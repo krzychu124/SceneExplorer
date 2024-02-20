@@ -33,30 +33,28 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public static Snapshots Instance = new GameObject("SceneManager Snapshots").AddComponent<Snapshots>();
 
         public Snapshots() {
-        _minSize = new Vector2(300, 250);
-        ForceSize(400, 350);
-        _items = new List<Item>();
-        _results = new List<Item>();
-    }
+            _minSize = new Vector2(300, 250);
+            ForceSize(400, 350);
+            _items = new List<Item>();
+            _results = new List<Item>();
+        }
 
         protected void Awake() {
-        _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        _prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
-        _snapshotService = SnapshotService.Instance;
-        _pagination = new Pagination<Item>(_results);
-        _pagination.ItemPerPage = 20;
-        _queryCreator = new QueryCreator(ComponentSearch._registeredComponents);
-        _query = new Query();
-    }
+            _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+            _prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
+            _snapshotService = SnapshotService.Instance;
+            _pagination = new Pagination<Item>(_results);
+            _pagination.ItemPerPage = 20;
+            _queryCreator = new QueryCreator(ComponentSearch._registeredComponents);
+            _query = new Query();
+        }
 
         public override void OnOpen() {
-        base.OnOpen();
-        RefreshData();
-    }
+            base.OnOpen();
+            RefreshData();
+        }
 
         protected override void RenderWindowContent() {
-        if (_items.Count > 0)
-        {
             if (GUILayout.Button("Clear Snapshots", UIStyle.Instance.iconButton, options: null))
             {
                 _snapshotService.Clear();
@@ -71,155 +69,154 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 _updateResults = true;
             }
-        }
 
-        int first = 1 + _pagination.ItemPerPage * (_pagination.CurrentPage - 1);
-        int last = first + (_pagination.ItemPerPage - 1) > _pagination.ItemCount ? _pagination.ItemCount : first + (_pagination.ItemPerPage);
+            int first = 1 + _pagination.ItemPerPage * (_pagination.CurrentPage - 1);
+            int last = first + (_pagination.ItemPerPage - 1) > _pagination.ItemCount ? _pagination.ItemCount : first + (_pagination.ItemPerPage);
 
-        CommonUI.ListHeader(first, last, ref _pagination);
+            CommonUI.ListHeader(first, last, ref _pagination);
 
-        if (_pagination.ItemCount > 0)
-        {
-            GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(12);
-            GUILayout.BeginVertical(options: null);
-
-            GUILayout.Space(6);
-            int count = _pagination.Data.Count;
-            int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
-            int lastItem = firstItem + _pagination.ItemPerPage;
-            if (firstItem < count)
+            if (_pagination.ItemCount > 0)
             {
-                _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
-                int max = lastItem > count ? count : lastItem;
-                for (int i = firstItem; i < max; i++)
+                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                GUILayout.Space(12);
+                GUILayout.BeginVertical(options: null);
+
+                GUILayout.Space(6);
+                int count = _pagination.Data.Count;
+                int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
+                int lastItem = firstItem + _pagination.ItemPerPage;
+                if (firstItem < count)
                 {
-                    var data = _pagination.Data[i];
-                    GUILayout.BeginHorizontal(options: null);
-                    GUILayout.Label(data.Entity.ToString(), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
-                    GUILayout.Space(5);
-                    GUILayout.Label(data.PrefabName, UIStyle.Instance.focusedReducedPaddingLabelStyle, options: null);
-                    GUILayout.FlexibleSpace();
-                    if (GUILayout.Button("Inspect", UIStyle.Instance.iconButton, options: null))
+                    _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
+                    int max = lastItem > count ? count : lastItem;
+                    for (int i = firstItem; i < max; i++)
                     {
-                        Inspect(data.Entity, data.SnapshotData);
+                        var data = _pagination.Data[i];
+                        GUILayout.BeginHorizontal(options: null);
+                        GUILayout.Label(data.Entity.ToString(), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
+                        GUILayout.Space(5);
+                        GUILayout.Label(data.PrefabName, UIStyle.Instance.focusedReducedPaddingLabelStyle, options: null);
+                        GUILayout.FlexibleSpace();
+                        if (GUILayout.Button("Inspect", UIStyle.Instance.iconButton, options: null))
+                        {
+                            Inspect(data.Entity, data.SnapshotData);
+                        }
+                        GUILayout.EndHorizontal();
                     }
-                    GUILayout.EndHorizontal();
+                    GUILayout.EndScrollView();
                 }
-                GUILayout.EndScrollView();
+
+                GUILayout.Space(8);
+                GUILayout.EndVertical();
+
+                GUILayout.EndHorizontal();
             }
-
-            GUILayout.Space(8);
-            GUILayout.EndVertical();
-
-            GUILayout.EndHorizontal();
         }
-    }
 
         private void Inspect(Entity entity, SnapshotService.EntitySnapshotData data) {
-        var inspector = new GameObject("Manual Object Inspector(Snapshot)").AddComponent<ManualEntityInspector>();
-        inspector.ChainDepth = ChainDepth + 1;
-        inspector.SelectedEntity = entity;
-        inspector.SnapshotData = data;
-        inspector.Subtitle = $"[S] {entity}";
-        inspector.ForcePosition(Position + new Vector2(32, -32));
-        inspector.Open();
-    }
+            var inspector = new GameObject("Manual Object Inspector(Snapshot)").AddComponent<ManualEntityInspector>();
+            inspector.ChainDepth = ChainDepth + 1;
+            inspector.SelectedEntity = entity;
+            inspector.SnapshotData = data;
+            inspector.Subtitle = $"[S] {entity}";
+            inspector.ForcePosition(Position + new Vector2(32, -32));
+            inspector.Open();
+        }
 
         private void LateUpdate() {
-        if (_snapshotService.DataChanged)
-        {
-            RefreshData();
-            _snapshotService.ResetChanged();
-            _updateResults = true;
-        }
-        if (_queryCreator.Changed)
-        {
-            if (_queryCreator.Sync())
+            if (_snapshotService.DataChanged)
             {
-                _queryCreator.FillQuery(_query);
+                RefreshData();
+                _snapshotService.ResetChanged();
+                _updateResults = true;
             }
-            else
+            if (_queryCreator.Changed)
             {
-                _query.Reset();
+                if (_queryCreator.Sync())
+                {
+                    _queryCreator.FillQuery(_query);
+                }
+                else
+                {
+                    _query.Reset();
+                }
+                _updateResults = true;
             }
-            _updateResults = true;
+            if (_updateResults)
+            {
+                _updateResults = false;
+                FilterResults();
+            }
         }
-        if (_updateResults)
-        {
-            _updateResults = false;
-            FilterResults();
-        }
-    }
 
         private void RefreshData() {
-        _items.ForEach(Item.DisposeItem);
-        _items.Clear();
-        int index = 0;
-        foreach (Entity entity in _snapshotService.Entities)
-        {
-            if (_snapshotService.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data))
+            _items.ForEach(Item.DisposeItem);
+            _items.Clear();
+            int index = 0;
+            foreach (Entity entity in _snapshotService.Entities)
             {
-                string prefabName = entity.TryGetPrefabName(_entityManager, _prefabSystem, out string prefabType);
-                string name = !string.IsNullOrEmpty(prefabName) ? $"({prefabType} - {prefabName})" : string.Empty;
-                _items.Add(new Item(entity, name, data));
+                if (_snapshotService.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data))
+                {
+                    string prefabName = entity.TryGetPrefabName(_entityManager, _prefabSystem, out string prefabType);
+                    string name = !string.IsNullOrEmpty(prefabName) ? $"({prefabType} - {prefabName})" : string.Empty;
+                    _items.Add(new Item(entity, name, data));
+                }
+            }
+            _items.Sort((item, item2) => item.Entity.CompareTo(item2.Entity));
+
+            if (_pagination.FixPage(false))
+            {
+                _scrollPos = Vector2.zero;
             }
         }
-        _items.Sort((item, item2) => item.Entity.CompareTo(item2.Entity));
-        
-        if (_pagination.FixPage(false))
-        {
-            _scrollPos = Vector2.zero;
-        }
-    }
 
         private void FilterResults() {
-        _results.Clear();
-        foreach (Item item in _items)
-        {
-            if (item.SnapshotData.Matching(_query) &&
-                (item.Entity.ToString().IndexOf(_searchName, StringComparison.OrdinalIgnoreCase) >= 0 || 
-                 item.PrefabName.IndexOf(_searchName, StringComparison.OrdinalIgnoreCase) >= 0))
+            _results.Clear();
+            foreach (Item item in _items)
             {
-                _results.Add(item);
+                if (item.SnapshotData.Matching(_query) &&
+                    (item.Entity.ToString().IndexOf(_searchName, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    item.PrefabName.IndexOf(_searchName, StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    _results.Add(item);
+                }
+            }
+
+            if (_pagination.FixPage(false))
+            {
+                _scrollPos = Vector2.zero;
             }
         }
-        
-        if (_pagination.FixPage(false))
-        {
-            _scrollPos = Vector2.zero;
-        }
-    }
 
-        public class Query: QueryCreator.IQuery
+        public class Query : QueryCreator.IQuery
         {
             public List<ComponentType> WithAll { get; }
             public List<ComponentType> WithAny { get; }
             public List<ComponentType> WithNone { get; }
 
             public Query() {
-            WithAll = new List<ComponentType>();
-            WithAny = new List<ComponentType>();
-            WithNone = new List<ComponentType>();
-        }
+                WithAll = new List<ComponentType>();
+                WithAny = new List<ComponentType>();
+                WithNone = new List<ComponentType>();
+            }
 
             public void Reset() {
-            WithAll.Clear();
-            WithAny.Clear();
-            WithNone.Clear();
-        }
+                WithAll.Clear();
+                WithAny.Clear();
+                WithNone.Clear();
+            }
 
             public void AddAll(ComponentType type) {
-            WithAll.Add(type);
-        }
+                WithAll.Add(type);
+            }
 
             public void AddAny(ComponentType type) {
-            WithAny.Add(type);
-        }
+                WithAny.Add(type);
+            }
 
             public void AddNone(ComponentType type) {
-            WithNone.Add(type);
-        }
+                WithNone.Add(type);
+            }
         }
 
         public class Item : IDisposable
@@ -229,18 +226,18 @@ namespace SceneExplorer.ToBeReplaced.Windows
             public SnapshotService.EntitySnapshotData SnapshotData { get; private set; }
 
             public Item(Entity e, string prefabName, SnapshotService.EntitySnapshotData data) {
-            Entity = e;
-            PrefabName = prefabName;
-            SnapshotData = data;
-        }
+                Entity = e;
+                PrefabName = prefabName;
+                SnapshotData = data;
+            }
 
             public void Dispose() {
-            SnapshotData = null;
-        }
+                SnapshotData = null;
+            }
 
             public static void DisposeItem(Item item) {
-            item.Dispose();
-        }
+                item.Dispose();
+            }
         }
     }
 }

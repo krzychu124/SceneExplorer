@@ -51,12 +51,12 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private bool _disposed;
 
         protected ComponentInfoBase(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) {
-        Type = type;
-        Name = name;
-        DataFields = fields;
-        IsSnapshot = isSnapshot;
-        Objects = UIGenerator.CalculateComponentInspectableInfo(type, fields, null, isSnapshot);
-    }
+            Type = type;
+            Name = name;
+            DataFields = fields;
+            IsSnapshot = isSnapshot;
+            Objects = UIGenerator.CalculateComponentInspectableInfo(type, fields, null, isSnapshot);
+        }
 
         public ComponentType Type { get; }
         public virtual SpecialComponentType SpecialType { get; protected set; }
@@ -70,169 +70,171 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         protected object _componentData;
 
         public bool UpdateBindings(Entity entity) {
-        if (!_disposed)
-        {
-            Type managedType = Type.GetManagedType();
-            if (entity != Entity.Null && managedType != null)
+            if (!_disposed)
             {
-                try
+                Type managedType = Type.GetManagedType();
+                if (entity != Entity.Null && managedType != null)
                 {
-                    _componentData = UpdateBindingsInternal(entity);
+                    try
+                    {
+                        _componentData = UpdateBindingsInternal(entity);
+                    }
+                    catch
+                    {
+                        Logging.Info($"Failed for: E: {entity}, type: {managedType.FullName}");
+                    }
                 }
-                catch
+                else
                 {
-                    Logging.Info($"Failed for: E: {entity}, type: {managedType.FullName}");
+                    _componentData = null;
                 }
             }
             else
             {
                 _componentData = null;
             }
+            return !_disposed;
         }
-        else
-        {
-            _componentData = null;
-        }
-        return !_disposed;
-    }
 
         public bool RefreshValues(Entity entity) {
-        if (_componentData != null)
-        {
-            RefreshValuesInternal(entity, _componentData);
+            if (_componentData != null)
+            {
+                RefreshValuesInternal(entity, _componentData);
+            }
+            return true;
         }
-        return true;
-    }
 
         public virtual object UpdateBindingsInternal(Entity e) {
-        return null;
-    }
+            return null;
+        }
 
         public virtual bool RefreshValuesInternal(Entity entity, object previousData) {
-        return false;
-    }
+            return false;
+        }
 
         public virtual void Dispose() {
-        DataFields = null;
-        Objects = null;
-        _disposed = true;
-    }
+            DataFields = null;
+            Objects = null;
+            _disposed = true;
+        }
 
         public void ShowDetails() {
-        DetailedView = true;
-    }
+            DetailedView = true;
+        }
 
         public void HideDetails() {
-        DetailedView = false;
-    }
+            DetailedView = false;
+        }
     }
 
     public sealed class UnmanagedComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public UnmanagedComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-        Logging.Debug($"[Component-Unmanaged] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ?"[P]": "")}: {f.FieldType.Name}"))}");
-        SpecialType = SpecialComponentType.UnManaged;
-    }
+            Logging.Debug($"[Component-Unmanaged] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            SpecialType = SpecialComponentType.UnManaged;
+        }
 
         public override object UpdateBindingsInternal(Entity entity) {
-        if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
-        {
-            return value;
+            if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
+            {
+                return value;
+            }
+            return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
-        return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
-    }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
-        foreach (IInspectableObject o in Objects)
-        {
-            o.UpdateValue(_componentData, false);
+            foreach (IInspectableObject o in Objects)
+            {
+                o.UpdateValue(_componentData, false);
+            }
+            return true;
         }
-        return true;
-    }
     }
 
     public sealed class ManagedComponentInfo : ComponentInfoBase, IEntityComponent
     {
-        public ManagedComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields,isSnapshot) {
-        Logging.Debug($"[Component-Managed] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]": "")}: {f.FieldType.Name}"))}");
-        SpecialType = SpecialComponentType.Managed;
-    }
+        public ManagedComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
+            Logging.Debug($"[Component-Managed] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            SpecialType = SpecialComponentType.Managed;
+        }
 
         public override object UpdateBindingsInternal(Entity entity) {
-        if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
-        {
-            return value;
+            if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
+            {
+                return value;
+            }
+            return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
-        return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
-    }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
-        foreach (IInspectableObject o in Objects)
-        {
-            o.UpdateValue(_componentData, false);
+            foreach (IInspectableObject o in Objects)
+            {
+                o.UpdateValue(_componentData, false);
+            }
+            return true;
         }
-        return true;
-    }
     }
 
     public sealed class CommonComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public CommonComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-        Logging.Debug($"[Component-Common] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ?"[P]": "")}: {f.FieldType.Name}"))}");
-        SpecialType = SpecialComponentType.None;
-    }
+            Logging.Debug($"[Component-Common] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            SpecialType = SpecialComponentType.None;
+        }
 
         public override object UpdateBindingsInternal(Entity entity) {
-        if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
-        {
-            return value;
+            if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
+            {
+                return value;
+            }
+            return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
-        return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
-    }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
-        foreach (IInspectableObject o in Objects)
-        {
-            o.UpdateValue(_componentData, false);
+            foreach (IInspectableObject o in Objects)
+            {
+                o.UpdateValue(_componentData, false);
+            }
+            return true;
         }
-        return true;
-    }
     }
 
     public sealed class PrefabRefComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public string PrefabRefDataName { get; private set; }
+
         public PrefabRefComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-        Logging.Debug($"[Component-PrefabRef] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ?"[P]": "")}: {f.FieldType.Name}"))}");
-        SpecialType = SpecialComponentType.PrefabRef;
-    }
+            Logging.Debug($"[Component-PrefabRef] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            SpecialType = SpecialComponentType.PrefabRef;
+        }
 
         public override object UpdateBindingsInternal(Entity entity) {
-        PrefabRef data;
-        if (IsSnapshot)
-        {
-            data = SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData snapshot) && snapshot.TryGetData(Type, out object val) && val != null 
-                ? (PrefabRef)val : new PrefabRef();
+            PrefabRef data;
+            if (IsSnapshot)
+            {
+                data = SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData snapshot) && snapshot.TryGetData(Type, out object val) && val != null
+                    ? (PrefabRef)val
+                    : new PrefabRef();
+            }
+            else
+            {
+                data = (PrefabRef)Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
+            }
+            PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
+            if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
+            {
+                PrefabRefDataName = prefab.name;
+            }
+            return data;
         }
-        else
-        {
-           data = (PrefabRef)Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
-        }
-        PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
-        if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
-        {
-            PrefabRefDataName = prefab.name;
-        }
-        return data;
-    }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
-        foreach (IInspectableObject o in Objects)
-        {
-            o.UpdateValue(_componentData, false);
+            foreach (IInspectableObject o in Objects)
+            {
+                o.UpdateValue(_componentData, false);
+            }
+            return true;
         }
-        return true;
-    }
     }
 
     public sealed class PrefabDataComponentInfo : ComponentInfoBase, IEntityComponent
@@ -240,36 +242,37 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public string PrefabDataName { get; private set; }
 
         public PrefabDataComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-        Logging.Debug($"[Component-PrefabData] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ?"[P]": "")}: {f.FieldType.Name}"))}");
-        SpecialType = SpecialComponentType.PrefabData;
-    }
+            Logging.Debug($"[Component-PrefabData] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            SpecialType = SpecialComponentType.PrefabData;
+        }
 
         public override object UpdateBindingsInternal(Entity entity) {
-        PrefabData data;
-        if (IsSnapshot)
-        {
-            data = SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData snapshot) && snapshot.TryGetData(Type, out object val) && val != null 
-                ? (PrefabData)val : new PrefabData() {m_Index = -1};
+            PrefabData data;
+            if (IsSnapshot)
+            {
+                data = SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData snapshot) && snapshot.TryGetData(Type, out object val) && val != null
+                    ? (PrefabData)val
+                    : new PrefabData() { m_Index = -1 };
+            }
+            else
+            {
+                data = (PrefabData)Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
+            }
+            PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
+            if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
+            {
+                PrefabDataName = prefab.name;
+            }
+            return data;
         }
-        else
-        {
-            data = (PrefabData)Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
-        }
-        PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
-        if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
-        {
-            PrefabDataName = prefab.name;
-        }
-        return data;
-    }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
-        foreach (IInspectableObject o in Objects)
-        {
-            o.UpdateValue(_componentData, false);
+            foreach (IInspectableObject o in Objects)
+            {
+                o.UpdateValue(_componentData, false);
+            }
+            return true;
         }
-        return true;
-    }
     }
 
     public class EntityBufferComponentInfo : ComponentInfoBase, IEntityBufferComponent
@@ -279,132 +282,137 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public int PageCount { get; private set; } = 1;
         public int ItemCount => DataArray.Count;
         public List<IInspectableObject> DataArray { get; private set; } = new List<IInspectableObject>();
-    
+
         private List<object> _allItems = new List<object>();
         private int _previousPage = 1;
         private bool _initialized;
 
-        public EntityBufferComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields,isSnapshot) {
-        Logging.Debug($"[Buffer] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ?"[P]": "")}: {f.FieldType.Name}"))}");
-    }
+        public EntityBufferComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
+            Logging.Debug($"[Buffer] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+        }
 
         public override object UpdateBindingsInternal(Entity entity) {
-        if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
-        {
-            return value;
+            if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
+            {
+                return value;
+            }
+            return Type.GetManagedType().GetComponentBufferArrayByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
-        return Type.GetManagedType().GetComponentBufferArrayByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
-    }
 
         public override bool RefreshValuesInternal(Entity entity, object newData) {
-        if ((!DetailedView && !IsSnapshot) && _initialized)
-        {
-            return false;
-        }
-        List<object> newObjects = (List<object>)newData;
+            if ((!DetailedView && !IsSnapshot) && _initialized)
+            {
+                return false;
+            }
+            List<object> newObjects = (List<object>)newData;
 
-        bool requireUpdate = false;
-        if (newObjects.Count != _allItems.Count)
-        {
-            Logging.Debug($"Seq not equal ({newObjects.Count}): {string.Join(", ", newObjects.Select(o => o.ToString()))}");
-            if (newObjects.Count > _allItems.Count)
+            bool requireUpdate = false;
+            if (newObjects.Count != _allItems.Count)
             {
-                int diff = newObjects.Count - _allItems.Count;
-                Logging.Debug($"[Add] New: ({newObjects.Count}), Old: {_allItems.Count} | diff: {diff}");
-                for (int i = 0; i < diff; i++)
+                Logging.Debug($"Seq not equal ({newObjects.Count}): {string.Join(", ", newObjects.Select(o => o.ToString()))}");
+                if (newObjects.Count > _allItems.Count)
                 {
-                    DataArray.Add(new ComplexObject(Type.GetManagedType(), DataFields, IsSnapshot));
+                    int diff = newObjects.Count - _allItems.Count;
+                    Logging.Debug($"[Add] New: ({newObjects.Count}), Old: {_allItems.Count} | diff: {diff}");
+                    for (int i = 0; i < diff; i++)
+                    {
+                        DataArray.Add(new ComplexObject(Type.GetManagedType(), DataFields, IsSnapshot));
+                    }
                 }
-            }
-            else
-            {
-                int diff = _allItems.Count - newObjects.Count;
-                Logging.Debug($"[Remove] New: ({newObjects.Count}), Old: {_allItems.Count} | diff: {diff}");
-                for (int i = newObjects.Count; i < _allItems.Count; i++)
+                else
                 {
-                    DataArray[i].IsActive = false;
-                    DataArray[i].Dispose();
+                    int diff = _allItems.Count - newObjects.Count;
+                    Logging.Debug($"[Remove] New: ({newObjects.Count}), Old: {_allItems.Count} | diff: {diff}");
+                    for (int i = newObjects.Count; i < _allItems.Count; i++)
+                    {
+                        DataArray[i].IsActive = false;
+                        DataArray[i].Dispose();
+                    }
+                    DataArray.RemoveRange(newObjects.Count, diff);
                 }
-                DataArray.RemoveRange(newObjects.Count, diff);
-            }
-            _allItems = newObjects;
-            ResetPage();
-            requireUpdate = true;
-        }
-        else if (_allItems.Count > 0)
-        {
-            _allItems = newObjects;
-            requireUpdate = true;
-        }
-
-        if (_previousPage != CurrentPage || requireUpdate)
-        {
-            Logging.Debug($"Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate}");
-            _previousPage = CurrentPage;
-            if (TryGetPaginationData(out int index, out int count))
-            {
-                Logging.Debug($"Updating values: {index} {count} | {ItemCount}");
-                for (; index < count; index++)
-                {
-                    IInspectableObject inspectableObject = DataArray[index];
-                    bool wasActive = inspectableObject.IsActive;
-                    inspectableObject.IsActive = true;
-                    inspectableObject.UpdateValue(_allItems[index], false);
-                    inspectableObject.IsActive = wasActive;
-                }
-            }
-            else
-            {
-                Logging.Debug($"Resetting page...");
-                foreach (IInspectableObject item in DataArray)
-                {
-                    item.IsActive = false;
-                }
+                _allItems = newObjects;
                 ResetPage();
+                requireUpdate = true;
             }
-            _initialized = true;
-        }
+            else if (_allItems.Count > 0)
+            {
+                _allItems = newObjects;
+                requireUpdate = true;
+            }
 
-        return true;
-    }
+            if (_previousPage != CurrentPage || requireUpdate)
+            {
+                Logging.Debug($"Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate}");
+                _previousPage = CurrentPage;
+                if (TryGetPaginationData(out int index, out int count))
+                {
+                    if (IsSnapshot)
+                    {
+                        index = 0;
+                        count = DataArray.Count;
+                    }
+                    Logging.Debug($"Updating values: {index} {count} | {ItemCount} | IsSnapshot: {IsSnapshot}");
+                    for (; index < count; index++)
+                    {
+                        IInspectableObject inspectableObject = DataArray[index];
+                        bool wasActive = inspectableObject.IsActive;
+                        inspectableObject.IsActive = true;
+                        inspectableObject.UpdateValue(_allItems[index], false);
+                        inspectableObject.IsActive = wasActive;
+                    }
+                }
+                else
+                {
+                    Logging.Debug($"Resetting page...");
+                    foreach (IInspectableObject item in DataArray)
+                    {
+                        item.IsActive = false;
+                    }
+                    ResetPage();
+                }
+                _initialized = true;
+            }
+
+            return true;
+        }
 
 
         public void PreviousPage() {
-        if (CurrentPage - 1 > 0)
-        {
-            CurrentPage--;
+            if (CurrentPage - 1 > 0)
+            {
+                CurrentPage--;
+            }
         }
-    }
 
         public void NextPage() {
-        if (CurrentPage + 1 <= PageCount)
-        {
-            CurrentPage++;
+            if (CurrentPage + 1 <= PageCount)
+            {
+                CurrentPage++;
+            }
         }
-    }
 
         private void ResetPage() {
-        CurrentPage = 1;
-        PageCount = ItemCount > 10 ? (ItemCount / 10) + ((ItemCount % 10) > 0 ? 1 : 0) : 1;
-    }
+            CurrentPage = 1;
+            PageCount = ItemCount > 10 ? (ItemCount / 10) + ((ItemCount % 10) > 0 ? 1 : 0) : 1;
+        }
 
         private bool TryGetPaginationData(out int firstItemIndex, out int lastItemIndex) {
-        firstItemIndex = (CurrentPage - 1) * 10;
-        lastItemIndex = ItemCount - firstItemIndex > 10 ? firstItemIndex + 10 : ItemCount;
-        return firstItemIndex < ItemCount;
-    }
+            firstItemIndex = (CurrentPage - 1) * 10;
+            lastItemIndex = ItemCount - firstItemIndex > 10 ? firstItemIndex + 10 : ItemCount;
+            return firstItemIndex < ItemCount;
+        }
 
         public override void Dispose() {
-        base.Dispose();
-        _allItems.Clear();
-        foreach (IInspectableObject item in DataArray)
-        {
-            item.IsActive = false;
-            item.Dispose();
+            base.Dispose();
+            _allItems.Clear();
+            foreach (IInspectableObject item in DataArray)
+            {
+                item.IsActive = false;
+                item.Dispose();
+            }
+            DataArray.Clear();
+            ResetPage();
         }
-        DataArray.Clear();
-        ResetPage();
-    }
     }
 
     public class EntityTagComponentInfo : ComponentInfoBase, IEntityTagComponent
@@ -412,7 +420,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public override SpecialComponentType SpecialType => SpecialComponentType.Tag;
 
         public EntityTagComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-    }
+        }
     }
 
     public class EntityNotSupportedComponent : ComponentInfoBase, IEntityNotSupportedComponent
@@ -420,7 +428,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public override SpecialComponentType SpecialType { get; protected set; } = SpecialComponentType.Unknown;
 
         public EntityNotSupportedComponent(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-    }
+        }
     }
 
 
@@ -437,4 +445,3 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         Unknown = 1 << 6,
     }
 }
-
