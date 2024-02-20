@@ -21,13 +21,13 @@ Since game entities may be composed from many components, framerate drop is expe
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.1.3" />
+	<ModVersion Value="0.1.4" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.0.*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Initial version" />
+	<ChangeLog Value="Removed unnecessary IMod class" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->

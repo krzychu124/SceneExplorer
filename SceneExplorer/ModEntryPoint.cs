@@ -1,11 +1,8 @@
-﻿using Colossal.IO.AssetDatabase;
-using Game;
+﻿using Game;
 using Game.Common;
 using Game.Modding;
-using Game.Prefabs;
 using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced.Windows;
-using UnityEngine;
 
 namespace SceneExplorer
 {
