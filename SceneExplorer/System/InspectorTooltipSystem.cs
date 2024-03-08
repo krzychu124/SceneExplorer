@@ -76,7 +76,7 @@ namespace SceneExplorer.System
                 {
                     color = TooltipColor.Success,
                     path = "title1",
-                    value = $"Prefab: \"{prefabName}\" [{e.Index}]"
+                    value = $"Prefab: \"{prefabName}\" [{e.Index}:{e.Version}]"
 
                 });
 
@@ -91,7 +91,7 @@ namespace SceneExplorer.System
                         {
                             color = TooltipColor.Success,
                             path = "title1_1",
-                            value = $"Owner prefab: \"{ownerPrefab.name}\" [{owner.m_Owner.Index}]"
+                            value = $"Owner prefab: \"{ownerPrefab.name}\" [{owner.m_Owner.Index}:{owner.m_Owner.Version}]"
                         });
                     }
                 }

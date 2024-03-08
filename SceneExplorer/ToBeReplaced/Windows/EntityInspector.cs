@@ -51,11 +51,13 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private EntityInspector _sharedEntityInspectorPopup;
         private PrefabDataInspector _sharedPrefabInspectorPopup;
         private SnapshotService.EntitySnapshotData _snapshotData;
+        private PrefabSystem _prefabSystem;
 
         public EntityInspector() {
-        _minSize = new Vector2(250, 250);
-        ForceSize(420, 460);
-    }
+            _minSize = new Vector2(250, 250);
+            ForceSize(420, 460);
+            _prefabSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
+        }
 
         protected override string Title { get; } = "Entity Inspector";
         public override string Subtitle { get; set; } = string.Empty;
@@ -64,43 +66,44 @@ namespace SceneExplorer.ToBeReplaced.Windows
         {
             get { return _selectedEntity; }
             set
-        {
-            Logging.Debug($"Selecting Entity: {value}");
-            if (value != _selectedEntity)
             {
-                _selectedEntity = value;
-                _entityChanged = true;
+                Logging.Debug($"Selecting Entity: {value}");
+                if (value != _selectedEntity)
+                {
+                    _selectedEntity = value;
+                    _entityChanged = true;
+                }
             }
-        }
         }
 
         public SnapshotService.EntitySnapshotData SnapshotData
         {
             get => _snapshotData;
             set
-        {
-            if (value != _snapshotData)
             {
-                _snapshotData = value;
-                if (_snapshotData != null)
+                if (value != _snapshotData)
                 {
-                    _evaluator.SelectedEntity = _snapshotData.Entity;
-                    _evaluator.UseSnapshot = true;
-                    _evaluator.Evaluate(_entityManager, refreshOnly: false);
+                    _snapshotData = value;
+                    if (_snapshotData != null)
+                    {
+                        _evaluator.SelectedEntity = _snapshotData.Entity;
+                        _evaluator.UseSnapshot = true;
+                        _evaluator.Evaluate(_entityManager, refreshOnly: false);
+                    }
                 }
             }
         }
-        }
 
         private void Awake() {
-        _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-    }
+            _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        }
 
         protected override void Start() {
             base.Start();
             Logging.Info($"Starting EntityInspector: {gameObject.name}");
 
 #if DEBUG_PP
+            _prefabSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
             _inspectObjectToolSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<InspectObjectToolSystem>();
             _renderer = new ComponentDataRenderer(this, _inspectObjectToolSystem);
 #endif
@@ -185,48 +188,48 @@ namespace SceneExplorer.ToBeReplaced.Windows
         }
 
         public override void OnDestroy() {
-        base.OnDestroy();
+            base.OnDestroy();
 
-        _components.ForEach(c => c.ParentInspector = null);
-        _components.Clear();
-    }
+            _components.ForEach(c => c.ParentInspector = null);
+            _components.Clear();
+        }
 
         public void PreviewEntity(Entity e, string fieldName, string typeName, bool standalone) {
-        if (!_sharedEntityInspectorPopup)
-        {
-            _sharedEntityInspectorPopup = new GameObject("Shared Entity Inspector Popup").AddComponent<EntityInspector>();
-            if (!standalone)
+            if (!_sharedEntityInspectorPopup)
             {
-                _sharedEntityInspectorPopup.ParentWindowId = Id;
+                _sharedEntityInspectorPopup = new GameObject("Shared Entity Inspector Popup").AddComponent<EntityInspector>();
+                if (!standalone)
+                {
+                    _sharedEntityInspectorPopup.ParentWindowId = Id;
+                }
             }
+
+            _sharedEntityInspectorPopup.ChainDepth = ChainDepth + 1;
+            _sharedEntityInspectorPopup.SelectedEntity = e;
+            _sharedEntityInspectorPopup.TitleSuffix = $"{(!string.IsNullOrEmpty(TitleSuffix) ? $"{TitleSuffix} ➜ " : string.Empty)}{_selectedEntity.ToString()}➤{typeName}.{fieldName}";
+            _sharedEntityInspectorPopup.Subtitle = $"{e.ToString()} | {typeName}.{fieldName}";
+            _sharedEntityInspectorPopup.ForcePosition(Position + new Vector2(22, 22));
+            _sharedEntityInspectorPopup.Open();
         }
-        
-        _sharedEntityInspectorPopup.ChainDepth = ChainDepth + 1;
-        _sharedEntityInspectorPopup.SelectedEntity = e;
-        _sharedEntityInspectorPopup.TitleSuffix = $"{(!string.IsNullOrEmpty(TitleSuffix) ? $"{TitleSuffix} ➜ " : string.Empty)}{_selectedEntity.ToString()}➤{typeName}.{fieldName}";
-        _sharedEntityInspectorPopup.Subtitle = $"{e.ToString()} | {typeName}.{fieldName}";
-        _sharedEntityInspectorPopup.ForcePosition(Position + new Vector2(22,22));
-        _sharedEntityInspectorPopup.Open();
-    }
 
         public IClosablePopup PreviewPrefab(PrefabBase prefab, string typeName, bool standalone) {
-        if (!_sharedPrefabInspectorPopup)
-        {
-            _sharedPrefabInspectorPopup = new GameObject("Shared Prefab Inspector Popup").AddComponent<PrefabDataInspector>();
-            if (!standalone)
+            if (!_sharedPrefabInspectorPopup)
             {
-                _sharedPrefabInspectorPopup.ParentWindowId = Id;
+                _sharedPrefabInspectorPopup = new GameObject("Shared Prefab Inspector Popup").AddComponent<PrefabDataInspector>();
+                if (!standalone)
+                {
+                    _sharedPrefabInspectorPopup.ParentWindowId = Id;
+                }
             }
-        }
 
-        _sharedPrefabInspectorPopup.ChainDepth = ChainDepth + 1;
-        _sharedPrefabInspectorPopup.SelectedPrefab = prefab;
-        _sharedPrefabInspectorPopup.TitleSuffix = $"{(!string.IsNullOrEmpty(TitleSuffix) ? $"{TitleSuffix} ➜ PrefabData.m_Index" : string.Empty)}";
-        _sharedPrefabInspectorPopup.Subtitle = $"{typeName} \"{prefab.name}\"";
-        _sharedPrefabInspectorPopup.ForcePosition(Position + new Vector2(22,22));
-        _sharedPrefabInspectorPopup.Open();
-        return _sharedPrefabInspectorPopup;
-    }
+            _sharedPrefabInspectorPopup.ChainDepth = ChainDepth + 1;
+            _sharedPrefabInspectorPopup.SelectedPrefab = prefab;
+            _sharedPrefabInspectorPopup.TitleSuffix = $"{(!string.IsNullOrEmpty(TitleSuffix) ? $"{TitleSuffix} ➜ PrefabData.m_Index" : string.Empty)}";
+            _sharedPrefabInspectorPopup.Subtitle = $"{typeName} \"{prefab.name}\"";
+            _sharedPrefabInspectorPopup.ForcePosition(Position + new Vector2(22, 22));
+            _sharedPrefabInspectorPopup.Open();
+            return _sharedPrefabInspectorPopup;
+        }
 
         bool IClosablePopup.IsActive
         {
@@ -235,103 +238,115 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         public event Action<IValueInspector> OnClosed;
 
-        public IClosablePopup Inspect(object value, IInspectableObject o, bool standalone) {
-        Logging.Info($"Inspecting: {value} | {value.GetType().Name} | {o.FieldInfo?.Name}");
-        if (value is Entity e)
-        {
-            if (SnapshotData != null && SnapshotService.Instance.TryGetSnapshot(e, out SnapshotService.EntitySnapshotData data))
+        public IClosablePopup Inspect(object value, IInspectableObject o, InspectMode mode) {
+            Logging.Info($"Inspecting: {value} | {value.GetType().Name} | {o.FieldInfo?.Name}");
+            if (value is Entity e)
             {
-                return InspectEntity(e, o, standalone, data);
+                if (mode == InspectMode.Watcher)
+                {
+                    WatcherService.Instance.Add(new WatcherService.WatchableEntity(e, _prefabSystem));
+                    return null;
+                }
+                
+                if (SnapshotData != null && SnapshotService.Instance.TryGetSnapshot(e, out SnapshotService.EntitySnapshotData data))
+                {
+                    return InspectEntity(e, o, mode, data);
+                }
+                else
+                {
+                    return InspectEntity(e, o, mode);
+                }
             }
-            else
+            if (mode == InspectMode.Watcher)
             {
-                return InspectEntity(e, o, standalone);
+                return null;
             }
+            if (value is PrefabData pd)
+            {
+                return InspectPrefabData(pd, o, mode == InspectMode.Standalone);
+            }
+            if (o.FieldInfo != null && o.FieldInfo.Name.Equals(nameof(PrefabData.m_Index)))
+            {
+                PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
+                PrefabData data = new PrefabData() { m_Index = (int)value };
+                if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
+                {
+                    return PreviewPrefab(prefab, prefab.GetType().Name, mode == InspectMode.Standalone);
+                }
+            }
+
+            return null;
         }
-        if (value is PrefabData pd)
-        {
-            return InspectPrefabData(pd, o, standalone);
+
+        private IClosablePopup InspectEntity(Entity e, IInspectableObject o, InspectMode mode, SnapshotService.EntitySnapshotData data = null) {
+            var inspector = new GameObject("Value Inspector").AddComponent<EntityInspector>();
+            if (mode == InspectMode.Linked)
+            {
+                inspector.ParentWindowId = Id;
+            }
+            inspector.ChainDepth = ChainDepth + 1;
+            inspector.SelectedEntity = e;
+            inspector.SnapshotData = data;
+            inspector.Subtitle = data != null ? $"[S] {e}" : e.ToString();
+            inspector.ForcePosition(Position + new Vector2(20, 20));
+            inspector.Open();
+            return inspector;
         }
-        if (o.FieldInfo != null && o.FieldInfo.Name.Equals(nameof(PrefabData.m_Index)))
-        {
+
+        public IClosablePopup InspectPrefabData(PrefabData data, IInspectableObject o, bool standalone) {
             PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
-            PrefabData data = new PrefabData() { m_Index = (int)value };
             if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
             {
                 return PreviewPrefab(prefab, prefab.GetType().Name, standalone);
             }
+            return null;
         }
-
-        return null;
-    }
-        private IClosablePopup InspectEntity(Entity e, IInspectableObject o, bool standalone, SnapshotService.EntitySnapshotData data = null) {
-        var inspector = new GameObject("Value Inspector").AddComponent<EntityInspector>();
-        if (!standalone)
-        {
-            inspector.ParentWindowId = Id;
-        }
-        inspector.ChainDepth = ChainDepth + 1;
-        inspector.SelectedEntity = e;
-        inspector.SnapshotData = data;
-        inspector.ForcePosition(Position + new Vector2(20,20));
-        inspector.Open();
-        return inspector;
-    }
-
-        public IClosablePopup InspectPrefabData(PrefabData data, IInspectableObject o, bool standalone) {
-        PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
-        if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
-        {
-            return PreviewPrefab(prefab, prefab.GetType().Name, standalone);
-        }
-        return null;
-    }
 
         public void InspectManagedObject(object value, IInspectableObject o, bool standalone) {
-        Logging.Debug($"Inspecting Value: {value.ToString()} | {o.GetType().FullName} | {o.FieldInfo?.Name}");
-        if (o.FieldInfo != null && o.FieldInfo.Name.Equals(nameof(PrefabData.m_Index)))
-        {
-            PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
-            PrefabData data = new PrefabData() { m_Index = (int)value };
-            if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
+            Logging.Debug($"Inspecting Value: {value.ToString()} | {o.GetType().FullName} | {o.FieldInfo?.Name}");
+            if (o.FieldInfo != null && o.FieldInfo.Name.Equals(nameof(PrefabData.m_Index)))
             {
-                PreviewPrefab(prefab, prefab.GetType().Name, standalone);
+                PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
+                PrefabData data = new PrefabData() { m_Index = (int)value };
+                if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
+                {
+                    PreviewPrefab(prefab, prefab.GetType().Name, standalone);
+                }
             }
         }
-    }
 
         public void TryClose() {
-        if (ParentWindowId > 0)
-        {
-            ForceClose();
-        }
-    }
-
-        public void ForceClose() {
-        Logging.Info($"Force closed: {Id}");
-    
-        Destroy(this.gameObject);
-        OnClosed?.Invoke(this);
-        OnClosed = null;
-    }
-
-        public void MarkAsRoot() {
-        IsRoot = true;
-    }
-
-        private static void BuildComponentsUI(Entity selectedEntity, EntityManager entityManager, IParentInspector inspector, List<ISection> components) {
-        NativeArray<ComponentType> componentTypes = entityManager.GetComponentTypes(selectedEntity);
-        foreach (ComponentType componentType in componentTypes)
-        {
-            ISection section = UIGenerator.GetUIForComponent(componentType, selectedEntity);
-            if (section != null)
+            if (ParentWindowId > 0)
             {
-                section.ParentInspector = inspector;
-                components.Add(section);
+                ForceClose();
             }
         }
-        componentTypes.Dispose();
-    }
+
+        public void ForceClose() {
+            Logging.Info($"Force closed: {Id}");
+
+            Destroy(this.gameObject);
+            OnClosed?.Invoke(this);
+            OnClosed = null;
+        }
+
+        public void MarkAsRoot() {
+            IsRoot = true;
+        }
+
+        private static void BuildComponentsUI(Entity selectedEntity, EntityManager entityManager, IParentInspector inspector, List<ISection> components) {
+            NativeArray<ComponentType> componentTypes = entityManager.GetComponentTypes(selectedEntity);
+            foreach (ComponentType componentType in componentTypes)
+            {
+                ISection section = UIGenerator.GetUIForComponent(componentType, selectedEntity);
+                if (section != null)
+                {
+                    section.ParentInspector = inspector;
+                    components.Add(section);
+                }
+            }
+            componentTypes.Dispose();
+        }
 
         protected override void RenderWindowContent() {
 
@@ -350,7 +365,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal(options: null);
-                GUILayout.Label("Entity Index: ", options: null);
+                GUILayout.Label("Inspect Entity", options: null);
+                GUILayout.Space(3);
+                GUILayout.Label("index|version", options: null);
                 _manualEntity = GUILayout.TextField(_manualEntity, options: _inputOptions);
                 _manualEntityVersion = GUILayout.TextField(_manualEntityVersion, options: _inputOptions);
                 GUI.enabled = _manualEntity.Length > 0 && _manualEntityVersion.Length > 0;
@@ -381,8 +398,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
             else
             {
                 Color temp = GUI.color;
+                GUILayout.Label(_selectedEntity.ToString(), Style.focusedLabelStyle);
+                GUILayout.Label("Right click to clear entity selection", options: null);
                 if (this is not ManualEntityInspector)
                 {
+                    
                     GUILayout.BeginHorizontal(options: null);
                     GUILayout.Label("Mode: ", options: null);
                     GUI.color = new Color32(255, 216, 13, 255);
@@ -393,7 +413,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     GUILayout.Label(" (Ctrl+E)", options: null);
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
-                    GUILayout.Label("Right click to clear entity selection", options: null);
                 }
                 GUI.color = _legendColor;
                 GUILayout.BeginHorizontal(options: null);
@@ -425,19 +444,19 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
 
         private bool InspectManual(Entity entity) {
-        if (_entityManager.Exists(entity))
-        {
-            var inspector = new GameObject("Manual Object Inspector").AddComponent<ManualEntityInspector>();
-            inspector.ChainDepth = ChainDepth + 1;
-            inspector.SelectedEntity = entity;
-            inspector.ForcePosition(Position + new Vector2(22,22));
-            inspector.Open();
-            return true;
-        }
+            if (_entityManager.Exists(entity))
+            {
+                var inspector = new GameObject("Manual Object Inspector").AddComponent<ManualEntityInspector>();
+                inspector.ChainDepth = ChainDepth + 1;
+                inspector.SelectedEntity = entity;
+                inspector.ForcePosition(Position + new Vector2(22, 22));
+                inspector.Open();
+                return true;
+            }
 
-        Logging.Warning($"Entity: {entity} does not exist!");
-        return false;
-    }
+            Logging.Warning($"Entity: {entity} does not exist!");
+            return false;
+        }
 
         public override void Close() {
             base.Close();
@@ -468,14 +487,14 @@ namespace SceneExplorer.ToBeReplaced.Windows
         }
 
         private void DestroyManualInspectors() {
-        foreach (EntityInspector inspector in _manualInspectors)
-        {
-            if (inspector)
+            foreach (EntityInspector inspector in _manualInspectors)
             {
-                Destroy(inspector.gameObject);
+                if (inspector)
+                {
+                    Destroy(inspector.gameObject);
+                }
             }
+            _manualInspectors.Clear();
         }
-        _manualInspectors.Clear();
-    }
     }
 }

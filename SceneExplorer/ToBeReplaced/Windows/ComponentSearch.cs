@@ -59,7 +59,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         protected override void RenderWindowContent() {
             GUILayout.Label($"Registered components: {_registeredComponents.Count}", options: null);
-
             GUILayout.Label("Search by name:", options: null);
             string oldName = _searchName;
             _searchName = GUILayout.TextField(_searchName);
@@ -78,6 +77,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 OpenSnapshots();
             }
+            //TODO Watchers
+            // if (GUILayout.Button("Watchers", UIStyle.Instance.iconButton, options: null))
+            // {
+            //     OpenWatchers();
+            // }
             GUILayout.EndHorizontal();
             GUILayout.Space(8);
             _fullNameMatch = GUILayout.Toggle(_fullNameMatch, "Type FullName matching", options: null);
@@ -204,6 +208,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         private void OpenSnapshots() {
             Snapshots.Instance.Open();
+        }
+
+        private void OpenWatchers() {
+            Watchers.Instance.Open();
         }
 
         private void ValidateInterval(string last) {

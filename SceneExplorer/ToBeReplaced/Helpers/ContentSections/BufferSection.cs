@@ -65,7 +65,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentSections
             {
                 string fieldName = fieldInfo.Name;
                 object fieldValue = fieldInfo.GetValue(bufferValue);
-                ISectionItem item = UIGenerator.GetSectionItem(fieldName, fieldValue, _typeName);
+                ISectionItem item = UIGenerator.GetSectionItem(fieldName, fieldValue, _typeName, 2);
                 if (item is IInteractiveSectionItem interactiveSectionItem)
                 {
                     interactiveSectionItem.ParentInspector = ParentInspector;

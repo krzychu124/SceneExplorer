@@ -56,7 +56,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentSections
 
         if (_typeName.Equals(nameof(PrefabData)))
         {
-            ISectionItem item = UIGenerator.GetSectionItem("m_Index", value, _typeName);
+            ISectionItem item = UIGenerator.GetSectionItem("m_Index", value, _typeName, 2);
             if (item is IInteractiveSectionItem interactiveSectionItem)
             {
                 interactiveSectionItem.ParentInspector = ParentInspector;
@@ -70,7 +70,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentSections
         foreach (FieldInfo fieldInfo in TypeDescriptorService.Instance.GetFields(_type))
         {
             string fieldName = fieldInfo.Name;
-            ISectionItem item = UIGenerator.GetSectionItem(fieldName, fieldInfo.GetValue(value), _typeName);
+            ISectionItem item = UIGenerator.GetSectionItem(fieldName, fieldInfo.GetValue(value), _typeName, 2);
             if (item is IInteractiveSectionItem interactiveSectionItem)
             {
                 interactiveSectionItem.ParentInspector = ParentInspector;

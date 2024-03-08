@@ -15,9 +15,15 @@ using Object = UnityEngine.Object;
 namespace SceneExplorer.ToBeReplaced.Helpers
 {
 
+    public enum InspectMode
+    {
+        Linked,
+        Standalone,
+        Watcher,
+    }
     public interface IValueInspector
     {
-        IClosablePopup Inspect(object value, IInspectableObject o, bool standalone);
+        IClosablePopup Inspect(object value, IInspectableObject o, InspectMode mode);
     }
 
     public interface IClosablePopup
@@ -706,10 +712,17 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 {
                     Children[i].UpdateValue(_value, resetState);
                 }
-                if (_prefabInfoData != default && string.IsNullOrEmpty(PrefabName))
+                if (string.IsNullOrEmpty(PrefabName))
                 {
-                    PrefabName = GetPrefabName(Children[_prefabInfoData.fieldIndex].GetValueCached(), _prefabInfoData.fieldName, _prefabInfoData.isPrefabRef, _rootType);
-                    Logging.Debug($"Calculated prefab name: {PrefabName} | {_prefabInfoData.fieldIndex}, {_prefabInfoData.fieldName}");
+                    if (_prefabInfoData != default)
+                    {
+                        PrefabName = GetPrefabName(Children[_prefabInfoData.fieldIndex].GetValueCached(), _prefabInfoData.fieldName, _prefabInfoData.isPrefabRef, _rootType);
+                        Logging.Debug($"Calculated prefab name: {PrefabName} | {_prefabInfoData.fieldIndex}, {_prefabInfoData.fieldName}");
+                    } 
+                    else if (instance.GetType() == typeof(PrefabBase) && _value is PrefabBase pb)
+                    {
+                        PrefabName = pb.name;
+                    }
                 }
             }
         }
@@ -728,28 +741,6 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
 
                 return e.TryGetPrefabName(entityManager, prefabSystem, out _);
-                /*if (!isPrefabRef)
-                {
-                    if (entityManager.HasComponent<PrefabData>(e))
-                    {
-                        PrefabData prefabData = entityManager.GetComponentData<PrefabData>(e);
-                        if (prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefab))
-                        {
-                            return prefab.name;
-                        }
-                    }
-                }
-                else
-                {
-                    if (entityManager.HasComponent<PrefabRef>(e))
-                    {
-                        PrefabRef prefabRef = entityManager.GetComponentData<PrefabRef>(e);
-                        if (prefabSystem.TryGetPrefab(prefabRef, out PrefabBase prefab))
-                        {
-                            return prefab.name;
-                        }
-                    }
-                }*/
             }
 
             return null;

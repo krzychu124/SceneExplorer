@@ -99,7 +99,8 @@ namespace SceneExplorer.System
                 {
                     object obj = components[i];
 
-                    IWidget[] tempChildren = _generator.BuildMembers(new ObjectAccessor<object>(obj, true), 0).ToArray<IWidget>();
+                    string name = obj.GetType().Name;
+                    IWidget[] tempChildren = _generator.BuildMembers(new ObjectAccessor<object>(obj, true), 0, name).ToArray<IWidget>();
                     EditorSection editorSection = new EditorSection
                     {
                         path = new PathSegment(i),

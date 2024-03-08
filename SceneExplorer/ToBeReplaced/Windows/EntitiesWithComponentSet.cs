@@ -19,13 +19,13 @@ namespace SceneExplorer.ToBeReplaced.Windows
         protected override string Title => "Entities";
 
         private int _updateInterval = 60;
-        private int _itemUpdateInterval = 10;
+        private int _itemUpdateInterval = 30;
         private int _lastUpdate = 0;
         private int _lastItemUpdate = 0;
         private bool _updateIntervalError1;
         private bool _updateIntervalError2;
         private string _updateIntervalStr1 = "60";
-        private string _updateIntervalStr2 = "10";
+        private string _updateIntervalStr2 = "30";
         private bool _requireListUpdate;
         private TypeIndex _currentType = TypeIndex.Null;
         private Pagination<Item> _pagination;

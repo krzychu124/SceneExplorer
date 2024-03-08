@@ -11,7 +11,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 {
     public class ComponentDataRenderer : IRenderer
     {
-        private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60),  GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
+        private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60), GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
         private InspectableObjectRenderer _objectRenderer;
         private IValueInspector _inspector;
         public static HoverData lastHovered;
@@ -19,167 +19,177 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private InspectObjectToolSystem _toolSystem;
 #endif
         private bool _lastRendered;
-    
+
 #if DEBUG_PP
-        public ComponentDataRenderer(IValueInspector inspector, InspectObjectToolSystem inspectObjectToolSystem) {
-        _objectRenderer = new InspectableObjectRenderer();
-        _inspector = inspector;
-        _toolSystem = inspectObjectToolSystem;
-    }
-#endif
-   
-        public void Render(IEntityTagComponent component, Entity entity) {
-        GUILayout.BeginHorizontal(options: null);
-        GUI.enabled = false;
-        GUILayout.Button("•", UIStyle.Instance.iconButton, options: CommonUI.ExpandButtonOptions);
-        GUI.enabled = true;
-        GUILayout.Label(GetTypeInfo(component.Type, component.Name, component.IsSnapshot), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
-        GUILayout.EndHorizontal();
-        _lastRendered = false;
-    }
-
-        public void Render(IEntityComponent component, Entity entity) {
-        string name = GetComponentName(component);
-        if (CommonUI.CollapsibleHeader(name, component.DetailedView, out bool _, CommonUI.ButtonLocation.Start,
-            textStyle: CommonUI.CalculateTextStyle(component.SpecialType, component.DetailedView)))
+        public ComponentDataRenderer(IValueInspector inspector, InspectObjectToolSystem inspectObjectToolSystem)
         {
-            if (component.DetailedView)
-            {
-                component.HideDetails();
-            }
-            else
-            {
-                component.ShowDetails();
-            }
+            _objectRenderer = new InspectableObjectRenderer();
+            _inspector = inspector;
+            _toolSystem = inspectObjectToolSystem;
         }
-        if (component.DetailedView)
+#endif
+
+        public void Render(IEntityTagComponent component, Entity entity)
         {
-            GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+            GUILayout.BeginHorizontal(options: null);
+            GUI.enabled = false;
+            GUILayout.Button("•", UIStyle.Instance.iconButton, options: CommonUI.ExpandButtonOptions);
+            GUI.enabled = true;
+            GUILayout.Label(GetTypeInfo(component.Type, component.Name, component.IsSnapshot), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
+            GUILayout.EndHorizontal();
+            _lastRendered = false;
+        }
 
-            GUILayout.Space(8);
-            GUILayout.BeginVertical(options: null);
-
-            GUILayout.Space(5);
-            for (var i = 0; i < component.DataFields?.Count; i++)
+        public void Render(IEntityComponent component, Entity entity)
+        {
+            string name = GetComponentName(component);
+            if (CommonUI.CollapsibleHeader(name, component.DetailedView, out bool _, CommonUI.ButtonLocation.Start,
+                textStyle: CommonUI.CalculateTextStyle(component.SpecialType, component.DetailedView)))
             {
-                // var field = component.Fields[i];
-                if (component.Objects?.Count > i)
+                if (component.DetailedView)
                 {
-                    _objectRenderer.Render(component.Objects[i], _inspector, -1, out _);
-
-                    if (i < component.DataFields.Count - 1)
-                    {
-                        CommonUI.DrawLine();
-                    }
+                    component.HideDetails();
+                }
+                else
+                {
+                    component.ShowDetails();
                 }
             }
-
-            GUILayout.Space(5);
-            GUILayout.EndVertical();
-
-            GUILayout.EndHorizontal();
-        }
-        _lastRendered = false;
-    }
-
-        private static string GetComponentName(IEntityComponent component) {
-        if (component == null) return "NULL!";
-        return component switch
-        {
-            PrefabRefComponentInfo r => GetTypeInfo(component.Type, component.Name) + $" - {r.PrefabRefDataName}",
-            PrefabDataComponentInfo d => GetTypeInfo(component.Type, component.Name) + $" - {d.PrefabDataName}",
-            _ => GetTypeInfo(component.Type, component.Name, component.IsSnapshot)
-        };
-    }
-
-        public void Render(IEntityBufferComponent component, Entity entity) {
-        if (CommonUI.CollapsibleHeader(GetTypeInfo(component.Type, $"{component.Name} ({component.ItemCount})", component.IsSnapshot), component.DetailedView, out bool titleHovered, CommonUI.ButtonLocation.Start,
-            textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, component.DetailedView)))
-        {
             if (component.DetailedView)
             {
-                component.HideDetails();
-            }
-            else
-            {
-                component.ShowDetails();
-            }
-        }
-        if (titleHovered)
-        {
-            var c = component as EntityBufferComponentInfo;
-            lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.Buffer, Type = c.Type };
-        }
-        
-        if (component.DetailedView)
-        {
-            GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(8);
+                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
 
-            GUILayout.Label("Buffer Items", UIStyle.Instance.paginationLabelStyle, options: null);
-            GUILayout.FlexibleSpace();
-            int first = 1 + 10 * (component.CurrentPage - 1);
-            int last = first + 9 > component.ItemCount ? component.ItemCount : first + 9;
-            GUILayout.Label($" {first} - {last} of {component.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
-            GUI.enabled = component.CurrentPage > 1;
-            if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
-            {
-                component.PreviousPage();
+                GUILayout.Space(8);
+                GUILayout.BeginVertical(options: null);
+
+                GUILayout.Space(5);
+                for (var i = 0; i < component.DataFields?.Count; i++)
+                {
+                    // var field = component.Fields[i];
+                    if (component.Objects?.Count > i)
+                    {
+                        _objectRenderer.Render(component.Objects[i], _inspector, -1, out _);
+
+                        if (i < component.DataFields.Count - 1)
+                        {
+                            CommonUI.DrawLine();
+                        }
+                    }
+                }
+
+                GUILayout.Space(5);
+                GUILayout.EndVertical();
+
+                GUILayout.EndHorizontal();
             }
-            GUI.enabled = component.CurrentPage < component.PageCount;
-            if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
+            _lastRendered = false;
+        }
+
+        private static string GetComponentName(IEntityComponent component)
+        {
+            if (component == null) return "NULL!";
+            return component switch
             {
-                component.NextPage();
+                PrefabRefComponentInfo r => GetTypeInfo(component.Type, component.Name) + $" - {r.PrefabRefDataName}",
+                PrefabDataComponentInfo d => GetTypeInfo(component.Type, component.Name) + $" - {d.PrefabDataName}",
+                _ => GetTypeInfo(component.Type, component.Name, component.IsSnapshot)
+            };
+        }
+
+        public void Render(IEntityBufferComponent component, Entity entity)
+        {
+            GUI.enabled = component.ItemCount > 0;
+            if (CommonUI.CollapsibleHeader(GetTypeInfo(component.Type, $"{component.Name} ({component.ItemCount})", component.IsSnapshot), component.DetailedView, out bool titleHovered, CommonUI.ButtonLocation.Start,
+                textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, component.DetailedView)))
+            {
+                if (component.DetailedView)
+                {
+                    component.HideDetails();
+                }
+                else
+                {
+                    component.ShowDetails();
+                }
             }
             GUI.enabled = true;
-            
-            GUILayout.EndHorizontal();
-            
-            GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(12);
-            GUILayout.BeginVertical(options: null);
-
-            GUILayout.Space(6);
-            int count = component.DataArray.Count;
-            int firstItem = (component.CurrentPage - 1) * 10;
-            int lastItem = firstItem + 10;
-            if (firstItem < count)
+            if (titleHovered)
             {
-                int max = lastItem > count ? count : lastItem;
-                for (int i = firstItem; i < max; i++)
-                {
-                    _objectRenderer.Render(component.DataArray[i], _inspector, i, out bool hovered);
-                    if (hovered)
-                    {
-                        var c = component as EntityBufferComponentInfo;
-                        lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.BufferItem, Type = c.Type, Index = i };
-                    }
-                }
+                var c = component as EntityBufferComponentInfo;
+                lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.Buffer, Type = c.Type };
             }
 
-            GUILayout.Space(8);
-            GUILayout.EndVertical();
+            if (component.DetailedView)
+            {
+                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                GUILayout.Space(8);
 
-            GUILayout.EndHorizontal();
+                GUILayout.Label("Buffer Items", UIStyle.Instance.paginationLabelStyle, options: null);
+                GUILayout.FlexibleSpace();
+                int first = 1 + 10 * (component.CurrentPage - 1);
+                int last = first + 9 > component.ItemCount ? component.ItemCount : first + 9;
+                GUILayout.Label($" {first} - {last} of {component.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
+                GUI.enabled = component.CurrentPage > 1;
+                if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
+                {
+                    component.PreviousPage();
+                }
+                GUI.enabled = component.CurrentPage < component.PageCount;
+                if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
+                {
+                    component.NextPage();
+                }
+                GUI.enabled = true;
+
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                GUILayout.Space(12);
+                GUILayout.BeginVertical(options: null);
+
+                GUILayout.Space(6);
+                int count = component.DataArray.Count;
+                int firstItem = (component.CurrentPage - 1) * 10;
+                int lastItem = firstItem + 10;
+                if (firstItem < count)
+                {
+                    int max = lastItem > count ? count : lastItem;
+                    for (int i = firstItem; i < max; i++)
+                    {
+                        _objectRenderer.Render(component.DataArray[i], _inspector, i, out bool hovered);
+                        if (hovered)
+                        {
+                            var c = component as EntityBufferComponentInfo;
+                            lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.BufferItem, Type = c.Type, Index = i };
+                        }
+                    }
+                }
+
+                GUILayout.Space(8);
+                GUILayout.EndVertical();
+
+                GUILayout.EndHorizontal();
+            }
+            _lastRendered = true;
         }
-        _lastRendered = true;
-    }
 
-        public void Render(IEntityNotSupportedComponent component) {
-        GUILayout.BeginHorizontal(options: null);
-        GUI.enabled = false;
-        GUILayout.Button("•", UIStyle.Instance.iconButton, options: CommonUI.ExpandButtonOptions);
-        GUI.enabled = true;
-        GUILayout.Label(GetTypeInfo(component.Type, component.Name), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
-        GUILayout.EndHorizontal();
-        _lastRendered = false;
-    }
+        public void Render(IEntityNotSupportedComponent component)
+        {
+            GUILayout.BeginHorizontal(options: null);
+            GUI.enabled = false;
+            GUILayout.Button("•", UIStyle.Instance.iconButton, options: CommonUI.ExpandButtonOptions);
+            GUI.enabled = true;
+            GUILayout.Label(GetTypeInfo(component.Type, component.Name), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
+            GUILayout.EndHorizontal();
+            _lastRendered = false;
+        }
 
-        public void BeginSection() {
-        lastHovered = new HoverData();
-    }
+        public void BeginSection()
+        {
+            lastHovered = new HoverData();
+        }
 
-        public void EndSection() {
+        public void EndSection()
+        {
             CommonUI.DrawLine();
             if (_lastRendered)
             {
@@ -189,42 +199,45 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        private static string GetTypeInfo(ComponentType type, string name, bool isSnapshot = false) {
-        return isSnapshot ? $"[S] {name}" : name;
-        // if (type.IsZeroSized)
-        // {
-        //     return "[T] " + name;
-        // }
-        // if (type.IsComponent)
-        // {
-        //     return "[C] " /*+ $"[{AccessTypeString(type.AccessModeType)}] "*/ + name;
-        // }
-        // if (type.IsBuffer)
-        // {
-        //     return "[B] " /*+ $"[{AccessTypeString(type.AccessModeType)}] "*/ + name;
-        // }
-        //
-        // return "[N] " + name;
-    }
-
-        private static string AccessTypeString(ComponentType.AccessMode typeAccessModeType) {
-        switch (typeAccessModeType)
+        private static string GetTypeInfo(ComponentType type, string name, bool isSnapshot = false)
         {
-            case ComponentType.AccessMode.ReadWrite:
-                return "RW";
-            case ComponentType.AccessMode.ReadOnly:
-                return "RO";
-            case ComponentType.AccessMode.Exclude:
-                return "E";
-            default:
-                throw new ArgumentOutOfRangeException(nameof(typeAccessModeType), typeAccessModeType, null);
+            return isSnapshot ? $"[S] {name}" : name;
+            // if (type.IsZeroSized)
+            // {
+            //     return "[T] " + name;
+            // }
+            // if (type.IsComponent)
+            // {
+            //     return "[C] " /*+ $"[{AccessTypeString(type.AccessModeType)}] "*/ + name;
+            // }
+            // if (type.IsBuffer)
+            // {
+            //     return "[B] " /*+ $"[{AccessTypeString(type.AccessModeType)}] "*/ + name;
+            // }
+            //
+            // return "[N] " + name;
         }
-    }
 
-        public static bool WasHovered() {
-        return Event.current.type == EventType.Repaint &&
-            GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition);
-    }
+        private static string AccessTypeString(ComponentType.AccessMode typeAccessModeType)
+        {
+            switch (typeAccessModeType)
+            {
+                case ComponentType.AccessMode.ReadWrite:
+                    return "RW";
+                case ComponentType.AccessMode.ReadOnly:
+                    return "RO";
+                case ComponentType.AccessMode.Exclude:
+                    return "E";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(typeAccessModeType), typeAccessModeType, null);
+            }
+        }
+
+        public static bool WasHovered()
+        {
+            return Event.current.type == EventType.Repaint &&
+                GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition);
+        }
 
         public struct HoverData
         {
@@ -244,247 +257,263 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
     public class InspectableObjectRenderer
     {
-        private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60),  GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
-        public bool Render(IInspectableObject obj, IValueInspector valueInspector, int index, out bool hovered) {
-        hovered = false;
-        if (obj is InspectableEntity entity)
+        private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60), GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
+
+        public bool Render(IInspectableObject obj, IValueInspector valueInspector, int index, out bool hovered)
         {
-            GUILayout.BeginHorizontal(options: null);
-            Entity value = (Entity)(entity.GetValueCached() ?? default(Entity));
-            GUILayout.Label(entity.FieldInfo.Name +":", UIStyle.Instance.reducedPaddingLabelStyle, options: null);
-            GUILayout.Space(2);
-            GUILayout.Label($"{value.ToString()} {(!string.IsNullOrEmpty(entity.PrefabName) ? $" - {entity.PrefabName}": string.Empty)}", UIStyle.Instance.CalculateTextStyle(typeof(Entity)), options: null);
-            GUILayout.FlexibleSpace();
-            GUI.enabled = value != Entity.Null;
-            if (GUILayout.Button("Details", UIStyle.Instance.iconButton, options: null))
-            {
-                entity.InspectorPopupRef = valueInspector.Inspect(value, entity, false);
-            }
-            if (GUILayout.Button("Inspect", UIStyle.Instance.iconButton, options: null))
-            {
-                entity.InspectorPopupRef = valueInspector.Inspect(value, entity, true);
-            }
-            GUI.enabled = true;
-            GUILayout.EndHorizontal();
-        }
-        else if (obj is CommonInspectableObject common)
-        {
-            GUILayout.BeginHorizontal(options: null);
-            GUILayout.Label((common.FieldInfo?.Name ?? common.ValueType.Name) +":", UIStyle.Instance.CalculateLabelStyle(common.FieldInfo?.IsPublic ?? true), options: null);
-            GUILayout.Space(2);
-            GUILayout.Label(common.GetValueCached()?.ToString(), UIStyle.Instance.CalculateTextStyle((common.FieldInfo?.FieldType ?? common.ValueType)), options: null);
-            GUILayout.FlexibleSpace();
-            if (common.CanInspectValue && GUILayout.Button("Preview", UIStyle.Instance.iconButton, options: null))
-            {
-                common.InspectorPopupRef = valueInspector.Inspect(common.GetValueCached(), common, false);
-            }
-            if (common.CanInspectValue && GUILayout.Button("Inspect", UIStyle.Instance.iconButton, options: null))
-            {
-                common.InspectorPopupRef = valueInspector.Inspect(common.GetValueCached(), common, true);
-            }
-            GUILayout.EndHorizontal();
-        }
-        else if (obj is ComplexObject complex)
-        {
-            string fieldName = obj.FieldInfo?.Name;
-            if (CommonUI.CollapsibleHeader($"{(!string.IsNullOrEmpty(fieldName) ? fieldName : $"{complex.RootType.Name} {(index >= 0 ? $"[{index}] {(!string.IsNullOrEmpty(complex.PrefabName) ? $"- {complex.PrefabName}": string.Empty)}": string.Empty)}")}", complex.IsActive, out hovered, CommonUI.ButtonLocation.Start,
-                textStyle: CommonUI.CalculateTextStyle(complex.RootType.Name, complex.IsActive), focused: obj.IsActive))
-            {
-                complex.IsActive = !complex.IsActive;
-            }
-            if (complex.IsActive && complex.Children != null)
+            hovered = false;
+            if (obj is InspectableEntity entity)
             {
                 GUILayout.BeginHorizontal(options: null);
-                GUILayout.Space(12);
-
-                GUILayout.BeginVertical(options: null);
-                for (var i = 0; i < complex.Children.Length; i++)
+                Entity value = (Entity)(entity.GetValueCached() ?? default(Entity));
+                GUILayout.Label(entity.FieldInfo.Name + ":", UIStyle.Instance.reducedPaddingLabelStyle, options: null);
+                GUILayout.Space(2);
+                GUILayout.Label($"{value.ToString()} {(!string.IsNullOrEmpty(entity.PrefabName) ? $" - {entity.PrefabName}" : string.Empty)}", UIStyle.Instance.CalculateTextStyle(typeof(Entity)), options: null);
+                GUILayout.FlexibleSpace();
+                GUI.enabled = value != Entity.Null;
+                if (GUILayout.Button("Details", UIStyle.Instance.iconButton, options: null))
                 {
-                    Render(complex.Children[i], valueInspector, i, out _);
-                    if (i < complex.Children.Length - 1)
-                    {
-                        CommonUI.DrawLine();
-                    }
+                    entity.InspectorPopupRef = valueInspector.Inspect(value, entity, InspectMode.Linked);
                 }
-                GUILayout.EndVertical();
+                //TODO Watchers
+                // if (GUILayout.Button("Watch", UIStyle.Instance.iconButton, options: null))
+                // {
+                //     entity.InspectorPopupRef = valueInspector.Inspect(value, entity, InspectMode.Watcher);
+                // }
+                if (GUILayout.Button("Inspect", UIStyle.Instance.iconButton, options: null))
+                {
+                    entity.InspectorPopupRef = valueInspector.Inspect(value, entity, InspectMode.Standalone);
+                }
+                GUI.enabled = true;
                 GUILayout.EndHorizontal();
             }
-        }
-        else if (obj is IterableObject iterable)
-        {
-            Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
-            if (CommonUI.CollapsibleHeader($"{iterable.FieldInfo.Name} ({iterable.ItemCount})", iterable.IsActive, out bool _, CommonUI.ButtonLocation.Start,
-                textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterable.IsActive)))
+            else if (obj is CommonInspectableObject common)
             {
-                iterable.IsActive = !iterable.IsActive;
-            }
-
-            if (iterable.IsActive)
-            {
-                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(8);
-
-                GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
+                GUILayout.BeginHorizontal(options: null);
+                GUILayout.Label((common.FieldInfo?.Name ?? common.ValueType.Name) + ":", UIStyle.Instance.CalculateLabelStyle(common.FieldInfo?.IsPublic ?? true), options: null);
+                GUILayout.Space(2);
+                var value = common.GetValueCached();
+                GUILayout.Label(value != null ? value.ToString() : "<NULL>", UIStyle.Instance.CalculateTextStyle((common.FieldInfo?.FieldType ?? common.ValueType)), options: null);
                 GUILayout.FlexibleSpace();
-                int first = 1 + 10 * (iterable.CurrentPage - 1);
-                int last = first + 9 > iterable.ItemCount ? iterable.ItemCount : first + 9;
-                GUILayout.Label($" {first} - {last} of {iterable.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
-                GUI.enabled = iterable.CurrentPage > 1;
-                if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
+                if (common.CanInspectValue && GUILayout.Button("Preview", UIStyle.Instance.iconButton, options: null))
                 {
-                    iterable.PreviousPage();
+                    common.InspectorPopupRef = valueInspector.Inspect(common.GetValueCached(), common, InspectMode.Linked);
                 }
-                GUI.enabled = iterable.CurrentPage < iterable.PageCount;
-                if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
+                if (common.CanInspectValue && GUILayout.Button("Inspect", UIStyle.Instance.iconButton, options: null))
                 {
-                    iterable.NextPage();
+                    common.InspectorPopupRef = valueInspector.Inspect(common.GetValueCached(), common, InspectMode.Standalone);
+                }
+                GUILayout.EndHorizontal();
+            }
+            else if (obj is ComplexObject complex)
+            {
+                string fieldName = obj.FieldInfo?.Name;
+                object valueCached = complex.GetValueCached();
+                GUI.enabled = valueCached != null;
+                if (CommonUI.CollapsibleHeader(
+                    $"{(!string.IsNullOrEmpty(fieldName) ? $"{fieldName}{(valueCached == null ? " <NULL>" : string.Empty)}" : $"{complex.RootType.Name} {(index >= 0 ? $"[{index}] {(!string.IsNullOrEmpty(complex.PrefabName) ? $"- {complex.PrefabName}" : string.Empty)}" : string.Empty)}")}",
+                    complex.IsActive, out hovered, CommonUI.ButtonLocation.Start,
+                    textStyle: CommonUI.CalculateTextStyle(complex.RootType.Name, complex.IsActive), focused: obj.IsActive))
+                {
+                    complex.IsActive = !complex.IsActive;
+                }
+                GUI.enabled = true;
+                if (complex.IsActive && complex.Children != null)
+                {
+                    GUILayout.BeginHorizontal(options: null);
+                    GUILayout.Space(12);
+
+                    GUILayout.BeginVertical(options: null);
+                    for (var i = 0; i < complex.Children.Length; i++)
+                    {
+                        Render(complex.Children[i], valueInspector, i, out _);
+                        if (i < complex.Children.Length - 1)
+                        {
+                            CommonUI.DrawLine();
+                        }
+                    }
+                    GUILayout.EndVertical();
+                    GUILayout.EndHorizontal();
+                }
+            }
+            else if (obj is IterableObject iterable)
+            {
+                Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
+                GUI.enabled = iterable.ItemCount > 0;
+                if (CommonUI.CollapsibleHeader($"{iterable.FieldInfo.Name} ({iterable.ItemCount}){(iterable.ItemCount == 0 ? " <EMPTY>" : string.Empty)}", iterable.IsActive, out bool _, CommonUI.ButtonLocation.Start,
+                    textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterable.IsActive)))
+                {
+                    iterable.IsActive = !iterable.IsActive;
                 }
                 GUI.enabled = true;
 
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(12);
-                GUILayout.BeginVertical(options: null);
-
-                GUILayout.Space(6);
-                int count = iterable.DataArray.Count;
-                int firstItem = (iterable.CurrentPage - 1) * 10;
-                int lastItem = firstItem + 10;
-                if (firstItem < count)
+                if (iterable.IsActive)
                 {
-                    int max = lastItem > count ? count : lastItem;
-                    for (int i = firstItem; i < max; i++)
+                    GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                    GUILayout.Space(8);
+
+                    GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
+                    GUILayout.FlexibleSpace();
+                    int first = 1 + 10 * (iterable.CurrentPage - 1);
+                    int last = first + 9 > iterable.ItemCount ? iterable.ItemCount : first + 9;
+                    GUILayout.Label($" {first} - {last} of {iterable.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
+                    GUI.enabled = iterable.CurrentPage > 1;
+                    if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
                     {
-                        Render(iterable.DataArray[i], valueInspector, i, out _);
+                        iterable.PreviousPage();
                     }
-                }
-
-                GUILayout.Space(8);
-                GUILayout.EndVertical();
-
-                GUILayout.EndHorizontal();
-            }
-        }
-        else if (obj is PrefabComponentsIterableObject iterableComponents)
-        {
-            Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
-            if (CommonUI.CollapsibleHeader($"{iterableComponents.FieldInfo.Name} ({iterableComponents.ItemCount})", iterableComponents.IsActive, out bool _, CommonUI.ButtonLocation.Start,
-                textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableComponents.IsActive)))
-            {
-                iterableComponents.IsActive = !iterableComponents.IsActive;
-            }
-
-            if (iterableComponents.IsActive)
-            {
-                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(8);
-
-                GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
-                GUILayout.FlexibleSpace();
-                int first = 1 + 10 * (iterableComponents.CurrentPage - 1);
-                int last = first + 9 > iterableComponents.ItemCount ? iterableComponents.ItemCount : first + 9;
-                GUILayout.Label($" {first} - {last} of {iterableComponents.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
-                GUI.enabled = iterableComponents.CurrentPage > 1;
-                if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
-                {
-                    iterableComponents.PreviousPage();
-                }
-                GUI.enabled = iterableComponents.CurrentPage < iterableComponents.PageCount;
-                if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
-                {
-                    iterableComponents.NextPage();
-                }
-                GUI.enabled = true;
-
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(12);
-                GUILayout.BeginVertical(options: null);
-
-                GUILayout.Space(6);
-                int count = iterableComponents.DataArray.Count;
-                int firstItem = (iterableComponents.CurrentPage - 1) * 10;
-                int lastItem = firstItem + 10;
-                if (firstItem < count)
-                {
-                    int max = lastItem > count ? count : lastItem;
-                    for (int i = firstItem; i < max; i++)
+                    GUI.enabled = iterable.CurrentPage < iterable.PageCount;
+                    if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
                     {
-                        Render(iterableComponents.DataArray[i], valueInspector, i, out _);
+                        iterable.NextPage();
                     }
-                }
+                    GUI.enabled = true;
 
-                GUILayout.Space(8);
-                GUILayout.EndVertical();
+                    GUILayout.EndHorizontal();
 
-                GUILayout.EndHorizontal();
-            }
-            
-        }
-        else if (obj is GenericListObject iterableList)
-        {
-            Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
-            if (CommonUI.CollapsibleHeader($"{iterableList.FieldInfo.Name} ({iterableList.ItemCount})", iterableList.IsActive, out bool _, CommonUI.ButtonLocation.Start,
-                textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableList.IsActive)))
-            {
-                iterableList.IsActive = !iterableList.IsActive;
-            }
+                    GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                    GUILayout.Space(12);
+                    GUILayout.BeginVertical(options: null);
 
-            if (iterableList.IsActive)
-            {
-                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(8);
-
-                GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
-                GUILayout.FlexibleSpace();
-                int first = 1 + 10 * (iterableList.CurrentPage - 1);
-                int last = first + 9 > iterableList.ItemCount ? iterableList.ItemCount : first + 9;
-                GUILayout.Label($" {first} - {last} of {iterableList.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
-                GUI.enabled = iterableList.CurrentPage > 1;
-                if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
-                {
-                    iterableList.PreviousPage();
-                }
-                GUI.enabled = iterableList.CurrentPage < iterableList.PageCount;
-                if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
-                {
-                    iterableList.NextPage();
-                }
-                GUI.enabled = true;
-
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(12);
-                GUILayout.BeginVertical(options: null);
-
-                GUILayout.Space(6);
-                int count = iterableList.DataArray.Count;
-                int firstItem = (iterableList.CurrentPage - 1) * 10;
-                int lastItem = firstItem + 10;
-                if (firstItem < count)
-                {
-                    int max = lastItem > count ? count : lastItem;
-                    for (int i = firstItem; i < max; i++)
+                    GUILayout.Space(6);
+                    int count = iterable.DataArray.Count;
+                    int firstItem = (iterable.CurrentPage - 1) * 10;
+                    int lastItem = firstItem + 10;
+                    if (firstItem < count)
                     {
-                        Render(iterableList.DataArray[i], valueInspector, i, out _);
+                        int max = lastItem > count ? count : lastItem;
+                        for (int i = firstItem; i < max; i++)
+                        {
+                            Render(iterable.DataArray[i], valueInspector, i, out _);
+                        }
                     }
+
+                    GUILayout.Space(8);
+                    GUILayout.EndVertical();
+
+                    GUILayout.EndHorizontal();
+                }
+            }
+            else if (obj is PrefabComponentsIterableObject iterableComponents)
+            {
+                Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
+                if (CommonUI.CollapsibleHeader($"{iterableComponents.FieldInfo.Name} ({iterableComponents.ItemCount})", iterableComponents.IsActive, out bool _, CommonUI.ButtonLocation.Start,
+                    textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableComponents.IsActive)))
+                {
+                    iterableComponents.IsActive = !iterableComponents.IsActive;
                 }
 
-                GUILayout.Space(8);
-                GUILayout.EndVertical();
+                if (iterableComponents.IsActive)
+                {
+                    GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                    GUILayout.Space(8);
 
-                GUILayout.EndHorizontal();
+                    GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
+                    GUILayout.FlexibleSpace();
+                    int first = 1 + 10 * (iterableComponents.CurrentPage - 1);
+                    int last = first + 9 > iterableComponents.ItemCount ? iterableComponents.ItemCount : first + 9;
+                    GUILayout.Label($" {first} - {last} of {iterableComponents.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
+                    GUI.enabled = iterableComponents.CurrentPage > 1;
+                    if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
+                    {
+                        iterableComponents.PreviousPage();
+                    }
+                    GUI.enabled = iterableComponents.CurrentPage < iterableComponents.PageCount;
+                    if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
+                    {
+                        iterableComponents.NextPage();
+                    }
+                    GUI.enabled = true;
+
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                    GUILayout.Space(12);
+                    GUILayout.BeginVertical(options: null);
+
+                    GUILayout.Space(6);
+                    int count = iterableComponents.DataArray.Count;
+                    int firstItem = (iterableComponents.CurrentPage - 1) * 10;
+                    int lastItem = firstItem + 10;
+                    if (firstItem < count)
+                    {
+                        int max = lastItem > count ? count : lastItem;
+                        for (int i = firstItem; i < max; i++)
+                        {
+                            Render(iterableComponents.DataArray[i], valueInspector, i, out _);
+                        }
+                    }
+
+                    GUILayout.Space(8);
+                    GUILayout.EndVertical();
+
+                    GUILayout.EndHorizontal();
+                }
+
             }
-            
-        } else if (obj == null)
-        {
-            Logging.Debug($"Object is null!");
-        }
+            else if (obj is GenericListObject iterableList)
+            {
+                Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
+                if (CommonUI.CollapsibleHeader($"{iterableList.FieldInfo.Name} ({iterableList.ItemCount})", iterableList.IsActive, out bool _, CommonUI.ButtonLocation.Start,
+                    textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableList.IsActive)))
+                {
+                    iterableList.IsActive = !iterableList.IsActive;
+                }
 
-        return false;
-    }
+                if (iterableList.IsActive)
+                {
+                    GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                    GUILayout.Space(8);
+
+                    GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
+                    GUILayout.FlexibleSpace();
+                    int first = 1 + 10 * (iterableList.CurrentPage - 1);
+                    int last = first + 9 > iterableList.ItemCount ? iterableList.ItemCount : first + 9;
+                    GUILayout.Label($" {first} - {last} of {iterableList.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
+                    GUI.enabled = iterableList.CurrentPage > 1;
+                    if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
+                    {
+                        iterableList.PreviousPage();
+                    }
+                    GUI.enabled = iterableList.CurrentPage < iterableList.PageCount;
+                    if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
+                    {
+                        iterableList.NextPage();
+                    }
+                    GUI.enabled = true;
+
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
+                    GUILayout.Space(12);
+                    GUILayout.BeginVertical(options: null);
+
+                    GUILayout.Space(6);
+                    int count = iterableList.DataArray.Count;
+                    int firstItem = (iterableList.CurrentPage - 1) * 10;
+                    int lastItem = firstItem + 10;
+                    if (firstItem < count)
+                    {
+                        int max = lastItem > count ? count : lastItem;
+                        for (int i = firstItem; i < max; i++)
+                        {
+                            Render(iterableList.DataArray[i], valueInspector, i, out _);
+                        }
+                    }
+
+                    GUILayout.Space(8);
+                    GUILayout.EndVertical();
+
+                    GUILayout.EndHorizontal();
+                }
+
+            }
+            else if (obj == null)
+            {
+                Logging.Debug($"Object is null!");
+            }
+
+            return false;
+        }
     }
 }
