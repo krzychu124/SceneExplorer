@@ -52,6 +52,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private PrefabDataInspector _sharedPrefabInspectorPopup;
         private SnapshotService.EntitySnapshotData _snapshotData;
         private PrefabSystem _prefabSystem;
+        private Rect _titleSectionRect;
 
         public EntityInspector() {
             _minSize = new Vector2(250, 250);
@@ -388,6 +389,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 return;
             }
 
+            GUILayout.BeginVertical(options: null);
             if (!string.IsNullOrEmpty(TitleSuffix))
             {
                 Color temp = GUI.color;
@@ -434,10 +436,17 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
             GUILayout.Space(12);
             CommonUI.DrawLine();
+            GUILayout.EndVertical();
+            Rect cached = _titleSectionRect;
+            if (Event.current.type == EventType.Repaint)
+            {
+                Rect lastRect =GUILayoutUtility.GetLastRect();
+                _titleSectionRect = new Rect(Rect.x + lastRect.x,Rect.y + lastRect.y + lastRect.height, lastRect.width, Rect.height - lastRect.height - lastRect.y - 20);
+            }
+            
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
             GUILayout.Space(5);
-
-            _evaluator.RenderComponents(_renderer, SelectedEntity);
+            _evaluator.RenderComponents(_renderer, SelectedEntity, cached);
 
             GUILayout.EndScrollView();
         }
@@ -464,7 +473,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
             _manualEntityVersion = string.Empty;
             _components.ForEach(c => c.ParentInspector = null);
             _components.Clear();
-            _selectedEntity = Entity.Null;
             if (_sharedEntityInspectorPopup && _sharedEntityInspectorPopup.IsOpen)
             {
                 _sharedEntityInspectorPopup.Close();

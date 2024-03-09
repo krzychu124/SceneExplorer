@@ -26,7 +26,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             return GUILayout.Button(expanded ? "▼" : "▶", UIStyle.Instance.iconButton, _expandButtonOptions);
         }
 
-        public static bool CollapsibleHeader(string text, bool expanded, out bool hovered, ButtonLocation location = ButtonLocation.Start, string prefix = null, GUIStyle textStyle = null, GUIStyle style = null, bool focused = false)
+        public static bool CollapsibleHeader(string text, bool expanded, Rect rect, out bool hovered, ButtonLocation location = ButtonLocation.Start, string prefix = null, GUIStyle textStyle = null, GUIStyle style = null, bool focused = false)
         {
             bool clicked;
             hovered = false;
@@ -86,7 +86,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             GUILayout.EndHorizontal();
 
-            if (ComponentDataRenderer.WasHovered())
+            if (ComponentDataRenderer.WasHovered(rect))
             {
                 hovered = true;
             }

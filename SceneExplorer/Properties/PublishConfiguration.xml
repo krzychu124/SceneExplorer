@@ -21,17 +21,15 @@ Since game entities may be composed from many components, framerate drop is expe
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.1.5" />
+	<ModVersion Value="0.1.6" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.0.21*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-* Fixed preview of null values
-* Disabled expand for empty collections or null objects
-* Display full Entity info in tooltip (index:version) 
-* Display corresponding Entity in every inspector window
+* Fixed highlight on hover - do not highlight things (e.g.: SubLanes) when component is not visible (e.g.: clipped by scroll view)
+* Disabled all controls on the right sidebar of selected entity in the Editor (it wasn't applying changes anyway)
 	</ChangeLog>>
 	<!--ChangeLog>
 	</ChangeLog-->

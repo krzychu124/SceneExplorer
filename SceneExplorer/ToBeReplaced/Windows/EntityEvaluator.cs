@@ -5,14 +5,15 @@ using SceneExplorer.Services;
 using SceneExplorer.ToBeReplaced.Helpers;
 using Unity.Collections;
 using Unity.Entities;
+using UnityEngine;
 
 namespace SceneExplorer.ToBeReplaced.Windows
 {
     public interface IRenderer
     {
         void Render(IEntityTagComponent component, Entity entity);
-        void Render(IEntityComponent component, Entity entity);
-        void Render(IEntityBufferComponent component, Entity entity);
+        void Render(IEntityComponent component, Entity entity, Rect rect);
+        void Render(IEntityBufferComponent component, Entity entity, Rect rect);
         void Render(IEntityNotSupportedComponent component);
         void BeginSection();
         void EndSection();
@@ -165,7 +166,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         }
     }
 
-        public void RenderComponents(IRenderer renderer, Entity selectedEntity) {
+        public void RenderComponents(IRenderer renderer, Entity selectedEntity, Rect rect) {
         if (_allComponents.Count == 0)
         {
             return;
@@ -174,7 +175,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         for (int index = 0; index < Components.Count; index++)
         {
             IEntityComponent entityComponent = Components[index];
-            renderer.Render(entityComponent, selectedEntity);
+            renderer.Render(entityComponent, selectedEntity, rect);
             if (index < Components.Count - 1)
             {
                 CommonUI.DrawLine();
@@ -185,7 +186,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         for (int index = 0; index < Buffers.Count; index++)
         {
             IEntityBufferComponent entityBufferComponent = Buffers[index];
-            renderer.Render(entityBufferComponent, selectedEntity);
+            renderer.Render(entityBufferComponent, selectedEntity, rect);
             if (index < Buffers.Count - 1)
             {
                 CommonUI.DrawLine();

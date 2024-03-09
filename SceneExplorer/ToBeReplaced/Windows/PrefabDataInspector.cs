@@ -203,7 +203,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 GUILayout.Space(20);
                 _complexObject.IsActive = true;
-                _objectRenderer.Render(_complexObject, this, -1, out _);
+                _objectRenderer.Render(_complexObject, this, -1, Rect, out _);
             }
             GUILayout.EndScrollView();
         }

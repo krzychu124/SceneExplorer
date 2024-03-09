@@ -30,7 +30,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentItems
             bool prevExpanded = _expanded;
 
             GUI.enabled = _items.Count > 0;
-            if (CommonUI.CollapsibleHeader($"{_title} ", _expanded, out bool _, location: CommonUI.ButtonLocation.AfterTitle, textStyle: !_expanded ? UIStyle.Instance.reducedPaddingLabelStyle : UIStyle.Instance.reducedPaddingHighlightedLabelStyle))
+            if (CommonUI.CollapsibleHeader($"{_title} ", _expanded, Rect.zero, out bool _, location: CommonUI.ButtonLocation.AfterTitle, textStyle: !_expanded ? UIStyle.Instance.reducedPaddingLabelStyle : UIStyle.Instance.reducedPaddingHighlightedLabelStyle))
             {
                 _expanded = !_expanded;
             }

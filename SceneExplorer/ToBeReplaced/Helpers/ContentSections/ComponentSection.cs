@@ -30,7 +30,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentSections
         public void Render() {
 
         bool prevExpanded = _expanded;
-        if (CommonUI.CollapsibleHeader(_typeName, _expanded, out bool _, prefix: "[C]", location: CommonUI.ButtonLocation.EndCenteredText, textStyle: CommonUI.CalculateTextStyle(_typeName, _expanded)))
+        if (CommonUI.CollapsibleHeader(_typeName, _expanded, Rect.zero, out bool _, prefix: "[C]", location: CommonUI.ButtonLocation.EndCenteredText, textStyle: CommonUI.CalculateTextStyle(_typeName, _expanded)))
         {
             _expanded = !_expanded;
             if (prevExpanded != _expanded && _expanded && Event.current.type == EventType.KeyDown)

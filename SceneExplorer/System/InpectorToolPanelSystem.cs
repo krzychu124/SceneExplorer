@@ -35,27 +35,29 @@ namespace SceneExplorer.System
         private string _parentName;
         private string _text;
 
-        protected override void OnCreate() {
-        base.OnCreate();
-
-        _inspectToolSystem = World.GetOrCreateSystemManaged<InspectObjectToolSystem>();
-        _generator = new EditorGenerator();
-        _prefabSystem = base.World.GetOrCreateSystemManaged<PrefabSystem>();
-
-        title = "Select object";
-        children = new List<IWidget>
+        protected override void OnCreate()
         {
-            GetToolControlsGroup()
-        };
+            base.OnCreate();
 
-        _inspectToolSystem.RegisterOnUIReadyAction(() => {
-            ObjectInfo.DataBindings b = ObjectInfo.BindingsBuilder.Create().SetTextGetter(() => _text).Build();
-            b.UpdateBindings();
-            _inspectToolSystem.UIManager.SetBindings(b);
-        });
-    }
+            _inspectToolSystem = World.GetOrCreateSystemManaged<InspectObjectToolSystem>();
+            _generator = new EditorGenerator();
+            _prefabSystem = base.World.GetOrCreateSystemManaged<PrefabSystem>();
 
-        protected override void OnUpdate() {
+            title = "Select object";
+            children = new List<IWidget>
+            {
+                GetToolControlsGroup()
+            };
+
+            _inspectToolSystem.RegisterOnUIReadyAction(() => {
+                ObjectInfo.DataBindings b = ObjectInfo.BindingsBuilder.Create().SetTextGetter(() => _text).Build();
+                b.UpdateBindings();
+                _inspectToolSystem.UIManager.SetBindings(b);
+            });
+        }
+
+        protected override void OnUpdate()
+        {
             base.OnUpdate();
 
             if (!_prefabChanged)
@@ -106,7 +108,8 @@ namespace SceneExplorer.System
                         path = new PathSegment(i),
                         displayName = LocalizedString.Value(WidgetReflectionUtils.NicifyVariableName(obj.GetType().Name)),
                         expanded = true,
-                        children = tempChildren
+                        children = tempChildren,
+                        disabled = true,
                     };
 
                     PrefabBase prefabBase = obj as PrefabBase;
@@ -156,6 +159,7 @@ namespace SceneExplorer.System
                             // builder.AddSection($"Unknown type: {obj.GetType().FullName}", new ValueBinding<string>(() => { return $"No data!"; }));
                         }
                     }
+                    DisableAllFields(editorSection);
                     list.Add(editorSection);
                 }
                 // RefreshBindings();
@@ -188,296 +192,329 @@ namespace SceneExplorer.System
     }
 #endif
 
-        protected override void OnValueChanged(IWidget widget) {
-        base.OnValueChanged(widget);
-        // this.UpdateParent(true);
-    }
-
-        private void UpdateParent(bool moveSubObjects) {
-        PrefabBase prefabBase = this._parentObject as PrefabBase;
-        if (prefabBase != null)
+        protected override void OnValueChanged(IWidget widget)
         {
-            if (moveSubObjects)
-            {
-                this.MoveSubObjects(prefabBase);
-            }
-            _prefabSystem.UpdatePrefab(prefabBase, default(Entity));
+            base.OnValueChanged(widget);
+            // this.UpdateParent(true);
         }
-    }
 
-        private void RefreshTitle() {
-        string objectName = this.GetObjectName(this._currentPrefab);
-        string objectName2 = this.GetObjectName(this._parentObject);
-        Logging.Info($"Title: [{objectName2}] => [{objectName}] | {_parentObject} -> {_currentPrefab}");
-        if (objectName != this._selectedName || objectName2 != this._parentName)
+        private void UpdateParent(bool moveSubObjects)
         {
-            this._selectedName = objectName;
-            this._parentName = objectName2;
-            if (!this._parentObject.Equals(this._currentPrefab))
+            PrefabBase prefabBase = this._parentObject as PrefabBase;
+            if (prefabBase != null)
             {
-                this.title = objectName2 + " > " + objectName;
-                return;
+                if (moveSubObjects)
+                {
+                    this.MoveSubObjects(prefabBase);
+                }
+                _prefabSystem.UpdatePrefab(prefabBase, default(Entity));
             }
-            this.title = objectName;
         }
-    }
+
+        private void RefreshTitle()
+        {
+            string objectName = this.GetObjectName(this._currentPrefab);
+            string objectName2 = this.GetObjectName(this._parentObject);
+            Logging.Info($"Title: [{objectName2}] => [{objectName}] | {_parentObject} -> {_currentPrefab}");
+            if (objectName != this._selectedName || objectName2 != this._parentName)
+            {
+                this._selectedName = objectName;
+                this._parentName = objectName2;
+                if (!this._parentObject.Equals(this._currentPrefab))
+                {
+                    this.title = objectName2 + " > " + objectName;
+                    return;
+                }
+                this.title = objectName;
+            }
+        }
 
         [CanBeNull]
-        private string GetObjectName([CanBeNull] object obj) {
-        if (obj == null)
+        private string GetObjectName([CanBeNull] object obj)
         {
-            return null;
-        }
-        PrefabBase prefabBase = obj as PrefabBase;
-        if (prefabBase != null)
-        {
-            return prefabBase.name;
-        }
-        return this._currentPrefab.GetType().Name;
-    }
-
-        private void MoveSubObjects(PrefabBase prefab) {
-        Entity entity = _prefabSystem.GetEntity(prefab);
-        DynamicBuffer<SubMesh> dynamicBuffer;
-        if (base.EntityManager.TryGetBuffer(entity, false, out dynamicBuffer))
-        {
-            ObjectGeometryPrefab objectGeometryPrefab = prefab as ObjectGeometryPrefab;
-            if (objectGeometryPrefab != null && objectGeometryPrefab.m_Meshes != null)
+            if (obj == null)
             {
-                int num = math.min(dynamicBuffer.Length, objectGeometryPrefab.m_Meshes.Length);
-                for (int i = 0; i < num; i++)
+                return null;
+            }
+            PrefabBase prefabBase = obj as PrefabBase;
+            if (prefabBase != null)
+            {
+                return prefabBase.name;
+            }
+            return this._currentPrefab.GetType().Name;
+        }
+
+        private void MoveSubObjects(PrefabBase prefab)
+        {
+            Entity entity = _prefabSystem.GetEntity(prefab);
+            DynamicBuffer<SubMesh> dynamicBuffer;
+            if (base.EntityManager.TryGetBuffer(entity, false, out dynamicBuffer))
+            {
+                ObjectGeometryPrefab objectGeometryPrefab = prefab as ObjectGeometryPrefab;
+                if (objectGeometryPrefab != null && objectGeometryPrefab.m_Meshes != null)
                 {
-                    SubMesh subMesh = dynamicBuffer[i];
-                    ObjectMeshInfo objectMeshInfo = objectGeometryPrefab.m_Meshes[i];
-                    if (!(subMesh.m_SubMesh != _prefabSystem.GetEntity(objectMeshInfo.m_Mesh)) && (!subMesh.m_Position.Equals(objectMeshInfo.m_Position) || !subMesh.m_Rotation.Equals(objectMeshInfo.m_Rotation)))
+                    int num = math.min(dynamicBuffer.Length, objectGeometryPrefab.m_Meshes.Length);
+                    for (int i = 0; i < num; i++)
                     {
-                        if (subMesh.m_Rotation.Equals(objectMeshInfo.m_Rotation))
+                        SubMesh subMesh = dynamicBuffer[i];
+                        ObjectMeshInfo objectMeshInfo = objectGeometryPrefab.m_Meshes[i];
+                        if (!(subMesh.m_SubMesh != _prefabSystem.GetEntity(objectMeshInfo.m_Mesh)) && (!subMesh.m_Position.Equals(objectMeshInfo.m_Position) || !subMesh.m_Rotation.Equals(objectMeshInfo.m_Rotation)))
                         {
-                            float3 rhs = objectMeshInfo.m_Position - subMesh.m_Position;
-                            ObjectSubObjects objectSubObjects;
-                            if (prefab.TryGet<ObjectSubObjects>(out objectSubObjects) && objectSubObjects.m_SubObjects != null)
+                            if (subMesh.m_Rotation.Equals(objectMeshInfo.m_Rotation))
                             {
-                                for (int j = 0; j < objectSubObjects.m_SubObjects.Length; j++)
+                                float3 rhs = objectMeshInfo.m_Position - subMesh.m_Position;
+                                ObjectSubObjects objectSubObjects;
+                                if (prefab.TryGet<ObjectSubObjects>(out objectSubObjects) && objectSubObjects.m_SubObjects != null)
                                 {
-                                    ObjectSubObjectInfo objectSubObjectInfo = objectSubObjects.m_SubObjects[j];
-                                    if (objectSubObjectInfo.m_ParentMesh % 1000 == i)
+                                    for (int j = 0; j < objectSubObjects.m_SubObjects.Length; j++)
                                     {
-                                        objectSubObjectInfo.m_Position += rhs;
+                                        ObjectSubObjectInfo objectSubObjectInfo = objectSubObjects.m_SubObjects[j];
+                                        if (objectSubObjectInfo.m_ParentMesh % 1000 == i)
+                                        {
+                                            objectSubObjectInfo.m_Position += rhs;
+                                        }
                                     }
                                 }
                             }
-                        }
-                        else
-                        {
-                            float4x4 m = float4x4.TRS(subMesh.m_Position, subMesh.m_Rotation, 1f);
-                            float4x4 a = math.mul(float4x4.TRS(objectMeshInfo.m_Position, objectMeshInfo.m_Rotation, 1f), math.inverse(m));
-                            quaternion a2 = math.mul(objectMeshInfo.m_Rotation, math.inverse(subMesh.m_Rotation));
-                            ObjectSubObjects objectSubObjects2;
-                            if (prefab.TryGet<ObjectSubObjects>(out objectSubObjects2) && objectSubObjects2.m_SubObjects != null)
+                            else
                             {
-                                for (int k = 0; k < objectSubObjects2.m_SubObjects.Length; k++)
+                                float4x4 m = float4x4.TRS(subMesh.m_Position, subMesh.m_Rotation, 1f);
+                                float4x4 a = math.mul(float4x4.TRS(objectMeshInfo.m_Position, objectMeshInfo.m_Rotation, 1f), math.inverse(m));
+                                quaternion a2 = math.mul(objectMeshInfo.m_Rotation, math.inverse(subMesh.m_Rotation));
+                                ObjectSubObjects objectSubObjects2;
+                                if (prefab.TryGet<ObjectSubObjects>(out objectSubObjects2) && objectSubObjects2.m_SubObjects != null)
                                 {
-                                    ObjectSubObjectInfo objectSubObjectInfo2 = objectSubObjects2.m_SubObjects[k];
-                                    if (objectSubObjectInfo2.m_ParentMesh % 1000 == i)
+                                    for (int k = 0; k < objectSubObjects2.m_SubObjects.Length; k++)
                                     {
-                                        objectSubObjectInfo2.m_Position = math.transform(a, objectSubObjectInfo2.m_Position);
-                                        objectSubObjectInfo2.m_Rotation = math.normalize(math.mul(a2, objectSubObjectInfo2.m_Rotation));
+                                        ObjectSubObjectInfo objectSubObjectInfo2 = objectSubObjects2.m_SubObjects[k];
+                                        if (objectSubObjectInfo2.m_ParentMesh % 1000 == i)
+                                        {
+                                            objectSubObjectInfo2.m_Position = math.transform(a, objectSubObjectInfo2.m_Position);
+                                            objectSubObjectInfo2.m_Rotation = math.normalize(math.mul(a2, objectSubObjectInfo2.m_Rotation));
+                                        }
                                     }
                                 }
                             }
+                            subMesh.m_Position = objectMeshInfo.m_Position;
+                            subMesh.m_Rotation = objectMeshInfo.m_Rotation;
+                            dynamicBuffer[i] = subMesh;
                         }
-                        subMesh.m_Position = objectMeshInfo.m_Position;
-                        subMesh.m_Rotation = objectMeshInfo.m_Rotation;
-                        dynamicBuffer[i] = subMesh;
                     }
                 }
             }
         }
-    }
 
-        private bool SelectObjectForEntity(Entity entity) {
-        PrefabRef refData;
-        if (entity == Entity.Null || !base.EntityManager.TryGetComponent(entity, out refData))
+        private bool SelectObjectForEntity(Entity entity)
         {
-            this._parentObject = null;
-            return false;
-        }
-        PrefabBase prefab = _prefabSystem.GetPrefab<PrefabBase>(refData);
-        this._parentObject = prefab;
-        Owner owner;
-        PrefabRef refData2;
-        EditorContainer editorContainer2;
-        if (base.EntityManager.TryGetComponent(entity, out owner) && base.EntityManager.TryGetComponent(owner.m_Owner, out refData2))
-        {
-            Logging.Info($"Entity: {entity} has owner: {owner.m_Owner}");
-            int num = -1;
-            LocalTransformCache localTransformCache;
-            if (base.EntityManager.TryGetComponent(entity, out localTransformCache))
+            PrefabRef refData;
+            if (entity == Entity.Null || !base.EntityManager.TryGetComponent(entity, out refData))
             {
-                num = localTransformCache.m_PrefabSubIndex;
-                Logging.Info($"Entity {entity}, owner: {owner.m_Owner}, prefab subIndex: {num}");
-            }
-            if (num == -1)
-            {
-                Logging.Info($"Entity {entity}, owner: {owner.m_Owner}, incorrect prefab subIndex!");
+                this._parentObject = null;
                 return false;
             }
-            PrefabBase prefab2 = _prefabSystem.GetPrefab<PrefabBase>(refData2);
-            EditorContainer editorContainer;
-            ObjectSubObjects objectSubObjects;
-            if (base.EntityManager.TryGetComponent(entity, out editorContainer))
-            {
-                Logging.Info($"Entity: {entity} has owner: {owner.m_Owner}, has editor container with prefab: {editorContainer.m_Prefab} group: {editorContainer.m_GroupIndex}");
-                EffectSource effectSource;
-                ActivityLocation activityLocation;
-                if (base.EntityManager.HasComponent<EffectData>(editorContainer.m_Prefab) && prefab2.TryGet<EffectSource>(out effectSource) && effectSource.m_Effects != null && effectSource.m_Effects.Count > num)
-                {
-                    prefab = _prefabSystem.GetPrefab<PrefabBase>(editorContainer.m_Prefab);
-                    EffectSource.EffectSettings effectSettings = effectSource.m_Effects[num];
-                    if (effectSettings != null && effectSettings.m_Effect == prefab)
-                    {
-                        this._parentObject = prefab2;
-                    }
-                }
-                else if (base.EntityManager.HasComponent<ActivityLocationData>(editorContainer.m_Prefab) && prefab2.TryGet<ActivityLocation>(out activityLocation) && activityLocation.m_Locations != null &&
-                    activityLocation.m_Locations.Length > num)
-                {
-                    prefab = _prefabSystem.GetPrefab<PrefabBase>(editorContainer.m_Prefab);
-                    ActivityLocation.LocationInfo locationInfo = activityLocation.m_Locations[num];
-                    if (locationInfo != null && locationInfo.m_Activity == prefab)
-                    {
-                        this._parentObject = prefab2;
-                    }
-                }
-            }
-            else if (prefab2.TryGet<ObjectSubObjects>(out objectSubObjects) && objectSubObjects.m_SubObjects != null && objectSubObjects.m_SubObjects.Length > num)
-            {
-                Logging.Info($"Entity: {entity} has owner: {owner.m_Owner}, has Subobjects collection length: {objectSubObjects.m_SubObjects.Length}");
-                ObjectSubObjectInfo objectSubObjectInfo = objectSubObjects.m_SubObjects[num];
-                if (objectSubObjectInfo != null && objectSubObjectInfo.m_Object == prefab)
-                {
-                    Logging.Info($"Entity: {entity} has owner: {owner.m_Owner}, has Subobjects with entity");
-                    this._parentObject = prefab2;
-                }
-            }
-        }
-        else if (base.EntityManager.TryGetComponent(entity, out editorContainer2) && _prefabSystem.TryGetPrefab<PrefabBase>(editorContainer2.m_Prefab, out prefab))
-        {
-            Logging.Info($"Entity: {entity} has editorContainer with prefab: {prefab.name}, group: {editorContainer2.m_GroupIndex}");
+            PrefabBase prefab = _prefabSystem.GetPrefab<PrefabBase>(refData);
             this._parentObject = prefab;
-        }
-        return true;
-    }
-
-        public bool SelectEntity(Entity entity) {
-        PrefabRef refData;
-        if (entity == Entity.Null || !base.EntityManager.TryGetComponent(entity, out refData))
-        {
-            _selectedEntity = Entity.Null;
-            _prefabChanged = _currentPrefab != null;
-            _currentPrefab = null;
-            _parentObject = null;
-            _inspectToolSystem.UIManager.InspectEntity(Entity.Null);
-            return false;
-        }
-
-        _selectedEntity = entity;
-        _parentObject = null;
-        PrefabBase newPrefab = _prefabSystem.GetPrefab<PrefabBase>(refData);
-        if (newPrefab != _currentPrefab)
-        {
-            SelectObjectForEntity(entity);
-            _currentPrefab = newPrefab;
-            _prefabChanged = true;
-            RefreshTitle();
-            _inspectToolSystem.UIManager.InspectEntity(_selectedEntity);
-        }
-
-        return true;
-    }
-
-        private EditorSection GetToolControlsGroup() {
-        EditorSection editorSection = new EditorSection
-        {
-            path = new PathSegment(key: "toolMode"),
-            displayName = "Tool Mode",
-            expanded = true,
-            color = new Color(0.02f, 0.65f, 1f),
-            children = new[]
+            Owner owner;
+            PrefabRef refData2;
+            EditorContainer editorContainer2;
+            if (base.EntityManager.TryGetComponent(entity, out owner) && base.EntityManager.TryGetComponent(owner.m_Owner, out refData2))
             {
-                new ToggleField
+                Logging.Info($"Entity: {entity} has owner: {owner.m_Owner}");
+                int num = -1;
+                LocalTransformCache localTransformCache;
+                if (base.EntityManager.TryGetComponent(entity, out localTransformCache))
                 {
-                    path = "tool_0",
-                    displayName = "Any Object",
-                    accessor = (new DelegateAccessor<bool>(
-                        getter: () => _inspectToolSystem.Mode == 0,
-                        setter: b => {
-                            if (b)
-                            {
-                                _inspectToolSystem.Mode = 0;
-                            }
-                        }))
-                },
-                new ToggleField
+                    num = localTransformCache.m_PrefabSubIndex;
+                    Logging.Info($"Entity {entity}, owner: {owner.m_Owner}, prefab subIndex: {num}");
+                }
+                if (num == -1)
                 {
-                    path = "tool_1",
-                    displayName = "Networks",
-                    accessor = (new DelegateAccessor<bool>(
-                        getter: () => _inspectToolSystem.Mode == 1,
-                        setter: b => {
-                            if (b)
-                            {
-                                _inspectToolSystem.Mode = 1;
-                            }
-                        }))
-                },
-                new ToggleField
+                    Logging.Info($"Entity {entity}, owner: {owner.m_Owner}, incorrect prefab subIndex!");
+                    return false;
+                }
+                PrefabBase prefab2 = _prefabSystem.GetPrefab<PrefabBase>(refData2);
+                EditorContainer editorContainer;
+                ObjectSubObjects objectSubObjects;
+                if (base.EntityManager.TryGetComponent(entity, out editorContainer))
                 {
-                    path = "tool_2",
-                    displayName = "Props and other objects",
-                    accessor = (new DelegateAccessor<bool>(
-                        getter: () => _inspectToolSystem.Mode == 2,
-                        setter: b => {
-                            if (b)
-                            {
-                                _inspectToolSystem.Mode = 2;
-                            }
-                        }))
-                },
-                new ToggleField
+                    Logging.Info($"Entity: {entity} has owner: {owner.m_Owner}, has editor container with prefab: {editorContainer.m_Prefab} group: {editorContainer.m_GroupIndex}");
+                    EffectSource effectSource;
+                    ActivityLocation activityLocation;
+                    if (base.EntityManager.HasComponent<EffectData>(editorContainer.m_Prefab) && prefab2.TryGet<EffectSource>(out effectSource) && effectSource.m_Effects != null && effectSource.m_Effects.Count > num)
+                    {
+                        prefab = _prefabSystem.GetPrefab<PrefabBase>(editorContainer.m_Prefab);
+                        EffectSource.EffectSettings effectSettings = effectSource.m_Effects[num];
+                        if (effectSettings != null && effectSettings.m_Effect == prefab)
+                        {
+                            this._parentObject = prefab2;
+                        }
+                    }
+                    else if (base.EntityManager.HasComponent<ActivityLocationData>(editorContainer.m_Prefab) && prefab2.TryGet<ActivityLocation>(out activityLocation) && activityLocation.m_Locations != null &&
+                        activityLocation.m_Locations.Length > num)
+                    {
+                        prefab = _prefabSystem.GetPrefab<PrefabBase>(editorContainer.m_Prefab);
+                        ActivityLocation.LocationInfo locationInfo = activityLocation.m_Locations[num];
+                        if (locationInfo != null && locationInfo.m_Activity == prefab)
+                        {
+                            this._parentObject = prefab2;
+                        }
+                    }
+                }
+                else if (prefab2.TryGet<ObjectSubObjects>(out objectSubObjects) && objectSubObjects.m_SubObjects != null && objectSubObjects.m_SubObjects.Length > num)
                 {
-                    path = "tool_3",
-                    displayName = "Net lanes",
-                    accessor = (new DelegateAccessor<bool>(
-                        getter: () => _inspectToolSystem.Mode == 3,
-                        setter: b => {
-                            if (b)
-                            {
-                                _inspectToolSystem.Mode = 3;
-                            }
-                        }))
+                    Logging.Info($"Entity: {entity} has owner: {owner.m_Owner}, has Subobjects collection length: {objectSubObjects.m_SubObjects.Length}");
+                    ObjectSubObjectInfo objectSubObjectInfo = objectSubObjects.m_SubObjects[num];
+                    if (objectSubObjectInfo != null && objectSubObjectInfo.m_Object == prefab)
+                    {
+                        Logging.Info($"Entity: {entity} has owner: {owner.m_Owner}, has Subobjects with entity");
+                        this._parentObject = prefab2;
+                    }
                 }
             }
-        };
-        return editorSection;
-    }
+            else if (base.EntityManager.TryGetComponent(entity, out editorContainer2) && _prefabSystem.TryGetPrefab<PrefabBase>(editorContainer2.m_Prefab, out prefab))
+            {
+                Logging.Info($"Entity: {entity} has editorContainer with prefab: {prefab.name}, group: {editorContainer2.m_GroupIndex}");
+                this._parentObject = prefab;
+            }
+            return true;
+        }
 
-        private static ITypedValueAccessor<bool> GetActiveAccessor(ComponentBase component) {
-        return new DelegateAccessor<bool>(
-            getter: () => component.active,
-            setter: (bool value) => { component.active = value; });
-    }
+        public bool SelectEntity(Entity entity)
+        {
+            PrefabRef refData;
+            if (entity == Entity.Null || !base.EntityManager.TryGetComponent(entity, out refData))
+            {
+                _selectedEntity = Entity.Null;
+                _prefabChanged = _currentPrefab != null;
+                _currentPrefab = null;
+                _parentObject = null;
+                _inspectToolSystem.UIManager.InspectEntity(Entity.Null);
+                return false;
+            }
+
+            _selectedEntity = entity;
+            _parentObject = null;
+            PrefabBase newPrefab = _prefabSystem.GetPrefab<PrefabBase>(refData);
+            if (newPrefab != _currentPrefab)
+            {
+                SelectObjectForEntity(entity);
+                _currentPrefab = newPrefab;
+                _prefabChanged = true;
+                RefreshTitle();
+                _inspectToolSystem.UIManager.InspectEntity(_selectedEntity);
+            }
+
+            return true;
+        }
+
+        private EditorSection GetToolControlsGroup()
+        {
+            EditorSection editorSection = new EditorSection
+            {
+                path = new PathSegment(key: "toolMode"),
+                displayName = "Tool Mode",
+                expanded = true,
+                color = new Color(0.02f, 0.65f, 1f),
+                children = new[]
+                {
+                    new ToggleField
+                    {
+                        path = "tool_0",
+                        displayName = "Any Object",
+                        accessor = (new DelegateAccessor<bool>(
+                            getter: () => _inspectToolSystem.Mode == 0,
+                            setter: b => {
+                                if (b)
+                                {
+                                    _inspectToolSystem.Mode = 0;
+                                }
+                            }))
+                    },
+                    new ToggleField
+                    {
+                        path = "tool_1",
+                        displayName = "Networks",
+                        accessor = (new DelegateAccessor<bool>(
+                            getter: () => _inspectToolSystem.Mode == 1,
+                            setter: b => {
+                                if (b)
+                                {
+                                    _inspectToolSystem.Mode = 1;
+                                }
+                            }))
+                    },
+                    new ToggleField
+                    {
+                        path = "tool_2",
+                        displayName = "Props and other objects",
+                        accessor = (new DelegateAccessor<bool>(
+                            getter: () => _inspectToolSystem.Mode == 2,
+                            setter: b => {
+                                if (b)
+                                {
+                                    _inspectToolSystem.Mode = 2;
+                                }
+                            }))
+                    },
+                    new ToggleField
+                    {
+                        path = "tool_3",
+                        displayName = "Net lanes",
+                        accessor = (new DelegateAccessor<bool>(
+                            getter: () => _inspectToolSystem.Mode == 3,
+                            setter: b => {
+                                if (b)
+                                {
+                                    _inspectToolSystem.Mode = 3;
+                                }
+                            }))
+                    }
+                }
+            };
+            return editorSection;
+        }
+
+        private static ITypedValueAccessor<bool> GetActiveAccessor(ComponentBase component)
+        {
+            return new DelegateAccessor<bool>(
+                getter: () => component.active,
+                setter: (bool value) => { /*component.active = value;*/
+                });
+        }
+        
+        private void DisableAllFields(IWidget widget)
+        {
+            IDisableable disableable = widget as IDisableable;
+            if (disableable != null)
+            {
+                disableable.disabled = true;
+            }
+            IDisableCallback disableCallback = widget as IDisableCallback;
+            if (disableCallback != null)
+            {
+                disableCallback.disabled = () => true;
+            }
+            IContainerWidget containerWidget = widget as IContainerWidget;
+            if (containerWidget != null)
+            {
+                foreach (IWidget widget2 in containerWidget.children)
+                {
+                    this.DisableAllFields(widget2);
+                }
+            }
+        }
 
         private class Scrollable : LayoutContainer
         {
             public override string propertiesTypeName => "Game.UI.Widgets.Scrollable";
             public Scrollable() => this.flex = FlexLayout.Fill;
 
-            public static Scrollable WithChildren(IList<IWidget> children) {
-            Scrollable scrollable = new Scrollable();
-            scrollable.children = children;
-            return scrollable;
-        }
+            public static Scrollable WithChildren(IList<IWidget> children)
+            {
+                Scrollable scrollable = new Scrollable();
+                scrollable.children = children;
+                return scrollable;
+            }
         }
     }
 #endif

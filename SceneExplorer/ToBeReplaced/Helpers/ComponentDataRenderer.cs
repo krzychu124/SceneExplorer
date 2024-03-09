@@ -6,6 +6,7 @@ using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced.Windows;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
 {
@@ -40,10 +41,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _lastRendered = false;
         }
 
-        public void Render(IEntityComponent component, Entity entity)
+        public void Render(IEntityComponent component, Entity entity, Rect rect)
         {
             string name = GetComponentName(component);
-            if (CommonUI.CollapsibleHeader(name, component.DetailedView, out bool _, CommonUI.ButtonLocation.Start,
+            if (CommonUI.CollapsibleHeader(name, component.DetailedView, rect, out bool _, CommonUI.ButtonLocation.Start,
                 textStyle: CommonUI.CalculateTextStyle(component.SpecialType, component.DetailedView)))
             {
                 if (component.DetailedView)
@@ -68,7 +69,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     // var field = component.Fields[i];
                     if (component.Objects?.Count > i)
                     {
-                        _objectRenderer.Render(component.Objects[i], _inspector, -1, out _);
+                        _objectRenderer.Render(component.Objects[i], _inspector, -1, rect, out _);
 
                         if (i < component.DataFields.Count - 1)
                         {
@@ -96,10 +97,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             };
         }
 
-        public void Render(IEntityBufferComponent component, Entity entity)
+        public void Render(IEntityBufferComponent component, Entity entity, Rect rect)
         {
             GUI.enabled = component.ItemCount > 0;
-            if (CommonUI.CollapsibleHeader(GetTypeInfo(component.Type, $"{component.Name} ({component.ItemCount})", component.IsSnapshot), component.DetailedView, out bool titleHovered, CommonUI.ButtonLocation.Start,
+            if (CommonUI.CollapsibleHeader(GetTypeInfo(component.Type, $"{component.Name} ({component.ItemCount})", component.IsSnapshot), component.DetailedView, rect, out bool titleHovered, CommonUI.ButtonLocation.Start,
                 textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, component.DetailedView)))
             {
                 if (component.DetailedView)
@@ -155,7 +156,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     int max = lastItem > count ? count : lastItem;
                     for (int i = firstItem; i < max; i++)
                     {
-                        _objectRenderer.Render(component.DataArray[i], _inspector, i, out bool hovered);
+                        _objectRenderer.Render(component.DataArray[i], _inspector, i, rect, out bool hovered);
                         if (hovered)
                         {
                             var c = component as EntityBufferComponentInfo;
@@ -233,9 +234,12 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        public static bool WasHovered()
+        public static bool WasHovered(Rect rect)
         {
-            return Event.current.type == EventType.Repaint &&
+            if (Event.current.type != EventType.Repaint) return false;
+            var mouse = Mouse.current.position.value;
+            Vector2 cursor = new Vector2(mouse.x, Screen.height - mouse.y);
+            return rect.Contains(cursor) &&
                 GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition);
         }
 
@@ -259,7 +263,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     {
         private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60), GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
 
-        public bool Render(IInspectableObject obj, IValueInspector valueInspector, int index, out bool hovered)
+        public bool Render(IInspectableObject obj, IValueInspector valueInspector, int index, Rect rect, out bool hovered)
         {
             hovered = false;
             if (obj is InspectableEntity entity)
@@ -312,7 +316,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 GUI.enabled = valueCached != null;
                 if (CommonUI.CollapsibleHeader(
                     $"{(!string.IsNullOrEmpty(fieldName) ? $"{fieldName}{(valueCached == null ? " <NULL>" : string.Empty)}" : $"{complex.RootType.Name} {(index >= 0 ? $"[{index}] {(!string.IsNullOrEmpty(complex.PrefabName) ? $"- {complex.PrefabName}" : string.Empty)}" : string.Empty)}")}",
-                    complex.IsActive, out hovered, CommonUI.ButtonLocation.Start,
+                    complex.IsActive, rect, out hovered, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(complex.RootType.Name, complex.IsActive), focused: obj.IsActive))
                 {
                     complex.IsActive = !complex.IsActive;
@@ -326,7 +330,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     GUILayout.BeginVertical(options: null);
                     for (var i = 0; i < complex.Children.Length; i++)
                     {
-                        Render(complex.Children[i], valueInspector, i, out _);
+                        Render(complex.Children[i], valueInspector, i, rect, out _);
                         if (i < complex.Children.Length - 1)
                         {
                             CommonUI.DrawLine();
@@ -340,7 +344,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
                 GUI.enabled = iterable.ItemCount > 0;
-                if (CommonUI.CollapsibleHeader($"{iterable.FieldInfo.Name} ({iterable.ItemCount}){(iterable.ItemCount == 0 ? " <EMPTY>" : string.Empty)}", iterable.IsActive, out bool _, CommonUI.ButtonLocation.Start,
+                if (CommonUI.CollapsibleHeader($"{iterable.FieldInfo.Name} ({iterable.ItemCount}){(iterable.ItemCount == 0 ? " <EMPTY>" : string.Empty)}", iterable.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterable.IsActive)))
                 {
                     iterable.IsActive = !iterable.IsActive;
@@ -384,7 +388,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         int max = lastItem > count ? count : lastItem;
                         for (int i = firstItem; i < max; i++)
                         {
-                            Render(iterable.DataArray[i], valueInspector, i, out _);
+                            Render(iterable.DataArray[i], valueInspector, i, rect, out _);
                         }
                     }
 
@@ -397,7 +401,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             else if (obj is PrefabComponentsIterableObject iterableComponents)
             {
                 Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
-                if (CommonUI.CollapsibleHeader($"{iterableComponents.FieldInfo.Name} ({iterableComponents.ItemCount})", iterableComponents.IsActive, out bool _, CommonUI.ButtonLocation.Start,
+                if (CommonUI.CollapsibleHeader($"{iterableComponents.FieldInfo.Name} ({iterableComponents.ItemCount})", iterableComponents.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableComponents.IsActive)))
                 {
                     iterableComponents.IsActive = !iterableComponents.IsActive;
@@ -440,7 +444,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         int max = lastItem > count ? count : lastItem;
                         for (int i = firstItem; i < max; i++)
                         {
-                            Render(iterableComponents.DataArray[i], valueInspector, i, out _);
+                            Render(iterableComponents.DataArray[i], valueInspector, i, rect, out _);
                         }
                     }
 
@@ -454,7 +458,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             else if (obj is GenericListObject iterableList)
             {
                 Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
-                if (CommonUI.CollapsibleHeader($"{iterableList.FieldInfo.Name} ({iterableList.ItemCount})", iterableList.IsActive, out bool _, CommonUI.ButtonLocation.Start,
+                if (CommonUI.CollapsibleHeader($"{iterableList.FieldInfo.Name} ({iterableList.ItemCount})", iterableList.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableList.IsActive)))
                 {
                     iterableList.IsActive = !iterableList.IsActive;
@@ -497,7 +501,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         int max = lastItem > count ? count : lastItem;
                         for (int i = firstItem; i < max; i++)
                         {
-                            Render(iterableList.DataArray[i], valueInspector, i, out _);
+                            Render(iterableList.DataArray[i], valueInspector, i, rect, out _);
                         }
                     }
 
