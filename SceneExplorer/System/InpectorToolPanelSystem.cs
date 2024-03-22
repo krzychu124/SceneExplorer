@@ -10,14 +10,11 @@ using Game.Tools;
 using Game.UI.Editor;
 using Game.UI.Localization;
 using Game.UI.Widgets;
-using SceneExplorer.ToBeReplaced.Helpers;
 using SceneExplorer.ToBeReplaced.Windows;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using EditorContainer = Game.Tools.EditorContainer;
-using SubLane = Game.Net.SubLane;
 
 namespace SceneExplorer.System
 {
@@ -52,7 +49,6 @@ namespace SceneExplorer.System
             _inspectToolSystem.RegisterOnUIReadyAction(() => {
                 ObjectInfo.DataBindings b = ObjectInfo.BindingsBuilder.Create().SetTextGetter(() => _text).Build();
                 b.UpdateBindings();
-                _inspectToolSystem.UIManager.SetBindings(b);
             });
         }
 
@@ -78,7 +74,6 @@ namespace SceneExplorer.System
             }
             else
             {
-                // title = _currentPrefab.name;
                 List<ComponentBase> components = new List<ComponentBase>
                 {
                     _currentPrefab,
@@ -92,9 +87,7 @@ namespace SceneExplorer.System
                 {
                     _text = "Root prefab";
                 }
-#if DEBUG2
-                ObjectInfo.UIBuilder builder = new ObjectInfo.UIBuilder();
-#endif
+                
                 components.AddRange(_currentPrefab.components);
                 HashSet<ComponentType> tempComponentTypes = new HashSet<ComponentType>();
                 for (var i = 0; i < components.Count; i++)
@@ -118,22 +111,6 @@ namespace SceneExplorer.System
                         editorSection.primary = true;
                         editorSection.color = new Color?(EditorSection.kPrefabColor);
                         editorSection.active = GetActiveAccessor(prefabBase);
-#if DEBUG_TEST
-                    builder.AddSection(prefabBase.name, new ValueBinding<string>(() => { return string.Join(", ", prefabBase.components); }));
-                    for (var i1 = 0; i1 < prefabBase.components.Count; i1++)
-                    {
-                        ComponentBase prefabBaseComponent = prefabBase.components[i1];
-                        tempComponentTypes.Clear();
-                        prefabBaseComponent.GetArchetypeComponents(tempComponentTypes);
-                        var temp = tempComponentTypes.ToArray();
-                        builder.AddSection(prefabBaseComponent.name, new ValueBinding<string>(() => {
-                            return $"Is active: {prefabBaseComponent.active},\n" +
-                                $"IgnoreUnlockDependencies: {prefabBaseComponent.ignoreUnlockDependencies},\n" +
-                                $"Prefab: {prefabBaseComponent.prefab.name}\n" +
-                                $"Archetype components ({temp.Length}):\n{string.Join("\n", temp.Select(t => $"{t.GetManagedType().FullName}, isComponent: {t.IsComponent} isBuffer: {t.IsBuffer}"))}";
-                        }));
-                    }
-#endif
                     }
                     else
                     {
@@ -142,60 +119,13 @@ namespace SceneExplorer.System
                         {
                             editorSection.onDelete = delegate { ApplyPrefabsSystem.RemoveComponent(component.prefab, component.GetType()); };
                             editorSection.active = GetActiveAccessor(component);
-#if DEBUG_TEST
-                        tempComponentTypes.Clear();
-                        component.GetArchetypeComponents(tempComponentTypes);
-                        var temp = tempComponentTypes.ToArray();
-                        builder.AddSection($"Editor Section: {component.name}",
-                            new ValueBinding<string>(() => {
-                                return
-                                    $"Is active: {component.active}\n" +
-                                    $"Archetype components ({temp.Length}):{string.Join("\n", temp.Select(t => $"{t.GetManagedType().Name}, isComponent: {t.IsComponent} isBuffer: {t.IsBuffer}"))}";
-                            }));
-#endif
-                        }
-                        else
-                        {
-                            // builder.AddSection($"Unknown type: {obj.GetType().FullName}", new ValueBinding<string>(() => { return $"No data!"; }));
                         }
                     }
                     DisableAllFields(editorSection);
                     list.Add(editorSection);
                 }
-                // RefreshBindings();
-
-                // _inspectToolSystem.UIManager.UpdateContent(_currentPrefab.name, builder.Build());
             }
             children = new[] { Scrollable.WithChildren(list.ToArray()) };
-        }
-
-#if DEBUG_TEST
-    private void RefreshBindings() {
-        if (_selectedEntity == Entity.Null)
-        {
-            return;
-        }
-        ObjectInfo.UIBuilder builder = new ObjectInfo.UIBuilder();
-        
-        _inspectToolSystem.UIManager.InspectEntity(_selectedEntity);
-
-        int componentCount = EntityManager.GetComponentCount(_selectedEntity);
-        NativeArray<ComponentType> componentTypes = EntityManager.GetComponentTypes(_selectedEntity);
-        ComponentType[] types = componentTypes.ToArray();
-        Logging.Info($"Building for {_selectedEntity} ({componentCount}): [{string.Join(", ", types.Select(t => t.GetManagedType().FullName))}]");
-        foreach (ComponentType componentType in types)
-        {
-            SectionGenerator.AddSection(componentType, builder, EntityManager, _selectedEntity, _prefabSystem);
-        }
-        componentTypes.Dispose();
-        _inspectToolSystem.UIManager.UpdateContent($"{_currentPrefab.name} ({componentCount})", builder.Build());
-    }
-#endif
-
-        protected override void OnValueChanged(IWidget widget)
-        {
-            base.OnValueChanged(widget);
-            // this.UpdateParent(true);
         }
 
         private void UpdateParent(bool moveSubObjects)

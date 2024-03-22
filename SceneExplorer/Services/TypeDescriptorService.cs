@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Game.Pathfind;
 using Unity.Collections;
 using Unity.Entities;
 

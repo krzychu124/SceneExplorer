@@ -1,24 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using Game.Prefabs;
-using Game.SceneFlow;
-using SceneExplorer.ToBeReplaced.Helpers;
+﻿using Game.Prefabs;
 using SceneExplorer.ToBeReplaced.Windows;
 using Unity.Entities;
 using UnityEngine;
 
 namespace SceneExplorer.ToBeReplaced
 {
-    public interface IGuiControl
-    {
-        void Render();
-        void Update();
-    }
-
     public class UIManager : MonoBehaviour
     {
-        private List<IGuiControl> _controls = new List<IGuiControl>();
-
         private FloatingWindowBase _floatingWindow;
         private EntityInspector _entityInspector;
         private FloatingWindowsManager _floatingWindowsManager;
@@ -40,10 +28,6 @@ namespace SceneExplorer.ToBeReplaced
             _entityInspector = null;
             _floatingWindowsManager.CloseAll(force: true);
             _floatingWindowsManager = null;
-        }
-
-        public void SetBindings(ObjectInfo.DataBindings bindings) {
-            // _bindings = bindings;
         }
 
         public void InspectEntity(Entity entity) {
