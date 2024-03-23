@@ -260,33 +260,56 @@ namespace SceneExplorer.System
             {
                 ComponentType type = (ComponentType)hovered.Type;
                 Type managedType = type.GetManagedType();
-                if (managedType.Equals(typeof(SubLane)))
+                if (managedType == typeof(SubLane))
                 {
                     var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                     deps = JobHandle.CombineDependencies(inputDeps, dependencies);
                     RenderSubLanes(hovered, buffer);
                     return deps;
                 }
-                if (managedType.Equals(typeof(SubNet)))
+                if (managedType == typeof(SubNet))
                 {
                     var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                     deps = JobHandle.CombineDependencies(inputDeps, dependencies);
                     RenderSubNets(hovered.entity, hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer, hovered, buffer);
                     return deps;
                 }
-                if (managedType.Equals(typeof(ConnectedEdge)))
+                if (managedType == typeof(ConnectedEdge))
                 {
                     var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                     deps = JobHandle.CombineDependencies(inputDeps, dependencies);
                     RenderConnectedEdges(hovered.entity, hovered, buffer);
                     return deps;
                 }
-                if (managedType.Equals(typeof(ConnectedNode)))
+                if (managedType == typeof(ConnectedNode))
                 {
                     var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                     deps = JobHandle.CombineDependencies(inputDeps, dependencies);
                     RenderConnectedNodes(hovered.entity, hovered, buffer);
                     return deps;
+                }
+                if (managedType == typeof(Node))
+                {
+                    var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                    deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                    RenderNode(hovered.entity, buffer);
+                    return deps;
+                }
+                if (managedType == typeof(Edge))
+                {
+                    switch (hovered.DataType)
+                    {
+                        case ComponentDataRenderer.HoverData.HoverType.Component:
+                            var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                            deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                            RenderEdgeNode(hovered.entity, null, buffer);
+                            return deps;
+                        case ComponentDataRenderer.HoverData.HoverType.ComponentItem:
+                            var buffer2 = _overlayRenderSystem.GetBuffer(out JobHandle dependencies2);
+                            deps = JobHandle.CombineDependencies(inputDeps, dependencies2);
+                            RenderEdgeNode(hovered.entity, hovered.Index == 0, buffer2);
+                            return deps;
+                    }
                 }
             }
 
@@ -446,6 +469,11 @@ namespace SceneExplorer.System
                 return;
 
             DynamicBuffer<ConnectedEdge> connectedEdges = EntityManager.GetBuffer<ConnectedEdge>(entity);
+            if (connectedEdges.Length == 0)
+            {
+                return;
+            }
+            
             if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer)
             {
                 foreach (ConnectedEdge connectedEdge in connectedEdges)
@@ -487,7 +515,7 @@ namespace SceneExplorer.System
                 float width = baseWidth > 0 ? baseWidth : 0.5f;
                 buffer.DrawCurve(Color.white,
                     new Color(0.79f, 0.79f, 0.79f, 0.1f),
-                    0.15f,
+                    0.25f,
                     OverlayRenderSystem.StyleFlags.Projected,
                     curve.m_Bezier,
                     width,
@@ -497,7 +525,72 @@ namespace SceneExplorer.System
 
         private void RenderConnectedNodes(Entity entity, ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
         {
-            //TODO
+            if (entity == Entity.Null)
+                return;
+
+            DynamicBuffer<ConnectedNode> connectedNodes = EntityManager.GetBuffer<ConnectedNode>(entity);
+            if (connectedNodes.Length == 0)
+            {
+                return;
+            }
+            
+            if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer)
+            {
+                foreach (ConnectedNode connectedNode in connectedNodes)
+                {
+                    if (connectedNode.m_Node != Entity.Null)
+                    {
+                        RenderNode(connectedNode.m_Node, buffer);
+                    }
+                }
+            }
+            else if (hovered.Index >= 0 && hovered.Index < connectedNodes.Length)
+            {
+                ConnectedNode connectedNode = connectedNodes[hovered.Index];
+                if (connectedNode.m_Node != Entity.Null)
+                {
+                    RenderNode(connectedNode.m_Node, buffer);
+                }
+            }
+        }
+
+        private void RenderNode(Entity entity, OverlayRenderSystem.Buffer buffer)
+        {
+            if (EntityManager.HasComponent<Node>(entity))
+            {
+                float diameter = 10f;
+                if (EntityManager.TryGetComponent(entity, out NodeGeometry nodeGeometry))
+                {
+                    diameter = MathUtils.Size(nodeGeometry.m_Bounds).x + 1f;
+                }
+
+                Node node = EntityManager.GetComponentData<Node>(entity);
+                buffer.DrawCircle(
+                    new Color(0f, 0.43f, 1f),
+                    new Color(0f, 0.09f, 0.85f, 0.24f),
+                    0.25f,
+                    0,
+                    new float2(0,1),
+                    node.m_Position,
+                    diameter);
+            }
+        }
+
+        private void RenderEdgeNode(Entity entity, bool? start, OverlayRenderSystem.Buffer buffer)
+        {
+            if (EntityManager.HasComponent<Edge>(entity))
+            {
+                Edge edge = EntityManager.GetComponentData<Edge>(entity);
+                if (start.HasValue)
+                {
+                    RenderNode(start.Value ? edge.m_Start: edge.m_End, buffer);
+                }
+                else
+                {
+                    RenderNode(edge.m_Start, buffer);
+                    RenderNode(edge.m_End, buffer);
+                }
+            }
         }
 
         private OverlayColor GetColor(LaneFlags flags)

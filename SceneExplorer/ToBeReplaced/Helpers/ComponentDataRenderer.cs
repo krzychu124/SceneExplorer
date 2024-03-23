@@ -44,7 +44,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public void Render(IEntityComponent component, Entity entity, Rect rect)
         {
             string name = GetComponentName(component);
-            if (CommonUI.CollapsibleHeader(name, component.DetailedView, rect, out bool _, CommonUI.ButtonLocation.Start,
+            if (CommonUI.CollapsibleHeader(name, component.DetailedView, rect, out bool titleHovered, CommonUI.ButtonLocation.Start,
                 textStyle: CommonUI.CalculateTextStyle(component.SpecialType, component.DetailedView)))
             {
                 if (component.DetailedView)
@@ -55,6 +55,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 {
                     component.ShowDetails();
                 }
+            }
+            if (titleHovered)
+            {
+                var c = component as ComponentInfoBase;
+                lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.Component, Type = c.Type };
             }
             if (component.DetailedView)
             {
@@ -69,8 +74,12 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     // var field = component.Fields[i];
                     if (component.Objects?.Count > i)
                     {
-                        _objectRenderer.Render(component.Objects[i], _inspector, -1, rect, out _);
-
+                        _objectRenderer.Render(component.Objects[i], _inspector, -1, rect, out bool hovered);
+                        if (hovered)
+                        {
+                            var c = component as ComponentInfoBase;
+                            lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.ComponentItem, Type = c.Type, Index = i };
+                        }
                         if (i < component.DataFields.Count - 1)
                         {
                             CommonUI.DrawLine();
@@ -83,7 +92,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
                 GUILayout.EndHorizontal();
             }
-            _lastRendered = false;
+            _lastRendered = true;
         }
 
         private static string GetComponentName(IEntityComponent component)
@@ -184,9 +193,12 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _lastRendered = false;
         }
 
-        public void BeginSection()
+        public void BeginSection(bool reset)
         {
-            lastHovered = new HoverData();
+            if (reset)
+            {
+                lastHovered = new HoverData();
+            }
         }
 
         public void EndSection()
@@ -255,6 +267,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 None,
                 Buffer,
                 BufferItem,
+                Component,
+                ComponentItem,
             }
         }
     }
@@ -290,6 +304,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 }
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();
+                if (ComponentDataRenderer.WasHovered(rect))
+                {
+                    hovered = true;
+                }
             }
             else if (obj is CommonInspectableObject common)
             {

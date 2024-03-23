@@ -6,7 +6,7 @@ namespace SceneExplorer.Tools
 {
     public class InspectObjectTool : EditorTool
     {
-        public const string ToolID = "Inspect Object";
+        public const string ToolID = "SceneExplorer_Inspect_Object";
 
         public InspectObjectTool(World world) : base(world)
         {

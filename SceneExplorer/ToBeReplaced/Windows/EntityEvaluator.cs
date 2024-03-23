@@ -15,7 +15,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         void Render(IEntityComponent component, Entity entity, Rect rect);
         void Render(IEntityBufferComponent component, Entity entity, Rect rect);
         void Render(IEntityNotSupportedComponent component);
-        void BeginSection();
+        void BeginSection(bool reset);
         void EndSection();
     }
 
@@ -24,13 +24,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public Entity SelectedEntity
         {
             get => _selectedEntity;
-            set
-        {
-            if (value != _selectedEntity)
-            {
-                _selectedEntity = value;
+            set {
+                if (value != _selectedEntity)
+                {
+                    _selectedEntity = value;
+                }
             }
-        }
         }
 
         public List<IEntityComponent> Components = new();
@@ -43,214 +42,219 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private List<IInspectableComponent> _tempToRemove = new();
         private Entity _selectedEntity;
 
-        public void Evaluate(EntityManager manager, bool refreshOnly = false) {
-        if (SelectedEntity != Entity.Null)
+        public void Evaluate(EntityManager manager, bool refreshOnly = false)
         {
-            if (!manager.Exists(SelectedEntity) && !UseSnapshot)
+            if (SelectedEntity != Entity.Null)
             {
-                Valid = false;
-                _selectedEntity = Entity.Null;
-                _allComponents.ForEach(c => { c.Dispose(); });
-                _allComponents.Clear();
-                Components.Clear();
-                Buffers.Clear();
-                Tags.Clear();
-                NotSupported.Clear();
-                Logging.Debug("Evaluating: entity not exist");
-                return;
-            }
-            
-            if (UseSnapshot)
-            {
-                Logging.Debug("Evaluating: Snapshot");
-                _allComponents.ForEach(c => { c.Dispose(); });
-                _allComponents.Clear();
-                Components.Clear();
-                Buffers.Clear();
-                Tags.Clear();
-                NotSupported.Clear();
-                if (SnapshotService.Instance.TryGetSnapshot(SelectedEntity, out SnapshotService.EntitySnapshotData data))
-                {
-                    Logging.Debug($"Preparing components for {data.ComponentTypes.Length} ComponentType's");
-                    foreach (ComponentType componentType in data.ComponentTypes)
-                    {
-                        IInspectableComponent componentInfo = UIGenerator.CalculateComponentInfo(componentType, SelectedEntity, true);
-                        componentInfo.UpdateBindings(_selectedEntity);
-                        AddComponent(componentInfo);
-                    }
-                    Valid = true;
-                    _allComponents.ForEach(c => c.RefreshValues(SelectedEntity));
-                }
-                else
+                if (!manager.Exists(SelectedEntity) && !UseSnapshot)
                 {
                     Valid = false;
+                    _selectedEntity = Entity.Null;
+                    _allComponents.ForEach(c => { c.Dispose(); });
+                    _allComponents.Clear();
+                    Components.Clear();
+                    Buffers.Clear();
+                    Tags.Clear();
+                    NotSupported.Clear();
+                    Logging.Debug("Evaluating: entity not exist");
+                    return;
                 }
-                return;
-            }
 
-            if (!refreshOnly)
-            {
-                Logging.Debug("Evaluating: full");
-                _allComponents.ForEach(c => { c.Dispose(); });
-                _allComponents.Clear();
-                Components.Clear();
-                Buffers.Clear();
-                Tags.Clear();
-                NotSupported.Clear();
-                
-                using (NativeArray<ComponentType> componentTypes = manager.GetComponentTypes(SelectedEntity))
+                if (UseSnapshot)
                 {
-                    foreach (ComponentType componentType in componentTypes)
+                    Logging.Debug("Evaluating: Snapshot");
+                    _allComponents.ForEach(c => { c.Dispose(); });
+                    _allComponents.Clear();
+                    Components.Clear();
+                    Buffers.Clear();
+                    Tags.Clear();
+                    NotSupported.Clear();
+                    if (SnapshotService.Instance.TryGetSnapshot(SelectedEntity, out SnapshotService.EntitySnapshotData data))
                     {
-                        IInspectableComponent componentInfo = UIGenerator.CalculateComponentInfo(componentType, SelectedEntity, false);
-                        componentInfo.UpdateBindings(_selectedEntity);
-                        AddComponent(componentInfo);
-                    }
-                }
-                Valid = true;
-            }
-            else
-            {
-                // Logging.Info("Evaluating: refresh");
-                using (NativeArray<ComponentType> componentTypes = manager.GetComponentTypes(SelectedEntity))
-                {
-                    IEnumerable<ComponentType> components = _allComponents.Select(c => c.Type);
-                    if (components.SequenceEqual(componentTypes))
-                    {
-
-                        foreach (IInspectableComponent inspectableComponent in _allComponents)
+                        Logging.Debug($"Preparing components for {data.ComponentTypes.Length} ComponentType's");
+                        foreach (ComponentType componentType in data.ComponentTypes)
                         {
-                            if (!inspectableComponent.UpdateBindings(_selectedEntity))
-                            {
-                                _tempToRemove.Add(inspectableComponent);
-                            }
-                        }
-
-                        if (_tempToRemove.Count > 0)
-                        {
-                            foreach (IInspectableComponent inspectableComponent in _tempToRemove)
-                            {
-                                RemoveComponent(inspectableComponent);
-                            }
-                            _tempToRemove.Clear();
+                            IInspectableComponent componentInfo = UIGenerator.CalculateComponentInfo(componentType, SelectedEntity, true);
+                            componentInfo.UpdateBindings(_selectedEntity);
+                            AddComponent(componentInfo);
                         }
                         Valid = true;
+                        _allComponents.ForEach(c => c.RefreshValues(SelectedEntity));
                     }
                     else
                     {
-                        Logging.Debug("Evaluating: dif sequence");
-                        Evaluate(manager, false);
-                        Valid = true;
+                        Valid = false;
+                    }
+                    return;
+                }
+
+                if (!refreshOnly)
+                {
+                    Logging.Debug("Evaluating: full");
+                    _allComponents.ForEach(c => { c.Dispose(); });
+                    _allComponents.Clear();
+                    Components.Clear();
+                    Buffers.Clear();
+                    Tags.Clear();
+                    NotSupported.Clear();
+
+                    using (NativeArray<ComponentType> componentTypes = manager.GetComponentTypes(SelectedEntity))
+                    {
+                        foreach (ComponentType componentType in componentTypes)
+                        {
+                            IInspectableComponent componentInfo = UIGenerator.CalculateComponentInfo(componentType, SelectedEntity, false);
+                            componentInfo.UpdateBindings(_selectedEntity);
+                            AddComponent(componentInfo);
+                        }
+                    }
+                    Valid = true;
+                }
+                else
+                {
+                    // Logging.Info("Evaluating: refresh");
+                    using (NativeArray<ComponentType> componentTypes = manager.GetComponentTypes(SelectedEntity))
+                    {
+                        IEnumerable<ComponentType> components = _allComponents.Select(c => c.Type);
+                        if (components.SequenceEqual(componentTypes))
+                        {
+
+                            foreach (IInspectableComponent inspectableComponent in _allComponents)
+                            {
+                                if (!inspectableComponent.UpdateBindings(_selectedEntity))
+                                {
+                                    _tempToRemove.Add(inspectableComponent);
+                                }
+                            }
+
+                            if (_tempToRemove.Count > 0)
+                            {
+                                foreach (IInspectableComponent inspectableComponent in _tempToRemove)
+                                {
+                                    RemoveComponent(inspectableComponent);
+                                }
+                                _tempToRemove.Clear();
+                            }
+                            Valid = true;
+                        }
+                        else
+                        {
+                            Logging.Debug("Evaluating: dif sequence");
+                            Evaluate(manager, false);
+                            Valid = true;
+                        }
                     }
                 }
             }
+            else if (Valid)
+            {
+                Logging.Debug("Evaluating: valid but selected is empty");
+                _allComponents.ForEach(c => { c.Dispose(); });
+                _allComponents.Clear();
+                Components.Clear();
+                Buffers.Clear();
+                Tags.Clear();
+                NotSupported.Clear();
+                Valid = false;
+            }
         }
-        else if (Valid)
-        {
-            Logging.Debug("Evaluating: valid but selected is empty");
-            _allComponents.ForEach(c => { c.Dispose(); });
-            _allComponents.Clear();
-            Components.Clear();
-            Buffers.Clear();
-            Tags.Clear();
-            NotSupported.Clear();
-            Valid = false;
-        }
-    }
 
-        public void Refresh() {
-        Evaluate(World.DefaultGameObjectInjectionWorld.EntityManager, true);
-        if (Valid)
+        public void Refresh()
         {
-            _allComponents.ForEach(c => c.RefreshValues(SelectedEntity));
+            Evaluate(World.DefaultGameObjectInjectionWorld.EntityManager, true);
+            if (Valid)
+            {
+                _allComponents.ForEach(c => c.RefreshValues(SelectedEntity));
+            }
         }
-    }
 
-        public void RenderComponents(IRenderer renderer, Entity selectedEntity, Rect rect) {
-        if (_allComponents.Count == 0)
+        public void RenderComponents(IRenderer renderer, Entity selectedEntity, Rect rect)
         {
-            return;
-        }
-        renderer.BeginSection();
-        for (int index = 0; index < Components.Count; index++)
-        {
-            IEntityComponent entityComponent = Components[index];
-            renderer.Render(entityComponent, selectedEntity, rect);
-            if (index < Components.Count - 1)
+            if (_allComponents.Count == 0)
             {
-                CommonUI.DrawLine();
+                return;
             }
-        }
-        renderer.EndSection();
-        renderer.BeginSection();
-        for (int index = 0; index < Buffers.Count; index++)
-        {
-            IEntityBufferComponent entityBufferComponent = Buffers[index];
-            renderer.Render(entityBufferComponent, selectedEntity, rect);
-            if (index < Buffers.Count - 1)
+            renderer.BeginSection(true);
+            for (int index = 0; index < Components.Count; index++)
             {
-                CommonUI.DrawLine();
+                IEntityComponent entityComponent = Components[index];
+                renderer.Render(entityComponent, selectedEntity, rect);
+                if (index < Components.Count - 1)
+                {
+                    CommonUI.DrawLine();
+                }
             }
-        }
-        renderer.EndSection();
-        
-        renderer.BeginSection();
-        for (int index = 0; index < Tags.Count; index++)
-        {
-            IEntityTagComponent entityTagComponent = Tags[index];
-            renderer.Render(entityTagComponent, selectedEntity);
-            if (index < Tags.Count - 1)
-            {
-                CommonUI.DrawLine();
-            }
-        }
-        renderer.EndSection();
-        if (NotSupported.Count > 0)
-        {
-            renderer.BeginSection();
-            NotSupported.ForEach(renderer.Render);
             renderer.EndSection();
-        }
-    }
+            renderer.BeginSection(false);
+            for (int index = 0; index < Buffers.Count; index++)
+            {
+                IEntityBufferComponent entityBufferComponent = Buffers[index];
+                renderer.Render(entityBufferComponent, selectedEntity, rect);
+                if (index < Buffers.Count - 1)
+                {
+                    CommonUI.DrawLine();
+                }
+            }
+            renderer.EndSection();
 
-        private void AddComponent(IInspectableComponent componentInfo) {
-        _allComponents.Add(componentInfo);
-        if (componentInfo is IEntityTagComponent tag)
-        {
-            Tags.Add(tag);
+            renderer.BeginSection(false);
+            for (int index = 0; index < Tags.Count; index++)
+            {
+                IEntityTagComponent entityTagComponent = Tags[index];
+                renderer.Render(entityTagComponent, selectedEntity);
+                if (index < Tags.Count - 1)
+                {
+                    CommonUI.DrawLine();
+                }
+            }
+            renderer.EndSection();
+            if (NotSupported.Count > 0)
+            {
+                renderer.BeginSection(false);
+                NotSupported.ForEach(renderer.Render);
+                renderer.EndSection();
+            }
         }
-        if (componentInfo is IEntityComponent component)
-        {
-            Components.Add(component);
-        }
-        if (componentInfo is IEntityBufferComponent buffer)
-        {
-            Buffers.Add(buffer);
-        }
-        if (componentInfo is EntityNotSupportedComponent notSupported)
-        {
-            NotSupported.Add(notSupported);
-        }
-    }
 
-        private void RemoveComponent(IInspectableComponent componentInfo) {
-        _allComponents.Remove(componentInfo);
-        if (componentInfo is IEntityTagComponent tag)
+        private void AddComponent(IInspectableComponent componentInfo)
         {
-            Tags.Remove(tag);
+            _allComponents.Add(componentInfo);
+            if (componentInfo is IEntityTagComponent tag)
+            {
+                Tags.Add(tag);
+            }
+            if (componentInfo is IEntityComponent component)
+            {
+                Components.Add(component);
+            }
+            if (componentInfo is IEntityBufferComponent buffer)
+            {
+                Buffers.Add(buffer);
+            }
+            if (componentInfo is EntityNotSupportedComponent notSupported)
+            {
+                NotSupported.Add(notSupported);
+            }
         }
-        if (componentInfo is IEntityComponent component)
+
+        private void RemoveComponent(IInspectableComponent componentInfo)
         {
-            Components.Remove(component);
+            _allComponents.Remove(componentInfo);
+            if (componentInfo is IEntityTagComponent tag)
+            {
+                Tags.Remove(tag);
+            }
+            if (componentInfo is IEntityComponent component)
+            {
+                Components.Remove(component);
+            }
+            if (componentInfo is IEntityBufferComponent buffer)
+            {
+                Buffers.Remove(buffer);
+            }
+            if (componentInfo is EntityNotSupportedComponent notSupported)
+            {
+                NotSupported.Remove(notSupported);
+            }
         }
-        if (componentInfo is IEntityBufferComponent buffer)
-        {
-            Buffers.Remove(buffer);
-        }
-        if (componentInfo is EntityNotSupportedComponent notSupported)
-        {
-            NotSupported.Remove(notSupported);
-        }
-    }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Game;
 using Game.SceneFlow;
 using SceneExplorer.ToBeReplaced.Helpers;
 using Unity.Collections;
@@ -73,7 +74,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 OpenTypeEntities(TypeIndex.Null, standalone: true);
             }
-            if (GUILayout.Button("Snapshots", UIStyle.Instance.iconButton, options: null))
+            if (GameManager.instance.gameMode == GameMode.Editor && GUILayout.Button("Snapshots", UIStyle.Instance.iconButton, options: null))
             {
                 OpenSnapshots();
             }

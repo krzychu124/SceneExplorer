@@ -446,7 +446,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
             GUILayout.Space(5);
-            _evaluator.RenderComponents(_renderer, SelectedEntity, cached);
+            _evaluator.RenderComponents(_renderer, SelectedEntity, HasFocus ? cached : Rect.zero);
 
             GUILayout.EndScrollView();
         }

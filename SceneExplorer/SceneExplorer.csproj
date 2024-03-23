@@ -18,7 +18,12 @@
         <!--The file where mod information which is required for publishing mod on PDX mods are stored-->
         <PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
         <LangVersion>9</LangVersion>
-        <Version>0.1.6</Version>
+        <Version>0.2.0</Version>
+        <Title>Scene Explorer</Title>
+        <Authors>krzychu124</Authors>
+        <AssemblyVersion>0.2.0</AssemblyVersion>
+        <FileVersion>0.2.0</FileVersion>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -27,6 +32,7 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DefineConstants>TRACE;DEBUG_PP</DefineConstants>
+      <DebugType>none</DebugType>
     </PropertyGroup>
 
     <!--Imports must be after PropertyGroup block-->
@@ -34,6 +40,9 @@
     <Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets"/>
 
     <ItemGroup>
+        <Reference Include="Colossal.Localization">
+            <Private>false</Private>
+        </Reference>
         <Reference Include="Game">
             <Private>false</Private>
         </Reference>

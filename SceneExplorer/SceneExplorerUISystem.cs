@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Colossal;
+using Colossal.Localization;
 using Colossal.Serialization.Entities;
 using Game;
+using Game.SceneFlow;
 using Game.UI;
 using Game.UI.Editor;
 using SceneExplorer.System;
@@ -49,6 +53,12 @@ namespace SceneExplorer
                 Array.Resize(ref tools, tools.Length +1);
                 tools[tools.Length - 1] = newTool;
                 editorToolUISystem.tools = tools;
+
+                IDictionarySource translations = new MemorySource(new Dictionary<string, string>() { {$"Editor.TOOL[{InspectObjectTool.ToolID}]", "Scene Explorer - Inspect Object"} });
+                foreach (string lang in GameManager.instance.localizationManager.GetSupportedLocales())
+                {
+                    GameManager.instance.localizationManager.AddSource(lang, translations);
+                }
 #endif
             } 
             else if (mode == GameMode.Game)
