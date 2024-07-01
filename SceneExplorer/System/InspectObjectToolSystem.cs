@@ -206,7 +206,7 @@ namespace SceneExplorer.System
 
                 if (_applyAction.WasPressedThisFrame() && e != Selected)
                 {
-                    Logging.Info($"Selected entity: {e}");
+                    Logging.Debug($"Selected entity: {e}");
                     EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
                     {
                         entity = e,

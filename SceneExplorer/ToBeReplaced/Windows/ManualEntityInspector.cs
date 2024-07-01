@@ -10,24 +10,24 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public override void OnDestroy() {
         base.OnDestroy();
         
-        Logging.Info($"Destroying manual {Id}");
+        Logging.Debug($"Destroying manual {Id}");
         base.OnDestroy();
         OnClosedManual?.Invoke(this);
         OnClosedManual = null;
-        Logging.Info($"Destroying manual {Id}");
+        Logging.Debug($"Destroying manual {Id}");
     }
 
         public event Action<ManualEntityInspector> OnClosedManual;
 
         public override void Close() {
-        Logging.Info($"Closing manual {Id}");
+        Logging.Debug($"Closing manual {Id}");
         base.Close();
         if (this)
         {
-            Logging.Info($"Closing manual (with destroy) {Id}");
+            Logging.Debug($"Closing manual (with destroy) {Id}");
             Destroy(this.gameObject);
         }
-        Logging.Info($"Closing manual completed {Id}");
+        Logging.Debug($"Closing manual completed {Id}");
     }
     }
 }

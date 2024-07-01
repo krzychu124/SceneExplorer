@@ -5,17 +5,14 @@
         <TargetFramework>net472</TargetFramework>
         <Configurations>Debug;Release</Configurations>
 
-        <!--The folder where Game.dll is located. Set it only if the game is not installed in the default location, otherwise keep it empty-->
-        <CustomManagedPath>D:\SteamLibrary\steamapps\common\Cities Skylines II\Cities2_Data\Managed</CustomManagedPath>
-
         <!--The file where mod information which is required for publishing mod on PDX mods are stored-->
         <PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
         <LangVersion>9</LangVersion>
-        <Version>0.2.0</Version>
+        <Version>0.2.1</Version>
         <Title>Scene Explorer</Title>
         <Authors>krzychu124</Authors>
-        <AssemblyVersion>0.2.0</AssemblyVersion>
-        <FileVersion>0.2.0</FileVersion>
+        <AssemblyVersion>0.2.1</AssemblyVersion>
+        <FileVersion>0.2.1</FileVersion>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -25,7 +22,8 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DefineConstants>TRACE;DEBUG_PP</DefineConstants>
-      <DebugType>none</DebugType>
+      <DebugType>portable</DebugType>
+      <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
     <!--Imports must be after PropertyGroup block-->
@@ -99,7 +97,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\..\Keys.props" Link="Properties\Keys.props"/>
         <None Include="$(ModPropsFile)" Link="Properties\Mod.props"/>
         <None Include="$(ModTargetsFile)" Link="Properties\Mod.targets"/>
     </ItemGroup>

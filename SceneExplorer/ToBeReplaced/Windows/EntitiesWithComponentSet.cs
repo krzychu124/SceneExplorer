@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using cohtml.Net;
 using Colossal.Entities;
 using Game;
+using Game.Input;
 using Game.Prefabs;
 using Game.SceneFlow;
 using Game.Vehicles;
@@ -40,7 +41,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private CommonUI.LocalState _allString = new CommonUI.LocalState();
         private CommonUI.LocalState _anyString = new CommonUI.LocalState();
         private CommonUI.LocalState _noneString = new CommonUI.LocalState();
-        private InputAction _snapshotEntities;
+        private ProxyAction _snapshotEntities;
 
         // private bool _searchByQuery;
 
@@ -60,14 +61,21 @@ namespace SceneExplorer.ToBeReplaced.Windows
             _pagination = new Pagination<Item>(_items);
             _pagination.ItemPerPage = 20;
             _queryCreator = new QueryCreator(ComponentSearch._registeredComponents);
-            _snapshotEntities = new InputAction("SnapshotEntitiesAction", InputActionType.Button);
-            _snapshotEntities.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/s").With("Modifier", "<keyboard>/ctrl");
+            _snapshotEntities = ModEntryPoint._settings.GetAction(Settings.MakeSnapshotAction);
+            _snapshotEntities.onInteraction += OnMakeSnapshot;
         }
 
         public override void OnOpen()
         {
             base.OnOpen();
-            this._snapshotEntities.Enable();
+            _snapshotEntities.shouldBeEnabled = true;
+        }
+
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
+            _snapshotEntities.onInteraction -= OnMakeSnapshot;
+            _snapshotEntities = null;
         }
 
         protected override void RenderWindowContent()
@@ -138,9 +146,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
                         GUILayout.Label(data.PrefabName, UIStyle.Instance.focusedReducedPaddingLabelStyle, options: null);
                         GUILayout.FlexibleSpace();
                         
+#if !DEBUG
                         // allow making entity snapshots only in the Editor
                         if (GameManager.instance.gameMode == GameMode.Editor)
                         {
+#endif
                             if (data.SnapshotExists)
                             {
                                 if (GUILayout.Button("Inspect Snapshot", UIStyle.Instance.iconButton, options: null))
@@ -156,7 +166,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
                                     _pagination.Data[i] = data;
                                 }
                             }
+#if !DEBUG
                         }
+#endif
                         GUI.enabled = data.IsValid;
                         if (GUILayout.Button("Inspect", UIStyle.Instance.iconButton, options: null))
                         {
@@ -218,7 +230,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public void InspectByQuery(TypeIndex typeIndex)
         {
             _currentType = typeIndex;
-            // _searchByQuery = true;
             _queryCreator.Clear();
             if (typeIndex != TypeIndex.Null)
             {
@@ -247,18 +258,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (typeIndex != TypeIndex.Null && _currentType == typeIndex)
             {
                 _requireListUpdate = true;
-            }
-        }
-
-        public void Update()
-        {
-            if (_snapshotEntities.WasReleasedThisFrame() && _items.Count > 0 && GameManager.instance.gameMode == GameMode.Editor)
-            {
-                Logging.Info($"Making snapshot triggered for {_items.Count} entities");
-                foreach (Item item in _items)
-                {
-                    item.TryMakeSnapshot();
-                }
             }
         }
 
@@ -321,6 +320,24 @@ namespace SceneExplorer.ToBeReplaced.Windows
             }
             _lastUpdate++;
             _lastItemUpdate++;
+        }
+
+        private void OnMakeSnapshot(ProxyAction proxyAction, InputActionPhase inputActionPhase)
+        {
+            if (inputActionPhase != InputActionPhase.Performed || !IsOpen || IsMinimized || !HasFocus || _items.Count == 0)
+            {
+                return;
+            }
+#if !DEBUG 
+            if (GameManager.instance.gameMode != GameMode.Editor) {
+                return;
+            }
+#endif
+            Logging.Info($"Making snapshot triggered for {_items.Count} entities");
+            foreach (Item item in _items)
+            {
+                item.TryMakeSnapshot();
+            }
         }
 
         private bool InspectManual(Entity entity)
@@ -389,8 +406,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public override void Close()
         {
             base.Close();
-            this._snapshotEntities.Disable();
-            _snapshotEntities.Dispose();
+            if (_snapshotEntities != null)
+            {
+                _snapshotEntities.shouldBeEnabled = false;
+                _snapshotEntities = null;
+            }
             GameManager.instance.inputManager.hasInputFieldFocus = false;
 
             Destroy(gameObject);
@@ -399,13 +419,19 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public override void OnFocus()
         {
             base.OnFocus();
-            _snapshotEntities.Enable();
+            if (IsOpen && _snapshotEntities != null)
+            {
+                _snapshotEntities.shouldBeEnabled = true;
+            }
         }
 
         public override void OnFocusLost()
         {
             base.OnFocusLost();
-            _snapshotEntities.Disable();
+            if (_snapshotEntities != null)
+            {
+                _snapshotEntities.shouldBeEnabled = false;
+            }
         }
 
         public struct Item

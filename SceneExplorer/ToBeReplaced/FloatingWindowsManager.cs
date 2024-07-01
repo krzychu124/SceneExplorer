@@ -19,11 +19,30 @@ namespace SceneExplorer.ToBeReplaced
 
         public void FocusWindow(int id)
         {
+            int lastWindow = FocusedWindowId;
             FocusedWindowId = id;
+            
+            if (_parentWindows.TryGetValue(lastWindow, out var window))
+            {
+                window.OnFocusLost();
+            }
+            
+            if (_openedWindows.TryGetValue(lastWindow, out var windows))
+            {
+                windows.ForEach(w => w.OnFocusLost());
+            }
         }
 
         public void Unfocus()
         {
+            if (_parentWindows.TryGetValue(FocusedWindowId, out var window))
+            {
+                window.OnFocusLost();
+            } 
+            else if (_openedWindows.TryGetValue(FocusedWindowId, out var windows))
+            {
+                windows.ForEach(w => w.OnFocusLost());
+            }
             FocusedWindowId = -1;
         }
 
@@ -62,7 +81,7 @@ namespace SceneExplorer.ToBeReplaced
 
         public void RegisterWindow(FloatingWindowBase window, int parentId = -1)
         {
-            Logging.Info($"Registering {window.Id} with parent: {parentId}");
+            Logging.Debug($"Registering {window.Id} with parent: {parentId}");
             if (parentId > -1)
             {
                 if (_openedWindows.TryGetValue(parentId, out List<FloatingWindowBase> windows))
@@ -72,7 +91,7 @@ namespace SceneExplorer.ToBeReplaced
                 }
                 else
                 {
-                    Logging.Info($"Parent id ({parentId}) not found while registering window: {window.Id}");
+                    Logging.Debug($"Parent id ({parentId}) not found while registering window: {window.Id}");
                 }
             }
             else
@@ -84,14 +103,14 @@ namespace SceneExplorer.ToBeReplaced
                 }
                 else
                 {
-                    Logging.Info($"Window ({window.Id}) already registered!");
+                    Logging.Debug($"Window ({window.Id}) already registered!");
                 }
             }
         }
 
         public void DisposeOpenedWindows(int parentWindowId)
         {
-            Logging.Info($"Disposing {parentWindowId}");
+            Logging.Debug($"Disposing {parentWindowId}");
             DropdownControl.Instance.Close(parentWindowId);
             if (_openedWindows.TryGetValue(parentWindowId, out List<FloatingWindowBase> children))
             {
@@ -103,12 +122,12 @@ namespace SceneExplorer.ToBeReplaced
                 _openedWindows.Remove(parentWindowId);
             }
             _parentWindows.Remove(parentWindowId);
-            Logging.Info($"Disposed {parentWindowId}!");
+            Logging.Debug($"Disposed {parentWindowId}!");
         }
 
         public void ClosingChild(int parentWindowId, int id)
         {
-            Logging.Info($"Closing child ({id}) of {parentWindowId}!");
+            Logging.Debug($"Closing child ({id}) of {parentWindowId}!");
             DropdownControl.Instance.Close(parentWindowId);
             if (_openedWindows.TryGetValue(parentWindowId, out List<FloatingWindowBase> children))
             {
@@ -116,7 +135,7 @@ namespace SceneExplorer.ToBeReplaced
                 if (index > -1)
                 {
                     children.RemoveAt(index);
-                    Logging.Info($"Detached opened window child {id} from {parentWindowId}!");
+                    Logging.Debug($"Detached opened window child {id} from {parentWindowId}!");
                 }
             }
         }

@@ -74,7 +74,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 OpenTypeEntities(TypeIndex.Null, standalone: true);
             }
+            #if DEBUG
+            if (GUILayout.Button("Snapshots", UIStyle.Instance.iconButton, options: null))
+            #else
             if (GameManager.instance.gameMode == GameMode.Editor && GUILayout.Button("Snapshots", UIStyle.Instance.iconButton, options: null))
+            #endif
             {
                 OpenSnapshots();
             }
@@ -306,14 +310,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 _sharedEntitiesInspector.Close();
             }
             GameManager.instance.inputManager.hasInputFieldFocus = false;
-        }
-
-        public override void OnFocus() {
-            base.OnFocus();
-        }
-
-        public override void OnFocusLost() {
-            base.OnFocusLost();
         }
 
         private void OnDisable() {

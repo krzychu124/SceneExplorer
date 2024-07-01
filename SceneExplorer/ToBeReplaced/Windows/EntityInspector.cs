@@ -324,7 +324,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         }
 
         public void ForceClose() {
-            Logging.Info($"Force closed: {Id}");
+            Logging.Debug($"Force closed: {Id}");
 
             Destroy(this.gameObject);
             OnClosed?.Invoke(this);

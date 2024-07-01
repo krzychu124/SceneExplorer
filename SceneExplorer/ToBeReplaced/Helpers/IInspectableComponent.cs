@@ -81,7 +81,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     }
                     catch
                     {
-                        Logging.Info($"Failed for: E: {entity}, type: {managedType.FullName}");
+                        Logging.Debug($"Failed for: E: {entity}, type: {managedType.FullName}");
                     }
                 }
                 else

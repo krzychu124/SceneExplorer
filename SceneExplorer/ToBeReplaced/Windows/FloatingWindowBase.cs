@@ -75,12 +75,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
     }
 
         public virtual void OnDestroy() {
-        if (ParentWindowId > -1)
-        {
-            WindowManager.ClosingChild(ParentWindowId, Id);
+            if (ParentWindowId > -1)
+            {
+                WindowManager.ClosingChild(ParentWindowId, Id);
+            }
+            WindowManager.DisposeOpenedWindows(Id);
         }
-        WindowManager.DisposeOpenedWindows(Id);
-    }
 
         public void OnGUI() {
         if (Style == null)
@@ -209,8 +209,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (Mouse.current.leftButton.wasReleasedThisFrame)
             {
                 drawButton = false;
-                Close();
                 WindowManager.Unfocus();
+                OnFocusLost();
+                Close();
             }
         }
 
@@ -235,6 +236,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 MinimizeToggle();
                 
                 WindowManager.Unfocus();
+                OnFocusLost();
             }
         }
 
@@ -403,21 +405,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
         }
     }
 
-        public virtual void OnActivate() {
-        if (WindowManager.FocusedWindowId != _id)
-        {
-            WindowManager.FocusWindow(_id);
-            OnFocus();
-        }
-    }
-
-        public virtual void OnDeactivate() {
-        if (WindowManager.FocusedWindowId == _id)
-        {
-            OnFocusLost();
-        }
-    }
-
         public virtual void OnFocus() {
     }
 
@@ -435,7 +422,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
     }
 
         public void Open() {
-        if (!_applyAction.enabled || !_applyAction.shouldBeEnabled)
+        if (!_applyAction.enabled)
         {
             _applyAction.shouldBeEnabled = true;
         }
@@ -447,6 +434,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         public virtual void Close() {
         IsOpen = false;
+        OnFocusLost();
         _applyAction.shouldBeEnabled = true;
     }
 

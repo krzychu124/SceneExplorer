@@ -155,7 +155,7 @@ using SubObject = Game.Objects.SubObject;
             return;
         }
      
-        Logging.Info($"Component type <{componentType.GetManagedType().FullName}> not supported");
+        Logging.Debug($"Component type <{componentType.GetManagedType().FullName}> not supported");
     }
 
         private static string GetValueString(object value, EntityManager entityManager, PrefabSystem prefabSystem) {

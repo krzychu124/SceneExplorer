@@ -51,7 +51,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public static ISectionItem GetSectionItem(string fieldName, object o, string sectionName, int depth)
         {
-            Logging.Info($"[{depth}] {sectionName} | {fieldName}: {o?.ToString()}");
+            Logging.Debug($"[{depth}] {sectionName} | {fieldName}: {o?.ToString()}");
             if (o == null)
             {
                 return new TextItem(fieldName, "null");

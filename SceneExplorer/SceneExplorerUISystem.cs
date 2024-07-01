@@ -5,6 +5,7 @@ using Colossal;
 using Colossal.Localization;
 using Colossal.Serialization.Entities;
 using Game;
+using Game.Input;
 using Game.SceneFlow;
 using Game.UI;
 using Game.UI.Editor;
@@ -13,6 +14,7 @@ using SceneExplorer.ToBeReplaced;
 using SceneExplorer.ToBeReplaced.Windows;
 using SceneExplorer.Tools;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Object = UnityEngine.Object;
 
 namespace SceneExplorer
@@ -20,6 +22,10 @@ namespace SceneExplorer
     public partial class SceneExplorerUISystem : UISystemBase
     {
         public UIManager UiManager;
+        
+        private ProxyAction _toggleExplorerAction;
+        private ProxyAction _toggleComponentSearchAction;
+        private ComponentSearch _searchWindow;
         
         public override GameMode gameMode
         {
@@ -32,6 +38,11 @@ namespace SceneExplorer
             
             UiManager = new GameObject("SceneExplorer GUI").AddComponent<UIManager>();
             Object.DontDestroyOnLoad(UiManager.gameObject);
+            
+            _toggleExplorerAction = ModEntryPoint._settings.GetAction(Settings.ToggleToolAction);
+            _toggleComponentSearchAction = ModEntryPoint._settings.GetAction(Settings.ToggleComponentSearchAction);
+            _toggleExplorerAction.onInteraction += OnToggleSceneExplorerTool;
+            _toggleComponentSearchAction.onInteraction += OnToggleComponentSearchWindow;
 
             Logging.Info("Done!");
         }
@@ -40,7 +51,7 @@ namespace SceneExplorer
             base.OnGamePreload(purpose, mode);
             if (mode == GameMode.Editor)
             {
-                World.GetExistingSystemManaged<InGameKeyListener>().Enabled = true;
+                ToggleInputActions(true);
                 World.GetExistingSystemManaged<InputGuiInteractionSystem>().Enabled = true;
 #if DEBUG_PP
                 EditorToolUISystem editorToolUISystem = World.GetExistingSystemManaged<EditorToolUISystem>();
@@ -53,33 +64,75 @@ namespace SceneExplorer
                 Array.Resize(ref tools, tools.Length +1);
                 tools[tools.Length - 1] = newTool;
                 editorToolUISystem.tools = tools;
-
-                IDictionarySource translations = new MemorySource(new Dictionary<string, string>() { {$"Editor.TOOL[{InspectObjectTool.ToolID}]", "Scene Explorer - Inspect Object"} });
-                foreach (string lang in GameManager.instance.localizationManager.GetSupportedLocales())
-                {
-                    GameManager.instance.localizationManager.AddSource(lang, translations);
-                }
 #endif
             } 
             else if (mode == GameMode.Game)
             {
-                World.GetExistingSystemManaged<InGameKeyListener>().Enabled = true;
+                ToggleInputActions(true);
                 World.GetExistingSystemManaged<InputGuiInteractionSystem>().Enabled = true;
             }
             else
             {
-                World.GetExistingSystemManaged<InGameKeyListener>().Enabled = false;
+                ToggleInputActions(false);
                 World.GetExistingSystemManaged<InputGuiInteractionSystem>().Enabled = false;
             }
         }
 
         protected override void OnDestroy() {
-            base.OnDestroy();
+            _toggleExplorerAction.onInteraction -= OnToggleSceneExplorerTool;
+            _toggleComponentSearchAction.onInteraction -= OnToggleComponentSearchWindow;
+            _toggleExplorerAction = null;
+            _toggleComponentSearchAction = null;
             
             if (UiManager)
             {
                 Object.Destroy(UiManager.gameObject);
                 UiManager = null;
+            }
+            
+            if (_searchWindow)
+            {
+                Object.Destroy(_searchWindow);
+                _searchWindow = null;
+            }
+            base.OnDestroy();
+        }
+
+        private void ToggleInputActions(bool activate)
+        {
+            _toggleExplorerAction.shouldBeEnabled = activate;
+            _toggleComponentSearchAction.shouldBeEnabled = activate;
+        }
+
+        private void OnToggleSceneExplorerTool(ProxyAction proxyAction, InputActionPhase inputActionPhase)
+        {
+            if (inputActionPhase != InputActionPhase.Performed)
+            {
+                return;
+            }
+            
+            World.GetExistingSystemManaged<InspectObjectToolSystem>().ChangeToolMode();
+        }
+        
+        private void OnToggleComponentSearchWindow(ProxyAction proxyAction, InputActionPhase inputActionPhase)
+        {
+            if (inputActionPhase != InputActionPhase.Performed)
+            {
+                return;
+            }
+            
+            if (!_searchWindow)
+            {
+                _searchWindow = new GameObject("SceneExplorer_ComponentSearch").AddComponent<ComponentSearch>();
+                Object.DontDestroyOnLoad(_searchWindow.gameObject);
+            }
+            if (_searchWindow.IsOpen)
+            {
+                _searchWindow.Close();
+            }
+            else
+            {
+                _searchWindow.Open();
             }
         }
     }

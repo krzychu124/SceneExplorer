@@ -40,7 +40,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             get { return _selectedPrefab; }
             set
             {
-                Logging.Info("Selecting PrefabData");
+                Logging.Debug("Selecting PrefabData");
                 if (value != _selectedPrefab)
                 {
                     _selectedPrefab = value;
@@ -60,7 +60,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (_dataChanged)
             {
                 _dataChanged = false;
-                Logging.Info("Building UI");
+                Logging.Debug("Building UI");
                 if (_sharedInspectorPopup && _sharedInspectorPopup.IsOpen)
                 {
                     _sharedInspectorPopup.Close();
@@ -72,9 +72,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 _components.Clear();
                 if (_selectedPrefab)
                 {
-                    Logging.Info("Generating data");
+                    Logging.Debug("Generating data");
                     BuildComponentsUI();
-                    Logging.Info($"Generated {_components.Count} components");
+                    Logging.Debug($"Generated {_components.Count} components");
                 }
                 if (_complexObject != null)
                 {
@@ -169,7 +169,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         private void BuildComponentsUI() {
             _prefabTypeName = _selectedPrefab.GetType().Name;
-            Logging.Info($"Prefab: {_prefabTypeName}");
+            Logging.Debug($"Prefab: {_prefabTypeName}");
             var t = _selectedPrefab.GetType();
             List<FieldInfo> fields = TypeDescriptorService.Instance.GetFields(t);
             _complexObject = new ComplexObject(t, fields, false);

@@ -13,13 +13,13 @@ When simulation is running the data is automatically updated.
 Since game entities may be composed from many components, framerate drop is expected during live-refresh of such large sets of data (will be improved in the future)
 
 #### In-Game or Editor features
-* Use **Ctrl+E** to open _Scene Explorer Inspector_ window
-* Use **Ctrl+W** to open _Scene Explorer Component Search_ window
+* Use **Ctrl+E** to open _Scene Explorer Inspector_ window (can be changed in the mod options)
+* Use **Ctrl+W** to open _Scene Explorer Component Search_ window (can be changed in the mod options)
 * Open _Entity Query Search_ window to find entities based on configurable query
 
 #### Editor-only features
 * When _Entity Query_ search window shows at least one entity listed, use **Ctrl+S** to make a snapshot
-* Open _Snapshots_ window with a button from _Component Search_ window to see/clear snapshotted entities
+* Open _Snapshots_ window with a button from _Component Search_ window to see/clear snapshot entities
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
@@ -28,23 +28,21 @@ Since game entities may be composed from many components, framerate drop is expe
 	<!--Tag, can be set multiple-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/scene-explorer.1655915/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.0" />
+	<ModVersion Value="0.2.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-* Snapshot feature available **only in the Editor**
-* Entity highlighting works only when window is **focused** (green text title)
-* Highlight hovered _Net.Node_ and _Net.Edge_ component in the inspector
-* Highlight hovered _ConnectedNode_ buffer in the inspector
-* Minor code clean-up
+* Compatibility fix for the game update (v. 1.1.5)
+* Configurable keybindings in the mod options
+* Fix window focus
 	</ChangeLog>>
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
-	<ExternalLink Type="" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/krzychu124/SceneExplorer" />
 </Publish>

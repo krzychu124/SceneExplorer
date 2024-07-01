@@ -40,12 +40,12 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentItems
 
         public static void PrepareItems(Type type, object value, string sectionName, List<ISectionItem> items, int depth)
         {
-            Logging.Info($"PrepareItems [{depth}]: {sectionName} ({type.Name}), {value}");
+            Logging.Debug($"PrepareItems [{depth}]: {sectionName} ({type.Name}), {value}");
             if (depth >= UIGenerator.MAX_GENERATOR_DEPTH)
             {
                 return;
             }
-            Logging.Info($"Depth OK {depth}");
+            Logging.Debug($"Depth OK {depth}");
             foreach (FieldInfo fieldInfo in type.GetRuntimeFields())
             {
                 if (fieldInfo.IsStatic)
@@ -55,7 +55,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentItems
 
                 items.Add(UIGenerator.GetSectionItem(fieldInfo.Name, fieldInfo.GetValue(value), sectionName, depth));
             }
-            Logging.Info($"PrepareItems [{depth}]: {sectionName} ({type.Name}), {value}, generated: {items.Count} items");
+            Logging.Debug($"PrepareItems [{depth}]: {sectionName} ({type.Name}), {value}, generated: {items.Count} items");
         }
     }
 }
