@@ -25,10 +25,11 @@ namespace SceneExplorer
         {
             Logging.Info("ModEntryPoint on OnLoad called!");
             _settings = new Settings(this);
+            _settings.RegisterKeyBindings();
             _settings.RegisterInOptionsUI();
             GameManager.instance.localizationManager.AddSource("en-US", new Localization.LocaleEN(_settings));
-            _settings.RegisterKeyBindings();
             AssetDatabase.global.LoadSettings(nameof(SceneExplorer), _settings, new Settings(this));
+            _settings.ApplyLoadedSettings();
             
             updateSystem.UpdateAt<SceneExplorerUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<InspectObjectToolSystem>(SystemUpdatePhase.ToolUpdate);

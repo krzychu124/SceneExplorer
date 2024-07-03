@@ -57,8 +57,8 @@ namespace SceneExplorer.System
         {
             base.OnCreate();
             EntityManager.AddComponent<InspectedObject>(SystemHandle);
-            _applyAction = InputManager.instance.FindAction("Tool", "Apply");
-            _secondaryApplyAction = InputManager.instance.FindAction("Tool", "Secondary Apply");
+            _applyAction = ModEntryPoint._settings.GetAction(Settings.ApplyToolAction);
+            _secondaryApplyAction = ModEntryPoint._settings.GetAction(Settings.CancelToolAction);
             _panel = World.GetOrCreateSystemManaged<InspectorToolPanelSystem>();
             Enabled = false;
             _prefabToolPanelSystem = World.GetExistingSystemManaged<PrefabToolPanelSystem>();
@@ -204,7 +204,7 @@ namespace SceneExplorer.System
                 HoveredEntity = e;
                 LastPos = rc.m_HitPosition;
 
-                if (_applyAction.WasPressedThisFrame() && e != Selected)
+                if (_applyAction.WasPerformedThisFrame() && e != Selected)
                 {
                     Logging.Debug($"Selected entity: {e}");
                     EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
@@ -228,7 +228,7 @@ namespace SceneExplorer.System
                     EntityManager.ChangeHighlighting_MainThread(HoveredEntity, Utils.ChangeMode.AddHighlight);
                 }
             }
-            else if (_secondaryApplyAction.WasReleasedThisFrame() || (Selected != Entity.Null && !EntityManager.Exists(Selected)))
+            else if (_secondaryApplyAction.WasPerformedThisFrame() || (Selected != Entity.Null && !EntityManager.Exists(Selected)))
             {
                 EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
                 {

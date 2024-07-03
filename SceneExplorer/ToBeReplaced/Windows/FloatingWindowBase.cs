@@ -33,13 +33,13 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public Rect Rect => _windowRect;
 
         static FloatingWindowBase() {
-        WindowManager = new FloatingWindowsManager();
-    }
-
-        public FloatingWindowBase() {
-        _applyAction = InputManager.instance.FindAction("Tool", "Apply");
-        _secondaryApplyAction = InputManager.instance.FindAction("Tool", "Secondary Apply");
-    }
+            WindowManager = new FloatingWindowsManager();
+        }
+    
+         public FloatingWindowBase() {
+            _applyAction = ModEntryPoint._settings.GetAction(Settings.ApplyToolAction);
+            _secondaryApplyAction = ModEntryPoint._settings.GetAction(Settings.CancelToolAction);
+        }
 
         protected bool IsRoot { get; set; }
         public int ParentWindowId { get; set; } = -1;
