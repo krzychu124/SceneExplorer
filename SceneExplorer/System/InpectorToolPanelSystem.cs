@@ -389,7 +389,7 @@ namespace SceneExplorer.System
                     new ToggleField
                     {
                         path = "tool_3",
-                        displayName = "Net lanes",
+                        displayName = "Areas",
                         accessor = (new DelegateAccessor<bool>(
                             getter: () => _inspectToolSystem.Mode == 3,
                             setter: b => {

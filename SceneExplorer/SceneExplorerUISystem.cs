@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using Colossal;
-using Colossal.Localization;
 using Colossal.Serialization.Entities;
 using Game;
 using Game.Input;
-using Game.SceneFlow;
+using Game.Rendering;
 using Game.UI;
 using Game.UI.Editor;
 using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced;
 using SceneExplorer.ToBeReplaced.Windows;
 using SceneExplorer.Tools;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Object = UnityEngine.Object;
@@ -23,9 +21,11 @@ namespace SceneExplorer
     {
         public UIManager UiManager;
         
+        private CameraUpdateSystem _cameraUpdateSystem;
         private ProxyAction _toggleExplorerAction;
         private ProxyAction _toggleComponentSearchAction;
         private ComponentSearch _searchWindow;
+        private bool _isEditor;
         
         public override GameMode gameMode
         {
@@ -39,6 +39,7 @@ namespace SceneExplorer
             UiManager = new GameObject("SceneExplorer GUI").AddComponent<UIManager>();
             Object.DontDestroyOnLoad(UiManager.gameObject);
             
+            _cameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
             _toggleExplorerAction = ModEntryPoint._settings.GetAction(Settings.ToggleToolAction);
             _toggleComponentSearchAction = ModEntryPoint._settings.GetAction(Settings.ToggleComponentSearchAction);
             _toggleExplorerAction.onInteraction += OnToggleSceneExplorerTool;
@@ -49,10 +50,12 @@ namespace SceneExplorer
 
         protected override void OnGamePreload(Purpose purpose, GameMode mode) {
             base.OnGamePreload(purpose, mode);
+            _isEditor = false;
             if (mode == GameMode.Editor)
             {
                 ToggleInputActions(true);
                 World.GetExistingSystemManaged<InputGuiInteractionSystem>().Enabled = true;
+                _isEditor = true;
 #if DEBUG_PP
                 EditorToolUISystem editorToolUISystem = World.GetExistingSystemManaged<EditorToolUISystem>();
                 if (editorToolUISystem.tools.Any(t => t.id == InspectObjectTool.ToolID))
@@ -83,6 +86,8 @@ namespace SceneExplorer
             _toggleComponentSearchAction.onInteraction -= OnToggleComponentSearchWindow;
             _toggleExplorerAction = null;
             _toggleComponentSearchAction = null;
+            _cameraUpdateSystem.orbitCameraController.EventCameraMove -= OnCameraMove;
+            _cameraUpdateSystem = null;
             
             if (UiManager)
             {
@@ -134,6 +139,29 @@ namespace SceneExplorer
             {
                 _searchWindow.Open();
             }
+        }
+
+        internal void NavigateTo(Entity entity)
+        {
+            if (_cameraUpdateSystem.orbitCameraController != null && entity != Entity.Null)
+            {
+                if (_isEditor) { 
+                    _cameraUpdateSystem.orbitCameraController.EventCameraMove -= OnCameraMove;
+                    _cameraUpdateSystem.orbitCameraController.EventCameraMove += OnCameraMove;
+                }
+                _cameraUpdateSystem.orbitCameraController.followedEntity = entity;
+                _cameraUpdateSystem.orbitCameraController.TryMatchPosition(_cameraUpdateSystem.activeCameraController);
+                _cameraUpdateSystem.activeCameraController = _cameraUpdateSystem.orbitCameraController;
+            }
+        }
+
+        private void OnCameraMove()
+        {
+            _cameraUpdateSystem.orbitCameraController.EventCameraMove -= OnCameraMove;
+            _cameraUpdateSystem.orbitCameraController.followedEntity = Entity.Null;
+            _cameraUpdateSystem.gamePlayController.TryMatchPosition(_cameraUpdateSystem.orbitCameraController);
+            _cameraUpdateSystem.activeCameraController = _cameraUpdateSystem.gamePlayController;
+            
         }
     }
 }

@@ -289,6 +289,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 GUILayout.Label($"{value.ToString()} {(!string.IsNullOrEmpty(entity.PrefabName) ? $" - {entity.PrefabName}" : string.Empty)}", UIStyle.Instance.CalculateTextStyle(typeof(Entity)), options: null);
                 GUILayout.FlexibleSpace();
                 GUI.enabled = value != Entity.Null;
+                if (entity.CanJumpTo && GUILayout.Button("Jump To", UIStyle.Instance.iconButton, options: null))
+                {
+                    entity.InspectorPopupRef = valueInspector.Inspect(value, entity, InspectMode.JumpTo);
+                }
                 if (GUILayout.Button("Details", UIStyle.Instance.iconButton, options: null))
                 {
                     entity.InspectorPopupRef = valueInspector.Inspect(value, entity, InspectMode.Linked);

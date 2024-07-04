@@ -30,15 +30,16 @@ Since game entities may be composed from many components, framerate drop is expe
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/scene-explorer.1655915/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.2" />
+	<ModVersion Value="0.2.3" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-* Compatibility fix for the game update (v. 1.1.6)
-* Improved key bindings
+* New feature: "Jump To Entity". Available for inspected entity or when entity is a value of component or buffer component
+* New feature: Inspect areas and surfaces. Cycle through available inspect filters (Ctrl+E) to select "Areas". Outline overlay and area type filter will be implemented later
+* Fix NullReferenceException when closing "Entities by EntityQuery" window
 	</ChangeLog>>
 	<!--ChangeLog>
 	</ChangeLog-->

@@ -4,6 +4,7 @@ using Colossal.Entities;
 using Colossal.Mathematics;
 using Colossal.Serialization.Entities;
 using Game;
+using Game.Areas;
 using Game.Common;
 using Game.Input;
 using Game.Net;
@@ -19,6 +20,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using CarLane = Game.Net.CarLane;
+using Node = Game.Net.Node;
 using SubLane = Game.Net.SubLane;
 using SubNet = Game.Net.SubNet;
 
@@ -161,9 +163,10 @@ namespace SceneExplorer.System
                     break;
                 case 3:
                     m_ToolRaycastSystem.collisionMask = (CollisionMask.OnGround | CollisionMask.Overground);
-                    m_ToolRaycastSystem.typeMask = (TypeMask.Net);
-                    m_ToolRaycastSystem.raycastFlags = RaycastFlags.SubElements | RaycastFlags.Cargo | RaycastFlags.Passenger | RaycastFlags.EditorContainers;
-                    m_ToolRaycastSystem.netLayerMask = Layer.All;
+                    m_ToolRaycastSystem.areaTypeMask = (AreaTypeMask.Lots | AreaTypeMask.Spaces | AreaTypeMask.Surfaces);
+                    m_ToolRaycastSystem.typeMask = (TypeMask.Areas);
+                    m_ToolRaycastSystem.raycastFlags = RaycastFlags.SubElements | RaycastFlags.EditorContainers;
+                    m_ToolRaycastSystem.netLayerMask = Layer.None;
                     m_ToolRaycastSystem.iconLayerMask = IconLayerMask.None;
                     m_ToolRaycastSystem.utilityTypeMask = UtilityTypes.None;
                     break;

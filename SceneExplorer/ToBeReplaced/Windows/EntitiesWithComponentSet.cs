@@ -74,8 +74,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public override void OnDestroy()
         {
             base.OnDestroy();
-            _snapshotEntities.onInteraction -= OnMakeSnapshot;
-            _snapshotEntities = null;
+            if (_snapshotEntities != null)
+            {
+                _snapshotEntities.onInteraction -= OnMakeSnapshot;
+                _snapshotEntities = null;
+            }
         }
 
         protected override void RenderWindowContent()
@@ -409,7 +412,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (_snapshotEntities != null)
             {
                 _snapshotEntities.shouldBeEnabled = false;
-                _snapshotEntities = null;
             }
             GameManager.instance.inputManager.hasInputFieldFocus = false;
 

@@ -4,13 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Colossal.Annotations;
-using Colossal.IO.AssetDatabase;
 using Game.Net;
 using Game.Prefabs;
 using SceneExplorer.Services;
 using Unity.Entities;
-using UnityEngine.PlayerLoop;
-using Object = UnityEngine.Object;
+using SubObject = Game.Prefabs.SubObject;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
 {
@@ -20,6 +18,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         Linked,
         Standalone,
         Watcher,
+        JumpTo,
     }
     public interface IValueInspector
     {
@@ -55,6 +54,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public virtual bool IsActive { get; set; }
         public bool IsSnapshot { get; }
         public bool CanInspectValue { get; set; }
+        public bool CanJumpTo { get; set; }
         public abstract IInspectableObject Parent { get; protected set; }
 
         protected Inspectable(FieldInfo fieldInfo, bool isSnapshot) {
@@ -135,6 +135,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 // IsValid = false;
                 PrefabName = string.Empty;
                 CanInspectValue = false;
+                CanJumpTo = false;
                 CloseInspectorPopup();
             }
             else
@@ -148,6 +149,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 _initialized = true;
                 // IsValid = true;
                 CanInspectValue = true;
+                CanJumpTo = InspectObjectUtils.EvaluateCanJumpTo(World.DefaultGameObjectInjectionWorld.EntityManager, _entity);
             }
             if (!prevValue.Equals(_value))
             {

@@ -1,22 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Game.Buildings;
-using Game.Citizens;
-using Game.Companies;
-using Game.Input;
 using Game.Prefabs;
-using Mono.Options;
 using SceneExplorer.Services;
 using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced.Helpers;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace SceneExplorer.ToBeReplaced.Windows
 {
@@ -48,10 +38,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private ComponentDataRenderer _renderer;
         private Vector2 _scrollPos;
         private Entity _selectedEntity;
+        private bool _canJumpTo;
         private EntityInspector _sharedEntityInspectorPopup;
         private PrefabDataInspector _sharedPrefabInspectorPopup;
         private SnapshotService.EntitySnapshotData _snapshotData;
         private PrefabSystem _prefabSystem;
+        private SceneExplorerUISystem _sceneExplorerUISystem;
         private Rect _titleSectionRect;
 
         public EntityInspector() {
@@ -73,6 +65,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 {
                     _selectedEntity = value;
                     _entityChanged = true;
+                    if (_selectedEntity != Entity.Null)
+                    {
+                        _canJumpTo = InspectObjectUtils.EvaluateCanJumpTo(_entityManager, _selectedEntity);
+                    }
                 }
             }
         }
@@ -106,6 +102,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 #if DEBUG_PP
             _prefabSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
             _inspectObjectToolSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<InspectObjectToolSystem>();
+            _sceneExplorerUISystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SceneExplorerUISystem>();
             _renderer = new ComponentDataRenderer(this, _inspectObjectToolSystem);
 #endif
 #if DEBUG_EXPERIMENTS
@@ -139,6 +136,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     isDirty = false,
                 });
                 _selectedEntity = inspectedObject.entity;
+                _canJumpTo = InspectObjectUtils.EvaluateCanJumpTo(_entityManager, _selectedEntity);
             }
 
             if ((isDirty || _entityChanged) && IsOpen)
@@ -246,6 +244,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 if (mode == InspectMode.Watcher)
                 {
                     WatcherService.Instance.Add(new WatcherService.WatchableEntity(e, _prefabSystem));
+                    return null;
+                }
+
+                if (mode == InspectMode.JumpTo)
+                {
+                    _sceneExplorerUISystem.NavigateTo(e);
                     return null;
                 }
                 
@@ -400,7 +404,17 @@ namespace SceneExplorer.ToBeReplaced.Windows
             else
             {
                 Color temp = GUI.color;
+                GUILayout.BeginHorizontal(options: null);
                 GUILayout.Label(_selectedEntity.ToString(), Style.focusedLabelStyle);
+                if (_canJumpTo)
+                {
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("Jump To", UIStyle.Instance.iconButton, options: null))
+                    {
+                        _sceneExplorerUISystem.NavigateTo(_selectedEntity);
+                    }
+                }
+                GUILayout.EndHorizontal();
                 GUILayout.Label("Right click to clear entity selection", options: null);
                 if (this is not ManualEntityInspector)
                 {
