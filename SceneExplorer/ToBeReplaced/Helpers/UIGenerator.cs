@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Colossal.IO;
+using Colossal.Logging.Utils;
 using Game.Net;
 using Game.Pathfind;
 using Game.Prefabs;
@@ -186,7 +187,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 return new BufferSection(type, entity);
             }
 
-            return new NotSupportedData(type.GetManagedType().Name + $"({type.TypeIndex})");
+            return new NotSupportedData(type.GetManagedType().GetFriendlyName() + $"({type.TypeIndex})");
         }
 
         public static IInspectableComponent CalculateComponentInfo(ComponentType type, Entity entity, bool isSnapshot)
@@ -194,36 +195,36 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (type.IsZeroSized /*IsTagComponent(type)*/)
             {
-                return new EntityTagComponentInfo(type, type.GetManagedType().Name, new List<FieldInfo>(), isSnapshot);
+                return new EntityTagComponentInfo(type, type.GetManagedType().GetFriendlyName(), new List<FieldInfo>(), isSnapshot);
             }
             if (type.IsComponent && !type.IsSharedComponent)
             {
                 if (type.GetManagedType() == typeof(PrefabRef))
                 {
-                    return new PrefabRefComponentInfo(type, type.GetManagedType().Name, _descriptorService.GetFields(type), isSnapshot);
+                    return new PrefabRefComponentInfo(type, type.GetManagedType().GetFriendlyName(), _descriptorService.GetFields(type), isSnapshot);
                 }
                 if (type.GetManagedType() == typeof(PrefabData))
                 {
-                    return new PrefabDataComponentInfo(type, type.GetManagedType().Name, _descriptorService.GetFields(type), isSnapshot);
+                    return new PrefabDataComponentInfo(type, type.GetManagedType().GetFriendlyName(), _descriptorService.GetFields(type), isSnapshot);
                 }
                 if (type.IsManagedComponent || type.GetManagedType().IsClass)
                 {
-                    return new ManagedComponentInfo(type, type.GetManagedType().Name, _descriptorService.GetFields(type), isSnapshot);
+                    return new ManagedComponentInfo(type, type.GetManagedType().GetFriendlyName(), _descriptorService.GetFields(type), isSnapshot);
                 }
                 if (!type.GetManagedType().IsClass)
                 {
-                    return new UnmanagedComponentInfo(type, type.GetManagedType().Name, _descriptorService.GetFields(type), isSnapshot);
+                    return new UnmanagedComponentInfo(type, type.GetManagedType().GetFriendlyName(), _descriptorService.GetFields(type), isSnapshot);
                 }
 
-                return new CommonComponentInfo(type, type.GetManagedType().Name, _descriptorService.GetFields(type), isSnapshot);
+                return new CommonComponentInfo(type, type.GetManagedType().GetFriendlyName(), _descriptorService.GetFields(type), isSnapshot);
 
             }
             if (type.IsBuffer)
             {
-                return new EntityBufferComponentInfo(type, type.GetManagedType().Name, _descriptorService.GetFields(type), isSnapshot);
+                return new EntityBufferComponentInfo(type, type.GetManagedType().GetFriendlyName(), _descriptorService.GetFields(type), isSnapshot);
             }
 
-            return new EntityNotSupportedComponent(type, type.GetManagedType().Name, new List<FieldInfo>(), isSnapshot);
+            return new EntityNotSupportedComponent(type, type.GetManagedType().GetFriendlyName(), new List<FieldInfo>(), isSnapshot);
         }
 
         public static List<IInspectableObject> CalculateComponentInspectableInfo(ComponentType type, List<FieldInfo> fields, IInspectableObject parent, bool isSnapshot)

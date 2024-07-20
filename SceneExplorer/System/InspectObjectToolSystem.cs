@@ -41,6 +41,9 @@ namespace SceneExplorer.System
 
         public override string toolID => "Object Inspector Tool";
         public int Mode { get; set; }
+        public bool Underground { get; set; }
+
+        public override bool allowUnderground => true;
 
         private ProxyAction _applyAction;
         private ProxyAction _secondaryApplyAction;
@@ -95,7 +98,7 @@ namespace SceneExplorer.System
             }
         }
 
-        public void ChangeToolMode()
+        public void ToggleTool()
         {
             if (m_ToolSystem.activeTool != this && m_ToolSystem.activeTool == m_DefaultToolSystem)
             {
@@ -104,9 +107,39 @@ namespace SceneExplorer.System
             }
             else if (m_ToolSystem.activeTool == this)
             {
+                m_ToolSystem.selected = Entity.Null;
+                m_ToolSystem.activeTool = m_DefaultToolSystem;
+            }
+        }
+
+        public void ChangeToolMode()
+        {
+            if (m_ToolSystem.activeTool == this)
+            {
                 Mode = GetNextMode();
             }
         }
+        
+        public override void SetUnderground(bool isUnderground)
+        {
+            Underground = isUnderground;
+        }
+
+        public override void ElevationUp()
+        {
+            Underground = false;
+        }
+
+        public override void ElevationDown()
+        {
+            Underground = true;
+        }
+
+        public override void ElevationScroll()
+        {
+            Underground = !Underground;
+        }
+
 
         public override PrefabBase GetPrefab()
         {
@@ -135,11 +168,19 @@ namespace SceneExplorer.System
             {
                 return;
             }
+            
+            if (Underground)
+            {
+                m_ToolRaycastSystem.collisionMask = CollisionMask.Underground;
+            }
+            else
+            {
+                m_ToolRaycastSystem.collisionMask = (CollisionMask.OnGround | CollisionMask.Overground);
+            }
 
             switch (Mode)
             {
                 case 0:
-                    m_ToolRaycastSystem.collisionMask = (CollisionMask.OnGround | CollisionMask.Overground);
                     m_ToolRaycastSystem.typeMask = (TypeMask.Lanes | TypeMask.Net | TypeMask.MovingObjects | TypeMask.StaticObjects | TypeMask.MovingObjects);
                     m_ToolRaycastSystem.raycastFlags = (RaycastFlags.SubElements | RaycastFlags.Decals | RaycastFlags.Placeholders | RaycastFlags.UpgradeIsMain | RaycastFlags.Outside |
                         RaycastFlags.Cargo | RaycastFlags.Passenger);
@@ -147,7 +188,6 @@ namespace SceneExplorer.System
                     m_ToolRaycastSystem.iconLayerMask = IconLayerMask.None;
                     break;
                 case 1:
-                    m_ToolRaycastSystem.collisionMask = (CollisionMask.OnGround | CollisionMask.Overground);
                     m_ToolRaycastSystem.typeMask = (TypeMask.Lanes | TypeMask.Net);
                     m_ToolRaycastSystem.raycastFlags = RaycastFlags.Markers | RaycastFlags.ElevateOffset | RaycastFlags.SubElements | RaycastFlags.Cargo | RaycastFlags.Passenger;
                     m_ToolRaycastSystem.netLayerMask = Layer.All;
@@ -155,14 +195,12 @@ namespace SceneExplorer.System
                     m_ToolRaycastSystem.utilityTypeMask = UtilityTypes.WaterPipe | UtilityTypes.SewagePipe | UtilityTypes.StormwaterPipe | UtilityTypes.LowVoltageLine | UtilityTypes.Fence | UtilityTypes.Catenary | UtilityTypes.HighVoltageLine;
                     break;
                 case 2:
-                    m_ToolRaycastSystem.collisionMask = (CollisionMask.OnGround | CollisionMask.Overground);
                     m_ToolRaycastSystem.typeMask = (TypeMask.MovingObjects | TypeMask.StaticObjects | TypeMask.MovingObjects);
                     m_ToolRaycastSystem.raycastFlags = (RaycastFlags.SubElements | RaycastFlags.Decals | RaycastFlags.Markers | RaycastFlags.Outside | RaycastFlags.Placeholders | RaycastFlags.UpgradeIsMain);
                     m_ToolRaycastSystem.netLayerMask = Layer.None;
                     m_ToolRaycastSystem.iconLayerMask = IconLayerMask.None;
                     break;
                 case 3:
-                    m_ToolRaycastSystem.collisionMask = (CollisionMask.OnGround | CollisionMask.Overground);
                     m_ToolRaycastSystem.areaTypeMask = (AreaTypeMask.Lots | AreaTypeMask.Spaces | AreaTypeMask.Surfaces);
                     m_ToolRaycastSystem.typeMask = (TypeMask.Areas);
                     m_ToolRaycastSystem.raycastFlags = RaycastFlags.SubElements | RaycastFlags.EditorContainers;
@@ -179,6 +217,7 @@ namespace SceneExplorer.System
         protected override void OnStartRunning()
         {
             base.OnStartRunning();
+            requireUnderground = false;
             _applyAction.shouldBeEnabled = true;
             _secondaryApplyAction.shouldBeEnabled = true;
             _uiManager.ShowUI();
@@ -201,6 +240,26 @@ namespace SceneExplorer.System
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            bool prevRequireUnderground = requireUnderground;
+            requireUnderground = Underground;
+            if (prevRequireUnderground != Underground)
+            {
+                EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
+                {
+                    entity = Entity.Null,
+                    entityChanged = true,
+                    isDirty = false,
+                });
+
+                EntityManager.ChangeHighlighting_MainThread(Selected, Utils.ChangeMode.RemoveHighlight);
+                EntityManager.ChangeHighlighting_MainThread(HoveredEntity, Utils.ChangeMode.RemoveHighlight);
+                Selected = Entity.Null;
+                HoveredEntity = Entity.Null;
+                LastPos = float3.zero;
+                _panel.SelectEntity(Entity.Null);
+                return inputDeps;
+            }
+
             if (GetRaycastResult(out Entity e, out RaycastHit rc))
             {
                 Entity prev = HoveredEntity;

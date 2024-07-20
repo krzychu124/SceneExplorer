@@ -11,6 +11,7 @@ namespace SceneExplorer
 {
     [FileLocation("SceneExplorer")]
     [SettingsUIKeyboardAction(ToggleToolAction, customUsages: new []{Usages.kDefaultUsage, Usages.kToolUsage})]
+    [SettingsUIKeyboardAction(ChangeToolModeAction, customUsages: new []{Usages.kDefaultUsage, Usages.kToolUsage})]
     [SettingsUIKeyboardAction(ToggleComponentSearchAction, customUsages: new []{Usages.kDefaultUsage, Usages.kToolUsage})]
     [SettingsUIKeyboardAction(MakeSnapshotAction, customUsages: new []{Usages.kToolUsage})]
     [SettingsUIMouseAction(ApplyToolAction, allowModifiers: false, usages: new []{"SceneExplorer.InspectObject"})]
@@ -23,10 +24,15 @@ namespace SceneExplorer
         public const string ApplyToolAction = "ApplyToolAction";
         public const string CancelToolAction = "CancelToolAction";
         public const string ToggleToolAction = "ToggleToolAction";
+        public const string ChangeToolModeAction = "ChangeToolModeAction";
         public const string ToggleComponentSearchAction = "ToggleComponentSearchAction";
         public const string MakeSnapshotAction = "MakeSnapshot";
         private Dictionary<string, ProxyBinding.Watcher> _vanillaBindingWatchers;
-  
+        private string _switchToolModeKeybindingName = string.Empty;
+
+        [SettingsUIHidden]
+        internal string SwitchToolModeKeybind => _switchToolModeKeybindingName;
+        
         [SettingsUISection(Section, KeybindingGroup)]
         [SettingsUISetter(typeof(Settings), nameof(OnUseVanillaToolActionsSet))]
         public bool UseVanillaToolActions { get; set; }
@@ -44,6 +50,10 @@ namespace SceneExplorer
         [SettingsUIKeyboardBinding(BindingKeyboard.E, ToggleToolAction, ctrl: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding ToggleSceneExplorerTool { get; set; }
+        
+        [SettingsUIKeyboardBinding(BindingKeyboard.D, ChangeToolModeAction, ctrl: true)]
+        [SettingsUISection(Section, KeybindingGroup)]
+        public ProxyBinding ChangeSceneExplorerToolMode { get; set; }
         
         [SettingsUIKeyboardBinding(BindingKeyboard.W, ToggleComponentSearchAction, ctrl: true)]
         [SettingsUISection(Section, KeybindingGroup)]
@@ -170,7 +180,14 @@ namespace SceneExplorer
             if (UseVanillaToolActions)
             {
                 RegisterToolActionWatchers();
+                UpdateKeybindingString(this);
+                onSettingsApplied += UpdateKeybindingString;
             }
+        }
+
+        private void UpdateKeybindingString(Setting setting)
+        {
+            _switchToolModeKeybindingName = string.Join("+", ChangeSceneExplorerToolMode.ToHumanReadablePath());
         }
     }
 }

@@ -65,12 +65,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
             _snapshotEntities.onInteraction += OnMakeSnapshot;
         }
 
-        public override void OnOpen()
-        {
-            base.OnOpen();
-            _snapshotEntities.shouldBeEnabled = true;
-        }
-
         public override void OnDestroy()
         {
             base.OnDestroy();
@@ -409,31 +403,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public override void Close()
         {
             base.Close();
-            if (_snapshotEntities != null)
-            {
-                _snapshotEntities.shouldBeEnabled = false;
-            }
             GameManager.instance.inputManager.hasInputFieldFocus = false;
 
             Destroy(gameObject);
-        }
-
-        public override void OnFocus()
-        {
-            base.OnFocus();
-            if (IsOpen && _snapshotEntities != null)
-            {
-                _snapshotEntities.shouldBeEnabled = true;
-            }
-        }
-
-        public override void OnFocusLost()
-        {
-            base.OnFocusLost();
-            if (_snapshotEntities != null)
-            {
-                _snapshotEntities.shouldBeEnabled = false;
-            }
         }
 
         public struct Item

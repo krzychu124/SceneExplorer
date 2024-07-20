@@ -33,6 +33,8 @@ namespace SceneExplorer
                     { _settings.GetOptionDescLocaleID(nameof(Settings.CancelTool)), "Keybinding used for canceling the tool action, e.g.: click to reset object selection" },
                     { _settings.GetOptionLabelLocaleID(nameof(Settings.ToggleSceneExplorerTool)), "Toggle Scene Explorer tool" },
                     { _settings.GetOptionDescLocaleID(nameof(Settings.ToggleSceneExplorerTool)), "Toggles Scene Explorer tool in-game or Editor" },
+                    { _settings.GetOptionLabelLocaleID(nameof(Settings.ChangeSceneExplorerToolMode)), "Change Inspect Mode of Scene Explorer tool" },
+                    { _settings.GetOptionDescLocaleID(nameof(Settings.ChangeSceneExplorerToolMode)), "Changes the inspection mode of Scene Explorer tool in-game or Editor" },
                     { _settings.GetOptionLabelLocaleID(nameof(Settings.ToggleComponentSearch)), "Toggle ECS Component Search window" },
                     { _settings.GetOptionDescLocaleID(nameof(Settings.ToggleComponentSearch)), "Toggle window to search vanilla or modded ECS components by their name" },
                     { _settings.GetOptionLabelLocaleID(nameof(Settings.MakeSnapshot)), "Make Snapshot" },

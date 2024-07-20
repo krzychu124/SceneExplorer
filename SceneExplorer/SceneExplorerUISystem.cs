@@ -6,6 +6,7 @@ using Game.Input;
 using Game.Rendering;
 using Game.UI;
 using Game.UI.Editor;
+using SceneExplorer.Services;
 using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced;
 using SceneExplorer.ToBeReplaced.Windows;
@@ -24,6 +25,8 @@ namespace SceneExplorer
         private CameraUpdateSystem _cameraUpdateSystem;
         private ProxyAction _toggleExplorerAction;
         private ProxyAction _toggleComponentSearchAction;
+        private ProxyAction _changeExplorerModeAction;
+        private ProxyAction _snapshotEntities;
         private ComponentSearch _searchWindow;
         private bool _isEditor;
         
@@ -42,8 +45,11 @@ namespace SceneExplorer
             _cameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
             _toggleExplorerAction = ModEntryPoint._settings.GetAction(Settings.ToggleToolAction);
             _toggleComponentSearchAction = ModEntryPoint._settings.GetAction(Settings.ToggleComponentSearchAction);
+            _changeExplorerModeAction = ModEntryPoint._settings.GetAction(Settings.ChangeToolModeAction);
+            _snapshotEntities = ModEntryPoint._settings.GetAction(Settings.MakeSnapshotAction);
             _toggleExplorerAction.onInteraction += OnToggleSceneExplorerTool;
             _toggleComponentSearchAction.onInteraction += OnToggleComponentSearchWindow;
+            _changeExplorerModeAction.onInteraction += OnChangeSceneExplorerInspectMode;
 
             Logging.Info("Done!");
         }
@@ -53,7 +59,7 @@ namespace SceneExplorer
             _isEditor = false;
             if (mode == GameMode.Editor)
             {
-                ToggleInputActions(true);
+                ToggleInputActions(true, true);
                 World.GetExistingSystemManaged<InputGuiInteractionSystem>().Enabled = true;
                 _isEditor = true;
 #if DEBUG_PP
@@ -71,12 +77,12 @@ namespace SceneExplorer
             } 
             else if (mode == GameMode.Game)
             {
-                ToggleInputActions(true);
+                ToggleInputActions(true, false);
                 World.GetExistingSystemManaged<InputGuiInteractionSystem>().Enabled = true;
             }
             else
             {
-                ToggleInputActions(false);
+                ToggleInputActions(false, false);
                 World.GetExistingSystemManaged<InputGuiInteractionSystem>().Enabled = false;
             }
         }
@@ -84,8 +90,10 @@ namespace SceneExplorer
         protected override void OnDestroy() {
             _toggleExplorerAction.onInteraction -= OnToggleSceneExplorerTool;
             _toggleComponentSearchAction.onInteraction -= OnToggleComponentSearchWindow;
+            _changeExplorerModeAction.onInteraction -= OnChangeSceneExplorerInspectMode;
             _toggleExplorerAction = null;
             _toggleComponentSearchAction = null;
+            _changeExplorerModeAction = null;
             _cameraUpdateSystem.orbitCameraController.EventCameraMove -= OnCameraMove;
             _cameraUpdateSystem = null;
             
@@ -103,13 +111,30 @@ namespace SceneExplorer
             base.OnDestroy();
         }
 
-        private void ToggleInputActions(bool activate)
+        private void ToggleInputActions(bool activate, bool isEditor)
         {
+            SnapshotService.Instance?.Clear();
             _toggleExplorerAction.shouldBeEnabled = activate;
             _toggleComponentSearchAction.shouldBeEnabled = activate;
+            _changeExplorerModeAction.shouldBeEnabled = activate;
+#if DEBUG
+            _snapshotEntities.shouldBeEnabled = activate;
+#else
+            _snapshotEntities.shouldBeEnabled = isEditor && activate;
+#endif
         }
 
         private void OnToggleSceneExplorerTool(ProxyAction proxyAction, InputActionPhase inputActionPhase)
+        {
+            if (inputActionPhase != InputActionPhase.Performed)
+            {
+                return;
+            }
+            
+            World.GetExistingSystemManaged<InspectObjectToolSystem>().ToggleTool();
+        }
+
+        private void OnChangeSceneExplorerInspectMode(ProxyAction proxyAction, InputActionPhase inputActionPhase)
         {
             if (inputActionPhase != InputActionPhase.Performed)
             {

@@ -365,7 +365,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUILayout.Label(InspectObjectUtils.GetModeName(_inspectObjectToolSystem.Mode), options: null);
 #endif
                 GUI.color = Color.white;
-                GUILayout.Label(" (Ctrl+E)", options: null);
+                GUILayout.Label($" ({ModEntryPoint._settings.SwitchToolModeKeybind})", options: null);
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
@@ -426,7 +426,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     GUILayout.Label(InspectObjectUtils.GetModeName(_inspectObjectToolSystem.Mode), options: null);
 #endif
                     GUI.color = temp;
-                    GUILayout.Label(" (Ctrl+E)", options: null);
+                    GUILayout.Label($" ({ModEntryPoint._settings.SwitchToolModeKeybind})", options: null);
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
                 }
