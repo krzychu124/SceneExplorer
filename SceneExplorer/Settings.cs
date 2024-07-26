@@ -16,9 +16,12 @@ namespace SceneExplorer
     [SettingsUIKeyboardAction(MakeSnapshotAction, customUsages: new []{Usages.kToolUsage})]
     [SettingsUIMouseAction(ApplyToolAction, allowModifiers: false, usages: new []{"SceneExplorer.InspectObject"})]
     [SettingsUIMouseAction(CancelToolAction, allowModifiers: false, usages: new []{"SceneExplorer.InspectObject"})]
+    [SettingsUIGroupOrder(KeybindingGroup, OtherSection, AboutSection)]
+    [SettingsUIShowGroupName(KeybindingGroup, OtherSection, AboutSection)]
     public class Settings : ModSetting
     {
         public const string Section = "Main";
+        public const string OtherSection = "Other";
         public const string AboutSection = "About";
         public const string KeybindingGroup = "KeyBinding";
         public const string ApplyToolAction = "ApplyToolAction";
@@ -66,6 +69,9 @@ namespace SceneExplorer
         [SettingsUISection(Section, AboutSection)]
         public string ModVersion => ModEntryPoint.Version;
         
+        [SettingsUISection(Section, OtherSection)]
+        public bool UseShortComponentNames { get; set; }
+        
         [SettingsUISection(Section, AboutSection)]
         public string InformationalVersion => ModEntryPoint.InformationalVersion;
 
@@ -107,6 +113,7 @@ namespace SceneExplorer
         public sealed override void SetDefaults()
         {
             UseVanillaToolActions = true;
+            UseShortComponentNames = false;
         }
         
         private void OnUseVanillaToolActionsSet(bool value)

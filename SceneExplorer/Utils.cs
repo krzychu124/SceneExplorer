@@ -1,4 +1,6 @@
-﻿using Game.Common;
+﻿using System;
+using Colossal.Logging.Utils;
+using Game.Common;
 using Game.Tools;
 using Unity.Entities;
 
@@ -34,5 +36,10 @@ namespace SceneExplorer
             AddHighlight,
             RemoveHighlight,
         }
+
+        internal static string GetTypeName(this Type type)
+        {
+            return ModEntryPoint._settings.UseShortComponentNames ? type.Name : type.GetFriendlyName();
+        } 
     }
 }

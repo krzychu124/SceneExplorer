@@ -10,7 +10,7 @@
 	<LongDescription>
 The mod lets you explore various internal data of selected in-game objects such as ECS component data.
 When simulation is running the data is automatically updated.
-Since game entities may be composed from many components, framerate drop is expected during live-refresh of such large sets of data (will be improved in the future)
+Since game entities may be composed of many components, framerate drop is expected during live-refresh of such large sets of data (will be improved in the future)
 
 #### In-Game or Editor features
 * Use **Ctrl+E** to open _Scene Explorer Inspector_ window (can be changed in the mod options)
@@ -30,17 +30,14 @@ Since game entities may be composed from many components, framerate drop is expe
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/scene-explorer.1655915/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.4" />
+	<ModVersion Value="0.2.5" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-* New feature: Separate keybinding for toggling the Inspector and switching between object type modes
-* New feature: Inspector can now inspect underground entities
-* Updated: extended the name of components in the inspector window since some components might have the same name but come from different namespace so completely different
-* Fix: Make Snapshot keybinding sometimes not working
+* New option 'Use short component names' - use previous component naming in the inspector window
 	</ChangeLog>
 	<!--ChangeLog>
 	</ChangeLog-->
