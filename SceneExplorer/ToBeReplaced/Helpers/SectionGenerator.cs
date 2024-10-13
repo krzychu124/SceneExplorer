@@ -43,7 +43,7 @@ using SubObject = Game.Objects.SubObject;
                 disposable.Dispose();
                 
                 string valueStr = sb.ToString();
-                Logging.Debug($"Section (buffer) ({typeName}):\n{valueStr}");
+                Logging.DebugEvaluation($"Section (buffer) ({typeName}):\n{valueStr}");
                 builder.AddBufferSection(typeName, valueStr);
                 
                 return;
@@ -145,7 +145,7 @@ using SubObject = Game.Objects.SubObject;
             if (sb.Length > 0)
             {
                 string value = sb.ToString();
-                Logging.Debug($"Section ({typeName}):\n{value}");
+                Logging.DebugEvaluation($"Section ({typeName}):\n{value}");
                 builder.AddSection(typeName, new ValueBinding<string>(() => value));
             }
             else
@@ -155,7 +155,7 @@ using SubObject = Game.Objects.SubObject;
             return;
         }
      
-        Logging.Debug($"Component type <{componentType.GetManagedType().FullName}> not supported");
+        Logging.DebugEvaluation($"Component type <{componentType.GetManagedType().FullName}> not supported");
     }
 
         private static string GetValueString(object value, EntityManager entityManager, PrefabSystem prefabSystem) {

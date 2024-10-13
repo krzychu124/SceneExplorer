@@ -19,6 +19,8 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Windows;
 using CarLane = Game.Net.CarLane;
 using Node = Game.Net.Node;
 using SubLane = Game.Net.SubLane;
@@ -45,8 +47,6 @@ namespace SceneExplorer.System
 
         public override bool allowUnderground => true;
 
-        private ProxyAction _applyAction;
-        private ProxyAction _secondaryApplyAction;
         private InspectorToolPanelSystem _panel;
         private UIManager _uiManager;
 
@@ -62,8 +62,6 @@ namespace SceneExplorer.System
         {
             base.OnCreate();
             EntityManager.AddComponent<InspectedObject>(SystemHandle);
-            _applyAction = ModEntryPoint._settings.GetAction(Settings.ApplyToolAction);
-            _secondaryApplyAction = ModEntryPoint._settings.GetAction(Settings.CancelToolAction);
             _panel = World.GetOrCreateSystemManaged<InspectorToolPanelSystem>();
             Enabled = false;
             _prefabToolPanelSystem = World.GetExistingSystemManaged<PrefabToolPanelSystem>();
@@ -218,8 +216,6 @@ namespace SceneExplorer.System
         {
             base.OnStartRunning();
             requireUnderground = false;
-            _applyAction.shouldBeEnabled = true;
-            _secondaryApplyAction.shouldBeEnabled = true;
             _uiManager.ShowUI();
             TryRegisterPrefabSelectedEvent();
         }
@@ -266,7 +262,7 @@ namespace SceneExplorer.System
                 HoveredEntity = e;
                 LastPos = rc.m_HitPosition;
 
-                if (_applyAction.WasPerformedThisFrame() && e != Selected)
+                if (Mouse.current.leftButton.wasReleasedThisFrame && e != Selected)
                 {
                     Logging.Debug($"Selected entity: {e}");
                     EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
@@ -290,7 +286,7 @@ namespace SceneExplorer.System
                     EntityManager.ChangeHighlighting_MainThread(HoveredEntity, Utils.ChangeMode.AddHighlight);
                 }
             }
-            else if (_secondaryApplyAction.WasPerformedThisFrame() || (Selected != Entity.Null && !EntityManager.Exists(Selected)))
+            else if (Mouse.current.rightButton.wasReleasedThisFrame || (Selected != Entity.Null && !EntityManager.Exists(Selected)))
             {
                 EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
                 {

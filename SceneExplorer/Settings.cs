@@ -14,8 +14,6 @@ namespace SceneExplorer
     [SettingsUIKeyboardAction(ChangeToolModeAction, customUsages: new []{Usages.kDefaultUsage, Usages.kToolUsage})]
     [SettingsUIKeyboardAction(ToggleComponentSearchAction, customUsages: new []{Usages.kDefaultUsage, Usages.kToolUsage})]
     [SettingsUIKeyboardAction(MakeSnapshotAction, customUsages: new []{Usages.kToolUsage})]
-    [SettingsUIMouseAction(ApplyToolAction, allowModifiers: false, usages: new []{"SceneExplorer.InspectObject"})]
-    [SettingsUIMouseAction(CancelToolAction, allowModifiers: false, usages: new []{"SceneExplorer.InspectObject"})]
     [SettingsUIGroupOrder(KeybindingGroup, OtherSection, AboutSection)]
     [SettingsUIShowGroupName(KeybindingGroup, OtherSection, AboutSection)]
     public class Settings : ModSetting
@@ -24,31 +22,14 @@ namespace SceneExplorer
         public const string OtherSection = "Other";
         public const string AboutSection = "About";
         public const string KeybindingGroup = "KeyBinding";
-        public const string ApplyToolAction = "ApplyToolAction";
-        public const string CancelToolAction = "CancelToolAction";
         public const string ToggleToolAction = "ToggleToolAction";
         public const string ChangeToolModeAction = "ChangeToolModeAction";
         public const string ToggleComponentSearchAction = "ToggleComponentSearchAction";
         public const string MakeSnapshotAction = "MakeSnapshot";
-        private Dictionary<string, ProxyBinding.Watcher> _vanillaBindingWatchers;
         private string _switchToolModeKeybindingName = string.Empty;
 
         [SettingsUIHidden]
         internal string SwitchToolModeKeybind => _switchToolModeKeybindingName;
-        
-        [SettingsUISection(Section, KeybindingGroup)]
-        [SettingsUISetter(typeof(Settings), nameof(OnUseVanillaToolActionsSet))]
-        public bool UseVanillaToolActions { get; set; }
-        
-        [SettingsUISection(Section, KeybindingGroup)]
-        [SettingsUIMouseBinding(BindingMouse.Left, ApplyToolAction, ctrl: false)]
-        [SettingsUIDisableByCondition(typeof(Settings), nameof(UseVanillaToolActions))]
-        public ProxyBinding ApplyTool { get; set; }
-        
-        [SettingsUISection(Section, KeybindingGroup)]
-        [SettingsUIMouseBinding(BindingMouse.Right, CancelToolAction, ctrl: false)]
-        [SettingsUIDisableByCondition(typeof(Settings), nameof(UseVanillaToolActions))]
-        public ProxyBinding CancelTool { get; set; }
         
         [SettingsUIKeyboardBinding(BindingKeyboard.E, ToggleToolAction, ctrl: true)]
         [SettingsUISection(Section, KeybindingGroup)]
@@ -96,100 +77,24 @@ namespace SceneExplorer
             set {
                 Logging.Info("Reset key bindings");
                 ResetKeyBindings();
-                if (UseVanillaToolActions)
-                {
-                    DisposeToolActionWatchers();
-                    RegisterToolActionWatchers();
-                }
             }
         }
 
         public Settings(IMod mod) : base(mod)
         {
-            _vanillaBindingWatchers = new Dictionary<string, ProxyBinding.Watcher>();
             SetDefaults();
         }
         
         public sealed override void SetDefaults()
         {
-            UseVanillaToolActions = true;
             UseShortComponentNames = false;
-        }
-        
-        private void OnUseVanillaToolActionsSet(bool value)
-        {
-            if (value)
-            {
-                RegisterToolActionWatchers();
-            }
-            else
-            {
-                DisposeToolActionWatchers();
-            }
-        }
-
-        
-        private void RegisterToolActionWatchers()
-        {
-            ProxyAction builtInApplyAction =  InputManager.instance.FindAction(InputManager.kToolMap, "Apply");
-            ProxyBinding.Watcher applyWatcher = MimicVanillaAction(builtInApplyAction, GetAction(ApplyToolAction), "Mouse");
-            if (_vanillaBindingWatchers.TryGetValue("Apply_Mouse", out ProxyBinding.Watcher oldApplyWatcher))
-            {
-                oldApplyWatcher.Dispose();
-                _vanillaBindingWatchers.Remove("Apply_Mouse");
-            }
-            _vanillaBindingWatchers.Add("Apply_Mouse", applyWatcher);
-            
-            ProxyAction builtInCancelAction = InputManager.instance.FindAction(InputManager.kToolMap, "Mouse Cancel");
-            ProxyBinding.Watcher cancelWatcher = MimicVanillaAction(builtInCancelAction, GetAction(CancelToolAction), "Mouse");
-            if (_vanillaBindingWatchers.TryGetValue("Cancel_Mouse", out ProxyBinding.Watcher oldCancelWatcher))
-            {
-                oldCancelWatcher.Dispose();
-                _vanillaBindingWatchers.Remove("Cancel_Mouse");
-            }
-            _vanillaBindingWatchers.Add("Cancel_Mouse", cancelWatcher);
-        }
-        
-        private void DisposeToolActionWatchers()
-        {
-            if (_vanillaBindingWatchers.TryGetValue("Apply_Mouse", out ProxyBinding.Watcher applyWatcher))
-            {
-                applyWatcher.Dispose();
-                _vanillaBindingWatchers.Remove("Apply_Mouse");
-            }
-            
-            if (_vanillaBindingWatchers.TryGetValue("Cancel_Mouse", out ProxyBinding.Watcher cancelWatcher))
-            {
-                cancelWatcher.Dispose();
-                _vanillaBindingWatchers.Remove("Cancel_Mouse");
-            }
-        }
-        
-        private ProxyBinding.Watcher MimicVanillaAction(ProxyAction vanillaAction, ProxyAction customAction, string actionGroup)
-        {
-            ProxyBinding customActionBinding = customAction.bindings.FirstOrDefault(b => b.group == actionGroup);
-            ProxyBinding vanillaActionBinding = vanillaAction.bindings.FirstOrDefault(b => b.group == actionGroup);
-            ProxyBinding.Watcher actionWatcher = new ProxyBinding.Watcher(vanillaActionBinding, binding => SetMimic(customActionBinding, binding));
-            SetMimic(customActionBinding, actionWatcher.binding);
-            return actionWatcher;
-        }
-        
-        private void SetMimic(ProxyBinding mimic, ProxyBinding buildIn)
-        {
-            var newMimicBinding = mimic.Copy();
-            newMimicBinding.path = buildIn.path;
-            newMimicBinding.modifiers = buildIn.modifiers;
-            InputManager.instance.SetBinding(newMimicBinding, out _);
         }
         
         internal void ApplyLoadedSettings()
         {
-            if (UseVanillaToolActions)
-            {
-                RegisterToolActionWatchers();
-                UpdateKeybindingString(this);
-                onSettingsApplied += UpdateKeybindingString;
-            }
+            UpdateKeybindingString(this);
+            onSettingsApplied -= UpdateKeybindingString;
+            onSettingsApplied += UpdateKeybindingString;
         }
 
         private void UpdateKeybindingString(Setting setting)

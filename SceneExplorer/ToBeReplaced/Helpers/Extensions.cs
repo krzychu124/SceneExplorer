@@ -24,6 +24,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         MethodInfo genericGetComponentData = getComponentData.MakeGenericMethod(type);
         return genericGetComponentData.Invoke(entityManager, new object[] { e });
     }
+        public static object GetSharedComponentDataByType(this Type type, EntityManager entityManager, Entity e) {
+        MethodInfo getComponentData = typeof(EntityManager).GetMethod(nameof(EntityManager.GetSharedComponentManaged), new Type[] { typeof(Entity) });
+        MethodInfo genericGetComponentData = getComponentData.MakeGenericMethod(type);
+        return genericGetComponentData.Invoke(entityManager, new object[] { e });
+    }
 
         public static List<object> GetComponentBufferArrayByType(this Type type, EntityManager entityManager, Entity e) {
         MethodInfo method = typeof(EntityManager).GetMethod(nameof(EntityManager.GetBuffer), new Type[] { typeof(Entity), typeof(bool) });

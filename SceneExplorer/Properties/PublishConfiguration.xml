@@ -30,14 +30,15 @@ Since game entities may be composed of many components, framerate drop is expect
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/scene-explorer.1655915/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.5" />
+	<ModVersion Value="0.2.6" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-* New option 'Use short component names' - use previous component naming in the inspector window
+* Shared component data is now available
+* Removed custom tool action bindings for Apply and Cancel, using Unity Mouse Input as default
 	</ChangeLog>
 	<!--ChangeLog>
 	</ChangeLog-->

@@ -364,7 +364,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
             else if (obj is IterableObject iterable)
             {
-                Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
+                Logging.DebugEvaluation($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
                 GUI.enabled = iterable.ItemCount > 0;
                 if (CommonUI.CollapsibleHeader($"{iterable.FieldInfo.Name} ({iterable.ItemCount}){(iterable.ItemCount == 0 ? " <EMPTY>" : string.Empty)}", iterable.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterable.IsActive)))
@@ -422,7 +422,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
             else if (obj is PrefabComponentsIterableObject iterableComponents)
             {
-                Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
+                Logging.DebugEvaluation($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
                 if (CommonUI.CollapsibleHeader($"{iterableComponents.FieldInfo.Name} ({iterableComponents.ItemCount})", iterableComponents.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableComponents.IsActive)))
                 {
@@ -479,7 +479,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
             else if (obj is GenericListObject iterableList)
             {
-                Logging.Debug($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
+                Logging.DebugEvaluation($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
                 if (CommonUI.CollapsibleHeader($"{iterableList.FieldInfo.Name} ({iterableList.ItemCount})", iterableList.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableList.IsActive)))
                 {
@@ -536,7 +536,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
             else if (obj == null)
             {
-                Logging.Debug($"Object is null!");
+                Logging.DebugEvaluation($"Object is null!");
             }
 
             return false;

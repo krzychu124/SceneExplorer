@@ -143,7 +143,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 bool isOnlyDirty = isDirty && !_entityChanged;
                 _entityChanged = false;
-                Logging.Debug("Building UI");
+                Logging.DebugEvaluation("Building UI");
                 if (isOnlyDirty)
                 {
                     _components.ForEach(c => c.UpdateBindings(refreshOnly: true));
@@ -308,7 +308,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         }
 
         public void InspectManagedObject(object value, IInspectableObject o, bool standalone) {
-            Logging.Debug($"Inspecting Value: {value.ToString()} | {o.GetType().FullName} | {o.FieldInfo?.Name}");
+            Logging.DebugEvaluation($"Inspecting Value: {value.ToString()} | {o.GetType().FullName} | {o.FieldInfo?.Name}");
             if (o.FieldInfo != null && o.FieldInfo.Name.Equals(nameof(PrefabData.m_Index)))
             {
                 PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
@@ -328,7 +328,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         }
 
         public void ForceClose() {
-            Logging.Debug($"Force closed: {Id}");
+            Logging.DebugEvaluation($"Force closed: {Id}");
 
             Destroy(this.gameObject);
             OnClosed?.Invoke(this);
@@ -436,9 +436,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUI.color = UIStyle.Instance.unManagedLabelStyle.normal.textColor;
                 GUILayout.Label("[Component] ", style, options: null);
                 GUI.color = UIStyle.Instance.managedLabelStyle.normal.textColor;
-                GUILayout.Label("[Managed Component] ", style, options: null);
+                GUILayout.Label("[Managed] ", style, options: null);
                 GUI.color = UIStyle.Instance.bufferLabelStyle.normal.textColor;
                 GUILayout.Label("[Buffer] ", style, options: null);
+                GUI.color = UIStyle.Instance.sharedLabelStyle.normal.textColor;
+                GUILayout.Label("[Shared] ", style, options: null);
                 GUI.color = UIStyle.Instance.unknownLabelStyle.normal.textColor;
                 GUILayout.Label("[Not Supported] ", style, options: null);
                 GUI.color = Color.white;

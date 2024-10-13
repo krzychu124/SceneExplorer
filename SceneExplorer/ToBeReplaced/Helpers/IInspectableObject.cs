@@ -104,9 +104,9 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (fieldInfo == null)
             {
-                Logging.Debug($"NULL INFO! {parentObject?.FieldInfo?.Name}");
+                Logging.DebugEvaluation($"NULL INFO! {parentObject?.FieldInfo?.Name}");
             }
-            Logging.Debug($"New Inspectable Entity! {fieldInfo?.FieldType.Name} | Parent: {parentObject?.FieldInfo?.Name}");
+            Logging.DebugEvaluation($"New Inspectable Entity! {fieldInfo?.FieldType.Name} | Parent: {parentObject?.FieldInfo?.Name}");
         }
 
         public override object GetValueCached() {
@@ -120,7 +120,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public override void UpdateValue(object instance, bool resetState) {
             if (instance == null)
             {
-                Logging.Debug($"NULL instance! {GetType().Name}");
+                Logging.DebugEvaluation($"NULL instance! {GetType().Name}");
                 // IsValid = false;
                 return;
             }
@@ -131,7 +131,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _entity = (Entity)_value;
             if (IsSnapshot && (_entity == Entity.Null || !World.DefaultGameObjectInjectionWorld.EntityManager.Exists(_entity)))
             {
-                Logging.Debug($"value not available: {_entity} | {prevValue} | {_value} | {instance.GetType().Name} | init: {_initialized}");
+                Logging.DebugEvaluation($"value not available: {_entity} | {prevValue} | {_value} | {instance.GetType().Name} | init: {_initialized}");
                 // IsValid = false;
                 PrefabName = string.Empty;
                 CanInspectValue = false;
@@ -142,7 +142,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 if (!_initialized)
                 {
-                    Logging.Debug($"Initialized! ({FieldInfo.Name})");
+                    Logging.DebugEvaluation($"Initialized! ({FieldInfo.Name})");
                     World world = World.DefaultGameObjectInjectionWorld;
                     PrefabName = _entity.TryGetPrefabName(world.EntityManager, world.GetExistingSystemManaged<PrefabSystem>(), out _);
                 }
@@ -201,7 +201,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _elementType = elementType;
             _elementTypeFields = elementTypeFields;
             Parent = parent;
-            Logging.Debug($"Created iterable object def: {fieldInfo.Name} ({fieldInfo.FieldType.Name})[{fieldInfo.FieldType.GetElementType()?.FullName}]");
+            Logging.DebugEvaluation($"Created iterable object def: {fieldInfo.Name} ({fieldInfo.FieldType.Name})[{fieldInfo.FieldType.GetElementType()?.FullName}]");
         }
 
         public override object GetValueCached() {
@@ -225,7 +225,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public override void UpdateValue(object instance, bool resetState) {
             if (instance == null)
             {
-                Logging.Debug($"NULL instance! {GetType().Name}");
+                Logging.DebugEvaluation($"NULL instance! {GetType().Name}");
                 return;
             }
 
@@ -234,25 +234,25 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (_value == null)
             {
-                Logging.Debug($"value not available: {prevValue} | {_value} | {instance.GetType().Name}");
+                Logging.DebugEvaluation($"value not available: {prevValue} | {_value} | {instance.GetType().Name}");
                 CloseInspectorPopup();
                 return;
             }
 
             if (!IsActive && _initialized)
             {
-                Logging.Debug($"[Iterable] Inactive and initialized. Page: {_previousPage}, now: {CurrentPage} | {FieldInfo.Name}");
+                Logging.DebugEvaluation($"[Iterable] Inactive and initialized. Page: {_previousPage}, now: {CurrentPage} | {FieldInfo.Name}");
                 return;
             }
 
             bool requireUpdate = false;
             if (HasElementCountChanged(out int previousCount, out int newCount))
             {
-                Logging.Debug($"[Iterable] Seq not equal ({newCount})");
+                Logging.DebugEvaluation($"[Iterable] Seq not equal ({newCount})");
                 if (newCount > previousCount)
                 {
                     int diff = newCount - previousCount;
-                    Logging.Debug($"[Iterable] [Add] New: ({newCount}), Old: {previousCount} | diff: {diff}");
+                    Logging.DebugEvaluation($"[Iterable] [Add] New: ({newCount}), Old: {previousCount} | diff: {diff}");
                     for (int i = 0; i < diff; i++)
                     {
                         DataArray.Add(_elementType.IsEnum ? new CommonInspectableObject(_elementType, ((info, o) => o.ToString()), IsSnapshot) : new ComplexObject(_elementType, _elementTypeFields, IsSnapshot));
@@ -261,7 +261,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 else
                 {
                     int diff = previousCount - newCount;
-                    Logging.Debug($"[Iterable] [Remove] New: ({newCount}), Old: {previousCount} | diff: {diff}");
+                    Logging.DebugEvaluation($"[Iterable] [Remove] New: ({newCount}), Old: {previousCount} | diff: {diff}");
                     for (int i = newCount; i < previousCount; i++)
                     {
                         DataArray[i].IsActive = false;
@@ -280,11 +280,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (_previousPage != CurrentPage || requireUpdate)
             {
-                Logging.Debug($"[Iterable] Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate} | {FieldInfo.Name}");
+                Logging.DebugEvaluation($"[Iterable] Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate} | {FieldInfo.Name}");
                 _previousPage = CurrentPage;
                 if (TryGetPaginationData(out int index, out int count))
                 {
-                    Logging.Debug($"[Iterable] Updating values: {index} {count} | {ItemCount}");
+                    Logging.DebugEvaluation($"[Iterable] Updating values: {index} {count} | {ItemCount}");
                     for (; index < count; index++)
                     {
                         IInspectableObject inspectableObject = DataArray[index];
@@ -296,7 +296,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 }
                 else
                 {
-                    Logging.Debug($"Resetting page...");
+                    Logging.DebugEvaluation($"Resetting page...");
                     foreach (IInspectableObject item in DataArray)
                     {
                         item.IsActive = false;
@@ -360,7 +360,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public override void UpdateValue(object instance, bool resetState) {
             if (instance == null)
             {
-                Logging.Debug($"NULL instance! {GetType().Name} {FieldInfo?.Name}");
+                Logging.DebugEvaluation($"NULL instance! {GetType().Name} {FieldInfo?.Name}");
                 return;
             }
             if (!IsActive && _initialized)
@@ -372,7 +372,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (value == null)
             {
-                Logging.Debug($"value not available | {instance.GetType().Name}");
+                Logging.DebugEvaluation($"value not available | {instance.GetType().Name}");
                 return;
             }
 
@@ -391,11 +391,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 _initialized = true;
             }
 
-            Logging.Debug($"Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate}");
+            Logging.DebugEvaluation($"Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate}");
             _previousPage = CurrentPage;
             if (TryGetPaginationData(out int index, out int count))
             {
-                Logging.Debug($"Updating values: {index} {count} | {ItemCount}");
+                Logging.DebugEvaluation($"Updating values: {index} {count} | {ItemCount}");
                 for (; index < count; index++)
                 {
                     IInspectableObject inspectableObject = DataArray[index];
@@ -407,7 +407,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
             else
             {
-                Logging.Debug($"Resetting page...");
+                Logging.DebugEvaluation($"Resetting page...");
                 foreach (IInspectableObject item in DataArray)
                 {
                     item.IsActive = false;
@@ -465,7 +465,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public override void UpdateValue(object instance, bool resetState) {
             if (instance == null)
             {
-                Logging.Debug($"NULL instance! {GetType().Name} {FieldInfo?.Name}");
+                Logging.DebugEvaluation($"NULL instance! {GetType().Name} {FieldInfo?.Name}");
                 return;
             }
             if (!IsActive && _initialized)
@@ -477,7 +477,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (value == null)
             {
-                Logging.Debug($"value not available | {instance.GetType().Name}");
+                Logging.DebugEvaluation($"value not available | {instance.GetType().Name}");
                 return;
             }
 
@@ -499,11 +499,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (_previousPage != CurrentPage || requireUpdate)
             {
-                Logging.Debug($"Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate}");
+                Logging.DebugEvaluation($"Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate}");
                 _previousPage = CurrentPage;
                 if (TryGetPaginationData(out int index, out int count))
                 {
-                    Logging.Debug($"Updating values: {index} {count} | {ItemCount}");
+                    Logging.DebugEvaluation($"Updating values: {index} {count} | {ItemCount}");
                     for (; index < count; index++)
                     {
                         IInspectableObject inspectableObject = DataArray[index];
@@ -515,7 +515,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 }
                 else
                 {
-                    Logging.Debug($"Resetting page...");
+                    Logging.DebugEvaluation($"Resetting page...");
                     foreach (IInspectableObject item in DataArray)
                     {
                         item.IsActive = false;
@@ -576,7 +576,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _valueType = _fieldInfo.FieldType;
             _getValueFn = getValueFn;
             IsSnapshot = isSnapshot;
-            Logging.Debug($"Common object: {fieldInfo.FieldType.Name}, isEnum?: {fieldInfo.FieldType.IsEnum}");
+            Logging.DebugEvaluation($"Common object: {fieldInfo.FieldType.Name}, isEnum?: {fieldInfo.FieldType.IsEnum}");
         }
 
         public CommonInspectableObject(Type valueType, Func<FieldInfo, object, object> getValueFn, bool isSnapshot) {
@@ -584,7 +584,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _valueType = valueType;
             _getValueFn = getValueFn;
             IsSnapshot = isSnapshot;
-            Logging.Debug($"Common object: {valueType.Name}");
+            Logging.DebugEvaluation($"Common object: {valueType.Name}");
         }
 
         public object GetValueCached() {
@@ -598,10 +598,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public void UpdateValue(object instance, bool resetState) {
             if (instance == null)
             {
-                Logging.Debug($"NULL instance! {GetType().Name} {_fieldInfo?.Name}");
+                Logging.DebugEvaluation($"NULL instance! {GetType().Name} {_fieldInfo?.Name}");
                 return;
             }
-            Logging.Debug($"Updating value! {GetType().Name} {_fieldInfo?.Name}");
+            Logging.DebugEvaluation($"Updating value! {GetType().Name} {_fieldInfo?.Name}");
             if (Children != null)
             {
                 if (IsActive || IsSnapshot)
@@ -665,7 +665,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _childrenFields = childrenFields;
             _isDirty = isSnapshot;
             IsSnapshot = isSnapshot;
-            Logging.Debug($"New Complex object; {fieldInfo?.Name}({fieldInfo?.FieldType.FullName}) ({_rootType.FullName}) | {string.Join(", ", childrenFields.Select(f => f.Name))}");
+            Logging.DebugEvaluation($"New Complex object; {fieldInfo?.Name}({fieldInfo?.FieldType.FullName}) ({_rootType.FullName}) | {string.Join(", ", childrenFields.Select(f => f.Name))}");
         }
 
         public ComplexObject(Type rootType, List<FieldInfo> childrenFields, bool isSnapshot) {
@@ -674,7 +674,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _childrenFields = childrenFields;
             _isDirty = isSnapshot;
             IsSnapshot = isSnapshot;
-            Logging.Debug($"New Complex object; ({rootType.FullName}) | {string.Join(", ", childrenFields.Select(f => f.Name))}");
+            Logging.DebugEvaluation($"New Complex object; ({rootType.FullName}) | {string.Join(", ", childrenFields.Select(f => f.Name))}");
         }
 
         public object GetValueCached() {
@@ -688,7 +688,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public void UpdateValue(object instance, bool resetState) {
             if (instance == null)
             {
-                Logging.Debug($"NULL instance! {GetType().Name} {_fieldInfo?.Name}");
+                Logging.DebugEvaluation($"NULL instance! {GetType().Name} {_fieldInfo?.Name}");
                 return;
             }
 
@@ -696,7 +696,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 _isDirty = false;
                 Children = _childrenFields.Select(field => UIGenerator.GetInspectableObjectData(field, this, IsSnapshot)).ToArray();
-                Logging.Debug($"Updating Children: {Children.Length} {_fieldInfo?.Name}({_fieldInfo?.FieldType.FullName}) | root: {_rootType.FullName}");
+                Logging.DebugEvaluation($"Updating Children: {Children.Length} {_fieldInfo?.Name}({_fieldInfo?.FieldType.FullName}) | root: {_rootType.FullName}");
                 _prefabInfoData = GetPrefabInfoRef(_rootType, Children);
             }
 
@@ -719,7 +719,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     if (_prefabInfoData != default)
                     {
                         PrefabName = GetPrefabName(Children[_prefabInfoData.fieldIndex].GetValueCached(), _prefabInfoData.fieldName, _prefabInfoData.isPrefabRef, _rootType);
-                        Logging.Debug($"Calculated prefab name: {PrefabName} | {_prefabInfoData.fieldIndex}, {_prefabInfoData.fieldName}");
+                        Logging.DebugEvaluation($"Calculated prefab name: {PrefabName} | {_prefabInfoData.fieldIndex}, {_prefabInfoData.fieldName}");
                     } 
                     else if (instance.GetType() == typeof(PrefabBase) && _value is PrefabBase pb)
                     {
@@ -734,7 +734,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 if (value is PrefabBase pb)
                 {
-                    Logging.Debug($"Field: {fieldName} in {rootType.FullName} is PrefabBase. Returning PrefabBase name");
+                    Logging.DebugEvaluation($"Field: {fieldName} in {rootType.FullName} is PrefabBase. Returning PrefabBase name");
                     return pb.name;
                 }
 
@@ -785,139 +785,139 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(NetSectionPiece.m_Piece)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(NetSectionPiece.m_Piece), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(NetPieceLane) || rootType == typeof(NetCompositionCrosswalk) || rootType == typeof(NetCompositionLane) || rootType == typeof(Game.Prefabs.SecondaryNetLane) || rootType == typeof(NetLaneInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(NetPieceLane.m_Lane)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(NetPieceLane.m_Lane), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(NetGeometryComposition))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(NetGeometryComposition.m_Composition)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(NetGeometryComposition.m_Composition), true);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(NetGeometrySection) || rootType == typeof(NetSectionInfo) || rootType == typeof(NetSubSectionInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(NetGeometrySection.m_Section)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(NetGeometrySection.m_Section), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Prefabs.SubObject) || rootType == typeof(Game.Prefabs.SubLane) || rootType == typeof(NetCompositionObject) || rootType == typeof(NetPieceObject))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(SubObject.m_Prefab)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(SubObject.m_Prefab), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(ObjectMeshInfo) || rootType == typeof(NetLaneMeshInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(ObjectMeshInfo.m_Mesh)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(ObjectMeshInfo.m_Mesh), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(ObjectSubAreaInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(ObjectSubAreaInfo.m_AreaPrefab)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(ObjectSubAreaInfo.m_AreaPrefab), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(ObjectSubLaneInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(ObjectSubLaneInfo.m_LanePrefab)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(ObjectSubLaneInfo.m_LanePrefab), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(ObjectSubNetInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(ObjectSubNetInfo.m_NetPrefab)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(ObjectSubNetInfo.m_NetPrefab), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(MultipleUnitTrainCarriageInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(MultipleUnitTrainCarriageInfo.m_Carriage)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(MultipleUnitTrainCarriageInfo.m_Carriage), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(SlaveAreaInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(SlaveAreaInfo.m_Area)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(SlaveAreaInfo.m_Area), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(SecondaryLaneInfo) || rootType == typeof(SecondaryLaneInfo2) || rootType == typeof(AuxiliaryLaneInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(SecondaryLaneInfo.m_Lane)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(SecondaryLaneInfo.m_Lane), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Prefabs.SubMesh))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Prefabs.SubMesh.m_SubMesh)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Prefabs.SubMesh.m_SubMesh), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Prefabs.PlaceholderObjectElement) || rootType == typeof(NetSubObjectInfo) || rootType == typeof(ObjectSubObjectInfo) || rootType == typeof(AreaSubObjectInfo) || rootType == typeof(NetPieceObjectInfo))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Prefabs.PlaceholderObjectElement.m_Object)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Prefabs.PlaceholderObjectElement.m_Object), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Prefabs.ObjectRequirementElement))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Prefabs.ObjectRequirementElement.m_Requirement)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Prefabs.ObjectRequirementElement.m_Requirement), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Prefabs.BuildingUpgradeElement))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Prefabs.BuildingUpgradeElement.m_Upgrade)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Prefabs.BuildingUpgradeElement.m_Upgrade), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Prefabs.ServiceUpgradeBuilding))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Prefabs.ServiceUpgradeBuilding.m_Building)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Prefabs.ServiceUpgradeBuilding.m_Building), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Prefabs.Effect))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Prefabs.Effect.m_Effect)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Prefabs.Effect.m_Effect), false);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Net.SubLane))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Net.SubLane.m_SubLane)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Net.SubLane.m_SubLane), true);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Net.SubNet))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Net.SubNet.m_SubNet)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Net.SubNet.m_SubNet), true);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Objects.SubObject))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(Game.Objects.SubObject.m_SubObject)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(Game.Objects.SubObject.m_SubObject), true);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(Game.Net.AggregateElement) || rootType == typeof(ConnectedEdge))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(AggregateElement.m_Edge)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(AggregateElement.m_Edge), true);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             else if (rootType == typeof(LaneOverlap))
             {
                 int index = Array.FindIndex(objects, o => o.FieldInfo?.Name.Equals(nameof(LaneOverlap.m_Other)) ?? false);
                 prefabInfoData = new PrefabInfoData(index, nameof(LaneOverlap.m_Other), true);
-                Logging.Debug($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
+                Logging.DebugEvaluation($"Found entity: {prefabInfoData.fieldIndex}, {prefabInfoData.fieldName}");
             }
             return prefabInfoData;
         }

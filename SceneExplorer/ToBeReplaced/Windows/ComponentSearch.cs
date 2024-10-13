@@ -294,7 +294,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 }
                 else
                 {
-                    Logging.Debug("Resetting page!");
+                    Logging.DebugEvaluation("Resetting page!");
                     _pagination.FixPage(true);
                     _scrollPos = Vector2.zero;
                     _scrollPos2 = Vector2.zero;

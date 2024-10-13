@@ -71,7 +71,7 @@ namespace SceneExplorer.System
                             prefabName = prefab.prefab ? prefab.prefab.name : prefab.name;
                         }
                     }
-                    var pos = WorldToTooltipPos(_inspectObjectTool.LastPos);
+                    var pos = WorldToTooltipPos(_inspectObjectTool.LastPos, out _);
                     _tooltipGroup.position = new float2(pos.x + 5, pos.y + 20);
                     _tooltipGroup.children.Add(new StringTooltip
                     {
@@ -135,7 +135,7 @@ namespace SceneExplorer.System
 
                 if (_tooltipGroup.children.Count > 0)
                 {
-                    var pos = WorldToTooltipPos(_inspectObjectTool.LastPos);
+                    var pos = WorldToTooltipPos(_inspectObjectTool.LastPos, out _);
                     _tooltipGroup.position = new float2(pos.x + 5, pos.y + 20);
                     AddGroup(_tooltipGroup);
                 }

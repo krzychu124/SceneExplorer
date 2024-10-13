@@ -56,13 +56,13 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     Buffers.Clear();
                     Tags.Clear();
                     NotSupported.Clear();
-                    Logging.Debug("Evaluating: entity not exist");
+                    Logging.DebugEvaluation("Evaluating: entity not exist");
                     return;
                 }
 
                 if (UseSnapshot)
                 {
-                    Logging.Debug("Evaluating: Snapshot");
+                    Logging.DebugEvaluation("Evaluating: Snapshot");
                     _allComponents.ForEach(c => { c.Dispose(); });
                     _allComponents.Clear();
                     Components.Clear();
@@ -71,7 +71,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     NotSupported.Clear();
                     if (SnapshotService.Instance.TryGetSnapshot(SelectedEntity, out SnapshotService.EntitySnapshotData data))
                     {
-                        Logging.Debug($"Preparing components for {data.ComponentTypes.Length} ComponentType's");
+                        Logging.DebugEvaluation($"Preparing components for {data.ComponentTypes.Length} ComponentType's");
                         foreach (ComponentType componentType in data.ComponentTypes)
                         {
                             IInspectableComponent componentInfo = UIGenerator.CalculateComponentInfo(componentType, SelectedEntity, true);
@@ -90,7 +90,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
                 if (!refreshOnly)
                 {
-                    Logging.Debug("Evaluating: full");
+                    Logging.DebugEvaluation("Evaluating: full");
                     _allComponents.ForEach(c => { c.Dispose(); });
                     _allComponents.Clear();
                     Components.Clear();
@@ -138,7 +138,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                         }
                         else
                         {
-                            Logging.Debug("Evaluating: dif sequence");
+                            Logging.DebugEvaluation("Evaluating: dif sequence");
                             Evaluate(manager, false);
                             Valid = true;
                         }
@@ -147,7 +147,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             }
             else if (Valid)
             {
-                Logging.Debug("Evaluating: valid but selected is empty");
+                Logging.DebugEvaluation("Evaluating: valid but selected is empty");
                 _allComponents.ForEach(c => { c.Dispose(); });
                 _allComponents.Clear();
                 Components.Clear();

@@ -145,7 +145,7 @@ namespace SceneExplorer.System
         {
             string objectName = this.GetObjectName(this._currentPrefab);
             string objectName2 = this.GetObjectName(this._parentObject);
-            Logging.Debug($"Title: [{objectName2}] => [{objectName}] | {_parentObject} -> {_currentPrefab}");
+            Logging.DebugEvaluation($"Title: [{objectName2}] => [{objectName}] | {_parentObject} -> {_currentPrefab}");
             if (objectName != this._selectedName || objectName2 != this._parentName)
             {
                 this._selectedName = objectName;
@@ -249,17 +249,17 @@ namespace SceneExplorer.System
             EditorContainer editorContainer2;
             if (base.EntityManager.TryGetComponent(entity, out owner) && base.EntityManager.TryGetComponent(owner.m_Owner, out refData2))
             {
-                Logging.Debug($"Entity: {entity} has owner: {owner.m_Owner}");
+                Logging.DebugEvaluation($"Entity: {entity} has owner: {owner.m_Owner}");
                 int num = -1;
                 LocalTransformCache localTransformCache;
                 if (base.EntityManager.TryGetComponent(entity, out localTransformCache))
                 {
                     num = localTransformCache.m_PrefabSubIndex;
-                    Logging.Debug($"Entity {entity}, owner: {owner.m_Owner}, prefab subIndex: {num}");
+                    Logging.DebugEvaluation($"Entity {entity}, owner: {owner.m_Owner}, prefab subIndex: {num}");
                 }
                 if (num == -1)
                 {
-                    Logging.Debug($"Entity {entity}, owner: {owner.m_Owner}, incorrect prefab subIndex!");
+                    Logging.DebugEvaluation($"Entity {entity}, owner: {owner.m_Owner}, incorrect prefab subIndex!");
                     return false;
                 }
                 PrefabBase prefab2 = _prefabSystem.GetPrefab<PrefabBase>(refData2);
@@ -267,7 +267,7 @@ namespace SceneExplorer.System
                 ObjectSubObjects objectSubObjects;
                 if (base.EntityManager.TryGetComponent(entity, out editorContainer))
                 {
-                    Logging.Debug($"Entity: {entity} has owner: {owner.m_Owner}, has editor container with prefab: {editorContainer.m_Prefab} group: {editorContainer.m_GroupIndex}");
+                    Logging.DebugEvaluation($"Entity: {entity} has owner: {owner.m_Owner}, has editor container with prefab: {editorContainer.m_Prefab} group: {editorContainer.m_GroupIndex}");
                     EffectSource effectSource;
                     ActivityLocation activityLocation;
                     if (base.EntityManager.HasComponent<EffectData>(editorContainer.m_Prefab) && prefab2.TryGet<EffectSource>(out effectSource) && effectSource.m_Effects != null && effectSource.m_Effects.Count > num)
@@ -292,18 +292,18 @@ namespace SceneExplorer.System
                 }
                 else if (prefab2.TryGet<ObjectSubObjects>(out objectSubObjects) && objectSubObjects.m_SubObjects != null && objectSubObjects.m_SubObjects.Length > num)
                 {
-                    Logging.Debug($"Entity: {entity} has owner: {owner.m_Owner}, has Subobjects collection length: {objectSubObjects.m_SubObjects.Length}");
+                    Logging.DebugEvaluation($"Entity: {entity} has owner: {owner.m_Owner}, has Subobjects collection length: {objectSubObjects.m_SubObjects.Length}");
                     ObjectSubObjectInfo objectSubObjectInfo = objectSubObjects.m_SubObjects[num];
                     if (objectSubObjectInfo != null && objectSubObjectInfo.m_Object == prefab)
                     {
-                        Logging.Debug($"Entity: {entity} has owner: {owner.m_Owner}, has Subobjects with entity");
+                        Logging.DebugEvaluation($"Entity: {entity} has owner: {owner.m_Owner}, has Subobjects with entity");
                         this._parentObject = prefab2;
                     }
                 }
             }
             else if (base.EntityManager.TryGetComponent(entity, out editorContainer2) && _prefabSystem.TryGetPrefab<PrefabBase>(editorContainer2.m_Prefab, out prefab))
             {
-                Logging.Debug($"Entity: {entity} has editorContainer with prefab: {prefab.name}, group: {editorContainer2.m_GroupIndex}");
+                Logging.DebugEvaluation($"Entity: {entity} has editorContainer with prefab: {prefab.name}, group: {editorContainer2.m_GroupIndex}");
                 this._parentObject = prefab;
             }
             return true;

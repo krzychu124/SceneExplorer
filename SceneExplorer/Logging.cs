@@ -27,6 +27,16 @@ namespace SceneExplorer
         public static void Debug(string message) {
             _logger.Info(message);
         }
+        
+        [Conditional("DEBUG_EVALUATION")]
+        public static void DebugEvaluation(string message) {
+            _logger.Info(message);
+        }
+        
+        [Conditional("DEBUG_UI")]
+        public static void DebugUI(string message) {
+            _logger.Info(message);
+        }
 
         public static void Warning(string message) {
             _logger.Warn(message);

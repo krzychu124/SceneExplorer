@@ -52,7 +52,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public static ISectionItem GetSectionItem(string fieldName, object o, string sectionName, int depth)
         {
-            Logging.Debug($"[{depth}] {sectionName} | {fieldName}: {o?.ToString()}");
+            Logging.DebugEvaluation($"[{depth}] {sectionName} | {fieldName}: {o?.ToString()}");
             if (o == null)
             {
                 return new TextItem(fieldName, "null");
@@ -142,7 +142,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     }
                     if (sectionName.Equals("Unlockable"))
                     {
-                        Logging.Debug($"Unlockable 1 {fieldName}: {array.Length}");
+                        Logging.DebugEvaluation($"Unlockable 1 {fieldName}: {array.Length}");
                         depth = MAX_GENERATOR_DEPTH-2;
                     }
                     List<ISectionItem> items4 = array.Where(item => item != null).Select(item => {
@@ -158,7 +158,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 case PrefabBase:
                     if (sectionName.Equals("Unlockable"))
                     {
-                        Logging.Debug($"Unlockable 2 {fieldName} {o.GetType()}");
+                        Logging.DebugEvaluation($"Unlockable 2 {fieldName} {o.GetType()}");
                         depth = MAX_GENERATOR_DEPTH-2;
                     }
                     List<ISectionItem> items = new List<ISectionItem>();
@@ -195,9 +195,13 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (type.IsZeroSized /*IsTagComponent(type)*/)
             {
+                if (type.IsSharedComponent)
+                {
+                    return new SharedComponentInfo(type, type.GetManagedType().GetTypeName(), _descriptorService.GetFields(type), isSnapshot);
+                }
                 return new EntityTagComponentInfo(type, type.GetManagedType().GetTypeName(), new List<FieldInfo>(), isSnapshot);
             }
-            if (type.IsComponent && !type.IsSharedComponent)
+            if (type.IsComponent)
             {
                 if (type.GetManagedType() == typeof(PrefabRef))
                 {
@@ -231,12 +235,12 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         {
             List<IInspectableObject> result = new List<IInspectableObject>(fields.Count);
 
-            Logging.Debug($"Reading types of: {type.GetManagedType().FullName}");
+            Logging.DebugEvaluation($"Reading types of: {type.GetManagedType().FullName}");
             bool isPrefabData = type.GetManagedType() == typeof(PrefabData);
             foreach (FieldInfo fieldInfo in fields)
             {
                 IInspectableObject obj = GetInspectableObjectData(fieldInfo, parent, isSnapshot);
-                Logging.Debug($"Field: {fieldInfo.Name}({fieldInfo.FieldType.FullName})");
+                Logging.DebugEvaluation($"Field: {fieldInfo.Name}({fieldInfo.FieldType.FullName})");
                 if (isPrefabData && fieldInfo.Name.Equals("m_Index"))
                 {
                     obj.CanInspectValue = true;
@@ -267,20 +271,20 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (fieldInfo.FieldType.IsArray)
             {
-                Logging.Debug($"Is Array: {fieldInfo.FieldType.FullName} | {fieldInfo.FieldType.GetElementType()?.FullName}");
+                Logging.DebugEvaluation($"Is Array: {fieldInfo.FieldType.FullName} | {fieldInfo.FieldType.GetElementType()?.FullName}");
                 var elType = fieldInfo.FieldType.GetElementType();
                 return new ArrayIterableObject(fieldInfo, elType, _descriptorService.GetFields(elType), parent, isSnapshot);
             }
 
             if (Extensions.IsList(fieldInfo.FieldType) && fieldInfo.Name.Equals("components") && fieldInfo.FieldType == typeof(List<ComponentBase>))
             {
-                Logging.Debug($"Is List: {fieldInfo.FieldType.FullName}");
+                Logging.DebugEvaluation($"Is List: {fieldInfo.FieldType.FullName}");
                 return new PrefabComponentsIterableObject(fieldInfo, parent, isSnapshot);
             }
 
             if (Extensions.IsList(fieldInfo.FieldType))
             {
-                Logging.Debug($"Is Generic List: {fieldInfo.FieldType.FullName} {string.Join(", ", fieldInfo.FieldType.GenericTypeArguments.Select(t => t.FullName))}");
+                Logging.DebugEvaluation($"Is Generic List: {fieldInfo.FieldType.FullName} {string.Join(", ", fieldInfo.FieldType.GenericTypeArguments.Select(t => t.FullName))}");
                 return new GenericListObject(fieldInfo, parent, isSnapshot);
             }
 

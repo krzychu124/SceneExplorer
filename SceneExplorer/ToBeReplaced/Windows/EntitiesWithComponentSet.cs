@@ -194,7 +194,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         {
             if (!last.Equals(_updateIntervalStr1))
             {
-                if (int.TryParse(_updateIntervalStr1, out int freq) && (freq >= 5 || freq == 0))
+                if (int.TryParse(_updateIntervalStr1, out int freq) && (freq >= 1 || freq == 0))
                 {
                     _updateInterval = freq;
                     _lastUpdate = 0;
@@ -211,7 +211,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         {
             if (!last.Equals(_updateIntervalStr2))
             {
-                if (int.TryParse(_updateIntervalStr2, out int freq) && (freq >= 5 || freq == 0))
+                if (int.TryParse(_updateIntervalStr2, out int freq) && (freq >= 1 || freq == 0))
                 {
                     _itemUpdateInterval = freq;
                     _lastItemUpdate = 0;
@@ -309,7 +309,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 }
                 else
                 {
-                    Logging.Debug("Resetting page!");
+                    Logging.DebugEvaluation("Resetting page!");
                     _pagination.FixPage(true);
                     _scrollPos = Vector2.zero;
                     _scrollPos2 = Vector2.zero;

@@ -73,7 +73,7 @@ namespace SceneExplorer.Services
                 return false;
             }
 
-            Logging.Debug($"Snapshotting: {entity}, visited: {visited.Count}");
+            Logging.DebugEvaluation($"Snapshotting: {entity}, visited: {visited.Count}");
             visited.Add(entity);
             NativeArray<ComponentType> componentTypes = _entityManager.GetComponentTypes(entity, Allocator.Temp);
             data = new EntitySnapshotData(entity, componentTypes.ToArray());

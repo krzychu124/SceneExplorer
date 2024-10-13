@@ -77,6 +77,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public readonly GUIStyle unManagedHighlightedLabelStyle;
         public readonly GUIStyle bufferHighlightedLabelStyle;
         public readonly GUIStyle bufferLabelStyle;
+        public readonly GUIStyle sharedLabelStyle;
+        public readonly GUIStyle sharedHighlightedLabelStyle;
         public readonly GUIStyle unknownLabelStyle;
         public readonly GUIStyle unknownHighlightedLabelStyle;
 
@@ -225,6 +227,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         unManagedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 245, 191, 255) } };
         bufferLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(242, 203, 0, 255) } };
         bufferHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(242, 203, 0, 255) } };
+        sharedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(120, 252, 255, 255) } };
+        sharedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(120, 252, 255, 255) } };
         unknownLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) } };
         unknownHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) } };
 

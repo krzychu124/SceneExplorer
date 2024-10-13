@@ -81,7 +81,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     }
                     catch
                     {
-                        Logging.Debug($"Failed for: E: {entity}, type: {managedType.FullName}");
+                        Logging.DebugEvaluation($"Failed for: E: {entity}, type: {managedType.FullName}");
                     }
                 }
                 else
@@ -130,7 +130,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public sealed class UnmanagedComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public UnmanagedComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-            Logging.Debug($"[Component-Unmanaged] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            Logging.DebugEvaluation($"[Component-Unmanaged] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.UnManaged;
         }
 
@@ -154,7 +154,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public sealed class ManagedComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public ManagedComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-            Logging.Debug($"[Component-Managed] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            Logging.DebugEvaluation($"[Component-Managed] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.Managed;
         }
 
@@ -178,7 +178,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public sealed class CommonComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public CommonComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-            Logging.Debug($"[Component-Common] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            Logging.DebugEvaluation($"[Component-Common] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.None;
         }
 
@@ -199,12 +199,36 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         }
     }
 
+    public sealed class SharedComponentInfo : ComponentInfoBase, IEntityComponent
+    {
+        public SharedComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
+            Logging.DebugEvaluation($"[Component-Common] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            SpecialType = SpecialComponentType.Shared;
+        }
+
+        public override object UpdateBindingsInternal(Entity entity) {
+            if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
+            {
+                return value;
+            }
+            return Type.GetManagedType().GetSharedComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
+        }
+
+        public override bool RefreshValuesInternal(Entity entity, object previousData) {
+            foreach (IInspectableObject o in Objects)
+            {
+                o.UpdateValue(_componentData, false);
+            }
+            return true;
+        }
+    }
+
     public sealed class PrefabRefComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public string PrefabRefDataName { get; private set; }
 
         public PrefabRefComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-            Logging.Debug($"[Component-PrefabRef] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            Logging.DebugEvaluation($"[Component-PrefabRef] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.PrefabRef;
         }
 
@@ -242,7 +266,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public string PrefabDataName { get; private set; }
 
         public PrefabDataComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-            Logging.Debug($"[Component-PrefabData] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            Logging.DebugEvaluation($"[Component-PrefabData] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.PrefabData;
         }
 
@@ -288,7 +312,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private bool _initialized;
 
         public EntityBufferComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
-            Logging.Debug($"[Buffer] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            Logging.DebugEvaluation($"[Buffer] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
         }
 
         public override object UpdateBindingsInternal(Entity entity) {
@@ -309,11 +333,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             bool requireUpdate = false;
             if (newObjects.Count != _allItems.Count)
             {
-                Logging.Debug($"Seq not equal ({newObjects.Count}): {string.Join(", ", newObjects.Select(o => o.ToString()))}");
+                Logging.DebugEvaluation($"Seq not equal ({newObjects.Count}): {string.Join(", ", newObjects.Select(o => o.ToString()))}");
                 if (newObjects.Count > _allItems.Count)
                 {
                     int diff = newObjects.Count - _allItems.Count;
-                    Logging.Debug($"[Add] New: ({newObjects.Count}), Old: {_allItems.Count} | diff: {diff}");
+                    Logging.DebugEvaluation($"[Add] New: ({newObjects.Count}), Old: {_allItems.Count} | diff: {diff}");
                     for (int i = 0; i < diff; i++)
                     {
                         DataArray.Add(new ComplexObject(Type.GetManagedType(), DataFields, IsSnapshot));
@@ -322,7 +346,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 else
                 {
                     int diff = _allItems.Count - newObjects.Count;
-                    Logging.Debug($"[Remove] New: ({newObjects.Count}), Old: {_allItems.Count} | diff: {diff}");
+                    Logging.DebugEvaluation($"[Remove] New: ({newObjects.Count}), Old: {_allItems.Count} | diff: {diff}");
                     for (int i = newObjects.Count; i < _allItems.Count; i++)
                     {
                         DataArray[i].IsActive = false;
@@ -342,7 +366,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (_previousPage != CurrentPage || requireUpdate)
             {
-                Logging.Debug($"Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate}");
+                Logging.DebugEvaluation($"Diff page: {_previousPage}, now: {CurrentPage} |reqUp: {requireUpdate}");
                 _previousPage = CurrentPage;
                 if (TryGetPaginationData(out int index, out int count))
                 {
@@ -351,7 +375,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         index = 0;
                         count = DataArray.Count;
                     }
-                    Logging.Debug($"Updating values: {index} {count} | {ItemCount} | IsSnapshot: {IsSnapshot}");
+                    Logging.DebugEvaluation($"Updating values: {index} {count} | {ItemCount} | IsSnapshot: {IsSnapshot}");
                     for (; index < count; index++)
                     {
                         IInspectableObject inspectableObject = DataArray[index];
@@ -363,7 +387,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 }
                 else
                 {
-                    Logging.Debug($"Resetting page...");
+                    Logging.DebugEvaluation($"Resetting page...");
                     foreach (IInspectableObject item in DataArray)
                     {
                         item.IsActive = false;
@@ -442,6 +466,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         Tag = 1 << 3,
         UnManaged = 1 << 4,
         Managed = 1 << 5,
-        Unknown = 1 << 6,
+        Shared = 1 << 6,
+        Unknown = 1 << 7,
     }
 }

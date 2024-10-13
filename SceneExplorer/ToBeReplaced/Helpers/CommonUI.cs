@@ -286,6 +286,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     return !highlight ? UIStyle.Instance.unManagedLabelStyle : UIStyle.Instance.unManagedHighlightedLabelStyle;
                 case SpecialComponentType.Buffer:
                     return !highlight ? UIStyle.Instance.bufferLabelStyle : UIStyle.Instance.bufferHighlightedLabelStyle;
+                case SpecialComponentType.Shared:
+                    return !highlight ? UIStyle.Instance.sharedLabelStyle : UIStyle.Instance.sharedHighlightedLabelStyle;
                 case SpecialComponentType.Unknown:
                     return !highlight ? UIStyle.Instance.unknownLabelStyle : UIStyle.Instance.unknownHighlightedLabelStyle;
                 default:

@@ -81,7 +81,7 @@ namespace SceneExplorer.ToBeReplaced
 
         public void RegisterWindow(FloatingWindowBase window, int parentId = -1)
         {
-            Logging.Debug($"Registering {window.Id} with parent: {parentId}");
+            Logging.DebugUI($"Registering {window.Id} with parent: {parentId}");
             if (parentId > -1)
             {
                 if (_openedWindows.TryGetValue(parentId, out List<FloatingWindowBase> windows))
@@ -91,7 +91,7 @@ namespace SceneExplorer.ToBeReplaced
                 }
                 else
                 {
-                    Logging.Debug($"Parent id ({parentId}) not found while registering window: {window.Id}");
+                    Logging.DebugUI($"Parent id ({parentId}) not found while registering window: {window.Id}");
                 }
             }
             else
@@ -103,14 +103,14 @@ namespace SceneExplorer.ToBeReplaced
                 }
                 else
                 {
-                    Logging.Debug($"Window ({window.Id}) already registered!");
+                    Logging.DebugUI($"Window ({window.Id}) already registered!");
                 }
             }
         }
 
         public void DisposeOpenedWindows(int parentWindowId)
         {
-            Logging.Debug($"Disposing {parentWindowId}");
+            Logging.DebugUI($"Disposing {parentWindowId}");
             DropdownControl.Instance.Close(parentWindowId);
             if (_openedWindows.TryGetValue(parentWindowId, out List<FloatingWindowBase> children))
             {
@@ -122,12 +122,12 @@ namespace SceneExplorer.ToBeReplaced
                 _openedWindows.Remove(parentWindowId);
             }
             _parentWindows.Remove(parentWindowId);
-            Logging.Debug($"Disposed {parentWindowId}!");
+            Logging.DebugUI($"Disposed {parentWindowId}!");
         }
 
         public void ClosingChild(int parentWindowId, int id)
         {
-            Logging.Debug($"Closing child ({id}) of {parentWindowId}!");
+            Logging.DebugUI($"Closing child ({id}) of {parentWindowId}!");
             DropdownControl.Instance.Close(parentWindowId);
             if (_openedWindows.TryGetValue(parentWindowId, out List<FloatingWindowBase> children))
             {
@@ -135,7 +135,7 @@ namespace SceneExplorer.ToBeReplaced
                 if (index > -1)
                 {
                     children.RemoveAt(index);
-                    Logging.Debug($"Detached opened window child {id} from {parentWindowId}!");
+                    Logging.DebugUI($"Detached opened window child {id} from {parentWindowId}!");
                 }
             }
         }
