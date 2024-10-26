@@ -35,7 +35,7 @@ namespace SceneExplorer.System
                 path = "SceneExplorerTooltipGroup",
                 horizontalAlignment = TooltipGroup.Alignment.Start,
                 verticalAlignment = TooltipGroup.Alignment.Center,
-                children = new List<IWidget>(10)
+                children = new List<IWidget>(10),
             };
             _inspectObjectTool = World.GetOrCreateSystemManaged<InspectObjectToolSystem>();
             _prefabSystem = base.World.GetOrCreateSystemManaged<PrefabSystem>();
@@ -51,7 +51,7 @@ namespace SceneExplorer.System
             Entity e = _inspectObjectTool.HoveredEntity;
             if (e == Entity.Null && _currentEntity != Entity.Null)
             {
-                _tooltip.value = "<Nothing here>";
+                _tooltip.value = "= Nothing here =";
                 _tooltipGroup.children.Clear();
                 _currentEntity = Entity.Null;
                 AddMouseTooltip(_tooltip);
@@ -78,9 +78,9 @@ namespace SceneExplorer.System
                         color = TooltipColor.Success,
                         path = "title1",
                         value = $"Prefab: \"{prefabName}\" [{e.Index}:{e.Version}]"
-
+                
                     });
-
+                
                     if (EntityManager.HasComponent<Owner>(e) &&
                         EntityManager.TryGetComponent<Owner>(e, out Owner owner) &&
                         EntityManager.TryGetComponent(owner.m_Owner, out PrefabRef ownerRef))
@@ -96,7 +96,7 @@ namespace SceneExplorer.System
                             });
                         }
                     }
-
+                
                     _tooltipGroup.children.Add(new StringTooltip
                     {
                         color = TooltipColor.Warning,
@@ -106,8 +106,9 @@ namespace SceneExplorer.System
                     var components = componentTypes.ToArray();
                     List<string> listOfComponentNames = new List<string>(components.Length);
                     int counter = 0;
-                    foreach (ComponentType component in components)
+                    for (int index = 0; index < components.Length; index++)
                     {
+                        ComponentType component = components[index];
                         counter++;
                         Type managedType = component.GetManagedType();
                         listOfComponentNames.Add(GetExtendedName(managedType));
@@ -116,6 +117,7 @@ namespace SceneExplorer.System
                             counter = 0;
                             _tooltipGroup.children.Add(new StringTooltip
                             {
+                                path = $"components_group_{index}",
                                 value = string.Join(", ", listOfComponentNames) + ","
                             });
                             listOfComponentNames.Clear();
@@ -125,6 +127,7 @@ namespace SceneExplorer.System
                     {
                         _tooltipGroup.children.Add(new StringTooltip
                         {
+                            path = "components_last",
                             value = string.Join(", ", listOfComponentNames)
                         });
                     }
@@ -132,7 +135,7 @@ namespace SceneExplorer.System
             }
             else
             {
-
+            
                 if (_tooltipGroup.children.Count > 0)
                 {
                     var pos = WorldToTooltipPos(_inspectObjectTool.LastPos, out _);
@@ -141,10 +144,10 @@ namespace SceneExplorer.System
                 }
                 else
                 {
-                    _tooltip.value = "<Nothing here>";
+                    _tooltip.value = "= Nothing here =";
                     AddMouseTooltip(_tooltip);
                 }
-
+            
             }
 
         }
