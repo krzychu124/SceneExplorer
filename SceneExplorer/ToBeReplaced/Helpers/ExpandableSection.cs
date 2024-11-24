@@ -50,7 +50,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         {
             _expanded = !_expanded;
         }
-        GUILayout.Space(4);
+        GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(4f));
         GUILayout.Label(_title, options: null);
         GUILayout.EndHorizontal();
 

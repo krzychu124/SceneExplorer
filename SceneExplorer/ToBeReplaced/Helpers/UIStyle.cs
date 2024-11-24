@@ -103,7 +103,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public UIStyle()
         {
-            _fontSize = CalculateUIScaledValue(12);
+            _fontSize = ModEntryPoint.Settings.CalculateUIScaledValue(12);
 
             _bgTexture = new Texture2D(1, 1);
             _bgTexture.SetPixel(0, 0, new Color32(26, 29, 34, 255));
@@ -190,16 +190,16 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 onHover = { background = _commonHoverTexture }
             };
             _skin.horizontalSlider = new GUIStyle(GUI.skin.horizontalSlider)
-            { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
+                { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
             _skin.horizontalSliderThumb = new GUIStyle(GUI.skin.horizontalSliderThumb)
-            { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
+                { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
             _skin.label = new GUIStyle(GUI.skin.label) { margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(0, 0, 1, 1), fontSize = _fontSize };
             _skin.scrollView = new GUIStyle(GUI.skin.scrollView);
-            _skin.textArea = new GUIStyle(GUI.skin.textArea);
-            _skin.textField = new GUIStyle(GUI.skin.textField);
-            _skin.toggle = new GUIStyle(GUI.skin.toggle);
+            _skin.textArea = new GUIStyle(GUI.skin.textArea) { fontSize = _fontSize };
+            _skin.textField = new GUIStyle(GUI.skin.textField) { fontSize = _fontSize };
+            _skin.toggle = new GUIStyle(GUI.skin.toggle) { fontSize = _fontSize };
             _skin.verticalScrollbar = new GUIStyle(GUI.skin.verticalScrollbar)
-            { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
+                { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
             _skin.verticalScrollbarDownButton = new GUIStyle(GUI.skin.verticalScrollbarDownButton);
             _skin.verticalScrollbarThumb = new GUIStyle(GUI.skin.verticalScrollbarThumb)
             {
@@ -261,8 +261,17 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             iconButton = new GUIStyle(GUI.skin.button)
             {
-                margin = new RectOffset(2, 2, 2, 2),
-                padding = new RectOffset(4, 4, 2, 2),
+                margin = new RectOffset(
+                    ModEntryPoint.Settings.CalculateUIScaledValue(2), 
+                    ModEntryPoint.Settings.CalculateUIScaledValue(2), 
+                    ModEntryPoint.Settings.CalculateUIScaledValue(2), 
+                    ModEntryPoint.Settings.CalculateUIScaledValue(2)),
+                padding = new RectOffset(
+                    ModEntryPoint.Settings.CalculateUIScaledValue(4),
+                    ModEntryPoint.Settings.CalculateUIScaledValue(4),
+                    ModEntryPoint.Settings.CalculateUIScaledValue(2),
+                    ModEntryPoint.Settings.CalculateUIScaledValue(2)),
+                fontSize = _fontSize,
                 normal = { background = _titleHoverTexture },
                 active = { background = _titleHoverTexture },
                 onNormal = { background = _titleHoverTexture },
@@ -316,26 +325,6 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public GUIStyle CalculateLabelStyle(bool isPublic)
         {
             return !isPublic ? reducedPaddingPrivateLabelStyle : reducedPaddingLabelStyle;
-        }
-
-        public int CalculateUIScaledValue(int value)
-        {
-            if (ModEntryPoint.Settings == null)
-            {
-                return value;
-            }
-
-            return (int)(ModEntryPoint.Settings.UIScalingSlider * value);
-        }
-
-        public float CalculateUIScaledValue(float value)
-        {
-            if (ModEntryPoint.Settings == null)
-            {
-                return value;
-            }
-
-            return ModEntryPoint.Settings.UIScalingSlider * value;
         }
     }
 }

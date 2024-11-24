@@ -49,8 +49,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         public EntitiesWithComponentSet()
         {
-            _minSize = new Vector2(300, 250);
-            ForceSize(400, 350);
+            _minSize = new Vector2(ModEntryPoint.Settings.CalculateUIScaledValue(300), ModEntryPoint.Settings.CalculateUIScaledValue(250));
+            ForceSize(ModEntryPoint.Settings.CalculateUIScaledValue(400), ModEntryPoint.Settings.CalculateUIScaledValue(350));
         }
 
         protected void Awake()
@@ -111,7 +111,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUI.color = temp;
             }
 
-            GUILayout.Space(8);
+            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
 
             int first = 1 + _pagination.ItemPerPage * (_pagination.CurrentPage - 1);
@@ -122,10 +122,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (_pagination.ItemCount > 0)
             {
                 GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(12);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
                 GUILayout.BeginVertical(options: null);
 
-                GUILayout.Space(6);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
                 int count = _pagination.Data.Count;
                 int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
                 int lastItem = firstItem + _pagination.ItemPerPage;
@@ -138,7 +138,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                         var data = _pagination.Data[i];
                         GUILayout.BeginHorizontal(options: null);
                         GUILayout.Label(data.Entity.ToString(), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
-                        GUILayout.Space(5);
+                        GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
                         GUILayout.Label(data.PrefabName, UIStyle.Instance.focusedReducedPaddingLabelStyle, options: null);
                         GUILayout.FlexibleSpace();
 
@@ -180,7 +180,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     GUILayout.EndScrollView();
                 }
 
-                GUILayout.Space(8);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
                 GUILayout.EndVertical();
 
                 GUILayout.EndHorizontal();

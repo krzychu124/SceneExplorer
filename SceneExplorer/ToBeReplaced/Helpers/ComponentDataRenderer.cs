@@ -65,10 +65,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
 
-                GUILayout.Space(8);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
                 GUILayout.BeginVertical(options: null);
 
-                GUILayout.Space(5);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
                 for (var i = 0; i < component.DataFields?.Count; i++)
                 {
                     // var field = component.Fields[i];
@@ -87,7 +87,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     }
                 }
 
-                GUILayout.Space(5);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
                 GUILayout.EndVertical();
 
                 GUILayout.EndHorizontal();
@@ -131,7 +131,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             if (component.DetailedView)
             {
                 GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(8);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
 
                 GUILayout.Label("Buffer Items", UIStyle.Instance.paginationLabelStyle, options: null);
                 GUILayout.FlexibleSpace();
@@ -153,10 +153,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(12);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
                 GUILayout.BeginVertical(options: null);
 
-                GUILayout.Space(6);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
                 int count = component.DataArray.Count;
                 int firstItem = (component.CurrentPage - 1) * 10;
                 int lastItem = firstItem + 10;
@@ -174,7 +174,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     }
                 }
 
-                GUILayout.Space(8);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
                 GUILayout.EndVertical();
 
                 GUILayout.EndHorizontal();
@@ -285,7 +285,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 GUILayout.BeginHorizontal(options: null);
                 Entity value = (Entity)(entity.GetValueCached() ?? default(Entity));
                 GUILayout.Label(entity.FieldInfo.Name + ":", UIStyle.Instance.reducedPaddingLabelStyle, options: null);
-                GUILayout.Space(2);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(2f));
                 GUILayout.Label($"{value.ToString()} {(!string.IsNullOrEmpty(entity.PrefabName) ? $" - {entity.PrefabName}" : string.Empty)}", UIStyle.Instance.CalculateTextStyle(typeof(Entity)), options: null);
                 GUILayout.FlexibleSpace();
                 GUI.enabled = value != Entity.Null;
@@ -317,7 +317,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 GUILayout.BeginHorizontal(options: null);
                 GUILayout.Label((common.FieldInfo?.Name ?? common.ValueType.Name) + ":", UIStyle.Instance.CalculateLabelStyle(common.FieldInfo?.IsPublic ?? true), options: null);
-                GUILayout.Space(2);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(2f));
                 var value = common.GetValueCached();
                 GUILayout.Label(value != null ? value.ToString() : "<NULL>", UIStyle.Instance.CalculateTextStyle((common.FieldInfo?.FieldType ?? common.ValueType)), options: null);
                 GUILayout.FlexibleSpace();
@@ -347,7 +347,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 if (complex.IsActive && complex.Children != null)
                 {
                     GUILayout.BeginHorizontal(options: null);
-                    GUILayout.Space(12);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
 
                     GUILayout.BeginVertical(options: null);
                     for (var i = 0; i < complex.Children.Length; i++)
@@ -376,7 +376,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 if (iterable.IsActive)
                 {
                     GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                    GUILayout.Space(8);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
 
                     GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
                     GUILayout.FlexibleSpace();
@@ -398,10 +398,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                    GUILayout.Space(12);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
                     GUILayout.BeginVertical(options: null);
 
-                    GUILayout.Space(6);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
                     int count = iterable.DataArray.Count;
                     int firstItem = (iterable.CurrentPage - 1) * 10;
                     int lastItem = firstItem + 10;
@@ -414,7 +414,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         }
                     }
 
-                    GUILayout.Space(8);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
                     GUILayout.EndVertical();
 
                     GUILayout.EndHorizontal();
@@ -432,7 +432,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 if (iterableComponents.IsActive)
                 {
                     GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                    GUILayout.Space(8);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
 
                     GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
                     GUILayout.FlexibleSpace();
@@ -454,10 +454,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                    GUILayout.Space(12);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
                     GUILayout.BeginVertical(options: null);
 
-                    GUILayout.Space(6);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
                     int count = iterableComponents.DataArray.Count;
                     int firstItem = (iterableComponents.CurrentPage - 1) * 10;
                     int lastItem = firstItem + 10;
@@ -470,7 +470,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         }
                     }
 
-                    GUILayout.Space(8);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
                     GUILayout.EndVertical();
 
                     GUILayout.EndHorizontal();
@@ -489,7 +489,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 if (iterableList.IsActive)
                 {
                     GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                    GUILayout.Space(8);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
 
                     GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
                     GUILayout.FlexibleSpace();
@@ -511,10 +511,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                    GUILayout.Space(12);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
                     GUILayout.BeginVertical(options: null);
 
-                    GUILayout.Space(6);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
                     int count = iterableList.DataArray.Count;
                     int firstItem = (iterableList.CurrentPage - 1) * 10;
                     int lastItem = firstItem + 10;
@@ -527,7 +527,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         }
                     }
 
-                    GUILayout.Space(8);
+                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
                     GUILayout.EndVertical();
 
                     GUILayout.EndHorizontal();

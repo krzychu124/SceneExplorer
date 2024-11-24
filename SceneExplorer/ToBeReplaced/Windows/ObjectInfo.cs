@@ -16,8 +16,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private Vector2 _scrollPos = Vector2.zero;
 
         public ObjectInfo() {
-        _minSize = new Vector2(200, 300);
-        ForceSize(420, 460);
+        _minSize = new Vector2(ModEntryPoint.Settings.CalculateUIScaledValue(200), ModEntryPoint.Settings.CalculateUIScaledValue(300));
+        ForceSize(ModEntryPoint.Settings.CalculateUIScaledValue(420), ModEntryPoint.Settings.CalculateUIScaledValue(460));
     }
 
         protected override string Title => "Object Info";

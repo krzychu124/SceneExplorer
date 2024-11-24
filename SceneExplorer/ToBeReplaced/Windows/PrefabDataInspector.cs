@@ -28,8 +28,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private InspectableObjectRenderer _objectRenderer;
 
         public PrefabDataInspector() {
-            _minSize = new Vector2(200, 300);
-            ForceSize(420, 460);
+            _minSize = new Vector2(ModEntryPoint.Settings.CalculateUIScaledValue(200), ModEntryPoint.Settings.CalculateUIScaledValue(300));
+            ForceSize(ModEntryPoint.Settings.CalculateUIScaledValue(420), ModEntryPoint.Settings.CalculateUIScaledValue(460));
         }
 
         protected override string Title { get; } = "PrefabData Inspector";
@@ -191,7 +191,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             }
 
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
-            // GUILayout.Space(5);
+            // GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
             //
             // for (var i = 0; i < _components.Count; i++)
             // {
@@ -201,7 +201,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             //
             if (_complexObject != null)
             {
-                GUILayout.Space(20);
+                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(20f));
                 _complexObject.IsActive = true;
                 _objectRenderer.Render(_complexObject, this, -1, HasFocus ? Rect : Rect.zero, out _);
             }

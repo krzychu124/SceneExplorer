@@ -114,7 +114,22 @@ namespace SceneExplorer
             UseShortComponentNames = false;
             UIScalingSlider = 1.0f;
         }
-        
+
+        public int CalculateUIScaledValue(int value)
+        {
+            return (int)(UIScalingSlider * value);
+        }
+
+        public uint CalculateUIScaledValue(uint value)
+        {
+            return (uint)(UIScalingSlider * value);
+        }
+
+        public float CalculateUIScaledValue(float value)
+        {
+            return UIScalingSlider * value;
+        }
+
         internal void ApplyLoadedSettings()
         {
             UpdateKeybindingString(this);
