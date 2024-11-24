@@ -39,7 +39,7 @@ namespace SceneExplorer
 
         internal static string GetTypeName(this Type type)
         {
-            return ModEntryPoint._settings.UseShortComponentNames ? type.Name : type.GetFriendlyName();
+            return ModEntryPoint.Settings.UseShortComponentNames ? type.Name : type.GetFriendlyName();
         } 
     }
 }

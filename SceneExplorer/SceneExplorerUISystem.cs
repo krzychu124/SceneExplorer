@@ -43,10 +43,10 @@ namespace SceneExplorer
             Object.DontDestroyOnLoad(UiManager.gameObject);
             
             _cameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
-            _toggleExplorerAction = ModEntryPoint._settings.GetAction(Settings.ToggleToolAction);
-            _toggleComponentSearchAction = ModEntryPoint._settings.GetAction(Settings.ToggleComponentSearchAction);
-            _changeExplorerModeAction = ModEntryPoint._settings.GetAction(Settings.ChangeToolModeAction);
-            _snapshotEntities = ModEntryPoint._settings.GetAction(Settings.MakeSnapshotAction);
+            _toggleExplorerAction = ModEntryPoint.Settings.GetAction(Settings.ToggleToolAction);
+            _toggleComponentSearchAction = ModEntryPoint.Settings.GetAction(Settings.ToggleComponentSearchAction);
+            _changeExplorerModeAction = ModEntryPoint.Settings.GetAction(Settings.ChangeToolModeAction);
+            _snapshotEntities = ModEntryPoint.Settings.GetAction(Settings.MakeSnapshotAction);
             _toggleExplorerAction.onInteraction += OnToggleSceneExplorerTool;
             _toggleComponentSearchAction.onInteraction += OnToggleComponentSearchWindow;
             _changeExplorerModeAction.onInteraction += OnChangeSceneExplorerInspectMode;

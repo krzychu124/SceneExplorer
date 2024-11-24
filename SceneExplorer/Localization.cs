@@ -22,6 +22,7 @@ namespace SceneExplorer
                     { _settings.GetSettingsLocaleID(), "Scene Explorer" },
                     { _settings.GetOptionTabLocaleID(Settings.Section), "Main" },
                     { _settings.GetOptionGroupLocaleID(Settings.KeybindingGroup), "Key bindings" },
+                    { _settings.GetOptionGroupLocaleID(Settings.UIGroup), "UI Settings" },
                     { _settings.GetOptionGroupLocaleID(Settings.OtherSection), "Other" },
                     { _settings.GetOptionGroupLocaleID(Settings.AboutSection), "About" },
                     
@@ -39,7 +40,11 @@ namespace SceneExplorer
                     { _settings.GetBindingKeyLocaleID(Settings.ToggleToolAction), "Toggle Scene Explorer Tool" },
                     { _settings.GetBindingKeyLocaleID(Settings.ToggleComponentSearchAction), "Toggle ECS Component Search window" },
                     { _settings.GetBindingKeyLocaleID(Settings.MakeSnapshotAction), "Make Snapshot" },
-                    
+
+                    //UI settings
+                    { _settings.GetOptionLabelLocaleID(nameof(Settings.UIScalingSlider)), "UI scaling" },
+                    { _settings.GetOptionDescLocaleID(nameof(Settings.UIScalingSlider)), "Make the UI smaller or bigger" },
+
                     //Other
                     { _settings.GetOptionLabelLocaleID(nameof(Settings.UseShortComponentNames)), "Use short component names" },
                     { _settings.GetOptionDescLocaleID(nameof(Settings.UseShortComponentNames)), "When enabled, the inspector will display component names in short form instead of full with namespace. Reopen window to update names after changing this option" },

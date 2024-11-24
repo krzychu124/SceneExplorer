@@ -365,7 +365,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUILayout.Label(InspectObjectUtils.GetModeName(_inspectObjectToolSystem.Mode), options: null);
 #endif
                 GUI.color = Color.white;
-                GUILayout.Label($" ({ModEntryPoint._settings.SwitchToolModeKeybind})", options: null);
+                GUILayout.Label($" ({ModEntryPoint.Settings.SwitchToolModeKeybind})", options: null);
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
@@ -405,7 +405,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 Color temp = GUI.color;
                 GUILayout.BeginHorizontal(options: null);
-                GUILayout.Label(_selectedEntity.ToString(), Style.focusedLabelStyle);
+                GUILayout.Label(_selectedEntity.ToString(), UIStyle.Instance.focusedLabelStyle);
                 if (_canJumpTo)
                 {
                     GUILayout.FlexibleSpace();
@@ -426,7 +426,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     GUILayout.Label(InspectObjectUtils.GetModeName(_inspectObjectToolSystem.Mode), options: null);
 #endif
                     GUI.color = temp;
-                    GUILayout.Label($" ({ModEntryPoint._settings.SwitchToolModeKeybind})", options: null);
+                    GUILayout.Label($" ({ModEntryPoint.Settings.SwitchToolModeKeybind})", options: null);
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
                 }
@@ -457,7 +457,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (Event.current.type == EventType.Repaint)
             {
                 Rect lastRect =GUILayoutUtility.GetLastRect();
-                _titleSectionRect = new Rect(Rect.x + lastRect.x,Rect.y + lastRect.y + lastRect.height, lastRect.width, Rect.height - lastRect.height - lastRect.y - 20);
+                _titleSectionRect = new Rect(Rect.x + lastRect.x,Rect.y + lastRect.y + lastRect.height, lastRect.width, Rect.height - lastRect.height - lastRect.y - UIStyle.Instance.CalculateUIScaledValue(20));
             }
             
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
