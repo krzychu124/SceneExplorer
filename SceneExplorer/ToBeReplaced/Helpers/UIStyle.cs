@@ -243,7 +243,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             entityValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.76f, 0.87f) }, fontStyle = FontStyle.Bold, wordWrap = true, fontSize = _fontSize };
             numericValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.8f, 0.71f) }, fontStyle = FontStyle.Bold, wordWrap = true, fontSize = _fontSize };
             booleanValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(16, 167, 178, 255) }, fontStyle = FontStyle.Bold, wordWrap = true, fontSize = _fontSize };
-            focusedReducedPaddingLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = new Color(0.21f, 0.75f, 0f) }, fontStyle = FontStyle.Bold, fontSize = _fontSize, margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1) };
+            focusedReducedPaddingLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = new Color(0.21f, 0.75f, 0f) }, fontStyle = FontStyle.Bold, fontSize = _fontSize, wordWrap = false, margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1) };
             focusedReducedPaddingHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingLabelStyle) { fontStyle = FontStyle.Bold, fontSize = _fontSize };
 
             managedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 232, 115, 255) }, fontSize = _fontSize };
