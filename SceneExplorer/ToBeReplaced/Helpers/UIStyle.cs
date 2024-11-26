@@ -191,7 +191,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
             _skin.horizontalSliderThumb = new GUIStyle(GUI.skin.horizontalSliderThumb)
                 { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
-            _skin.label = new GUIStyle(GUI.skin.label) { margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(0, 0, 1, 1), fontSize = _fontSize };
+            _skin.label = new GUIStyle(GUI.skin.label) { margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(0, 0, 1, 1), fontSize = _fontSize, wordWrap = false };
             _skin.scrollView = new GUIStyle(GUI.skin.scrollView);
             _skin.textArea = new GUIStyle(GUI.skin.textArea) { fontSize = _fontSize };
             _skin.textField = new GUIStyle(GUI.skin.textField) { fontSize = _fontSize };

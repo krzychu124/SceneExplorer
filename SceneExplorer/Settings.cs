@@ -48,7 +48,7 @@ namespace SceneExplorer
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding MakeSnapshot { get; set; }
 
-        [SettingsUISlider(min = 0.5f, max = 2.0f, step = 0.05f, scalarMultiplier = 1, unit = Unit.kFloatSingleFraction)]
+        [SettingsUISlider(min = 0.5f, max = 1.5f, step = 0.01f, scalarMultiplier = 1, unit = Unit.kFloatTwoFractions)]
         [SettingsUISection(Section, UIGroup)]
         public float UIScalingSlider 
         { 
