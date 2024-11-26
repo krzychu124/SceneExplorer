@@ -1,9 +1,8 @@
-﻿using System;
+﻿using Game.SceneFlow;
+using SceneExplorer.ToBeReplaced.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Game;
-using Game.SceneFlow;
-using SceneExplorer.ToBeReplaced.Helpers;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -42,8 +41,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private CommonUI.LocalState _noneString = new CommonUI.LocalState();
 
         public ComponentSearch() {
-            _minSize = new Vector2(ModEntryPoint.Settings.CalculateUIScaledValue(300), ModEntryPoint.Settings.CalculateUIScaledValue(350));
-            ForceSize(ModEntryPoint.Settings.CalculateUIScaledValue(420), ModEntryPoint.Settings.CalculateUIScaledValue(500));
+            _minSize = new Vector2(300, 350);
+            ForceSize(420, 500);
         }
 
         protected override void Start() {
@@ -68,7 +67,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 _updateResults = true;
             }
             bool old = _fullNameMatch;
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
+            GUILayout.Space(8);
             GUILayout.BeginHorizontal(options: null);
             if (GUILayout.Button("Search with query", UIStyle.Instance.iconButton, options: null))
             {
@@ -88,7 +87,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             //     OpenWatchers();
             // }
             GUILayout.EndHorizontal();
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
+            GUILayout.Space(8);
             _fullNameMatch = GUILayout.Toggle(_fullNameMatch, "Type FullName matching", options: null);
             _updateResults = _updateResults || old != _fullNameMatch;
 
@@ -113,12 +112,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 GUILayout.Label($"Next update in {_updateInterval - _lastUpdate} ({_updateInterval})", options: null);
             }
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
+            GUILayout.Space(8);
 
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
 
             GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
+            GUILayout.Space(8);
 
             GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
             GUILayout.FlexibleSpace();
@@ -142,10 +141,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (_pagination.ItemCount > 0)
             {
                 GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
+                GUILayout.Space(12);
                 GUILayout.BeginVertical(options: null);
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
+                GUILayout.Space(6);
                 int count = _pagination.Data.Count;
                 int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
                 int lastItem = firstItem + _pagination.ItemPerPage;
@@ -163,7 +162,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                         GUILayout.Label(TypeManager.GetType(data.Key).FullName, options: null);
                         GUILayout.FlexibleSpace();
                         GUILayout.Label(data.Value.ToString(), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
-                        GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
+                        GUILayout.Space(5);
                         if (GUILayout.Button("Entities", UIStyle.Instance.iconButton, options: null))
                         {
                             OpenTypeEntities(data.Key);
@@ -173,7 +172,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     GUILayout.EndScrollView();
                 }
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
+                GUILayout.Space(8);
                 GUILayout.EndVertical();
 
                 GUILayout.EndHorizontal();

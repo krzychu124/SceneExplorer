@@ -1,5 +1,4 @@
 using System;
-using Unity.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -68,7 +67,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         if (c == _callback && Time.time - _lastCheck > 1f && (Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame))
         {
             Vector2 v = Mouse.current.position.value;
-            if (!_position.Contains(new Vector2(v.x, Screen.height - v.y)))
+            if (!_position.Contains(new Vector2(v.x / ModEntryPoint.Settings.NormalizedScaling, (Screen.height - v.y) / ModEntryPoint.Settings.NormalizedScaling)))
             {
                 enabled = false;
             }

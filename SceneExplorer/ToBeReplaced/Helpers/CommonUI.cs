@@ -1,10 +1,7 @@
 ﻿using Game.Prefabs;
-
 using System;
 using System.Collections.Generic;
-
 using Unity.Entities;
-
 using UnityEngine;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
@@ -12,15 +9,15 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public static class CommonUI
     {
         private static GUILayoutOption[] _expandButtonOptions = new GUILayoutOption[] { 
-            GUILayout.MaxWidth(ModEntryPoint.Settings.CalculateUIScaledValue(21)), 
-            GUILayout.MaxHeight(ModEntryPoint.Settings.CalculateUIScaledValue(22)) };
+            GUILayout.MaxWidth(21), 
+            GUILayout.MaxHeight(22) };
         private static GUILayoutOption[] _lineOptions = new[] { 
             GUILayout.ExpandWidth(true), 
-            GUILayout.Height(ModEntryPoint.Settings.CalculateUIScaledValue(1f)) };
+            GUILayout.Height(1f) };
         private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { 
-            GUILayout.MinWidth(ModEntryPoint.Settings.CalculateUIScaledValue(60)), 
-            GUILayout.MaxWidth(ModEntryPoint.Settings.CalculateUIScaledValue(60)), 
-            GUILayout.MaxHeight(ModEntryPoint.Settings.CalculateUIScaledValue(22)) };
+            GUILayout.MinWidth(60), 
+            GUILayout.MaxWidth(60), 
+            GUILayout.MaxHeight(22) };
 
         public static GUILayoutOption[] ExpandButtonOptions => _expandButtonOptions;
 
@@ -107,10 +104,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 GUILayout.BeginHorizontal(style ?? UIStyle.Instance.collapsibleContentStyle, options: null);
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(leftMargin));
+                GUILayout.Space(leftMargin);
                 GUILayout.BeginVertical(options: null);
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
+                GUILayout.Space(5);
                 for (var i = 0; i < items.Count; i++)
                 {
                     items[i].Render();
@@ -120,7 +117,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     }
                 }
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
+                GUILayout.Space(5);
                 GUILayout.EndVertical();
 
                 GUILayout.EndHorizontal();
@@ -133,10 +130,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 GUILayout.BeginHorizontal(style ?? UIStyle.Instance.collapsibleContentStyle, options: null);
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(leftMargin));
+                GUILayout.Space(leftMargin);
                 GUILayout.BeginVertical(options: null);
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
+                GUILayout.Space(5);
                 for (var i = 0; i < items.Count; i++)
                 {
                     items[i].Render();
@@ -146,7 +143,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     }
                 }
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
+                GUILayout.Space(5);
                 GUILayout.EndVertical();
 
                 GUILayout.EndHorizontal();
@@ -169,7 +166,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public static void ListHeader<T>(int first, int last, ref Pagination<T> pagination)
         {
             GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
+            GUILayout.Space(8);
 
             GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
             GUILayout.FlexibleSpace();
@@ -193,7 +190,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         {
             GUILayout.Label("EntityQuery:", UIStyle.Instance.reducedPaddingHighlightedLabelStyle, options: null);
             GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
+            GUILayout.Space(6);
             GUILayout.BeginVertical(options: null);
             {
                 GUILayout.BeginHorizontal(options: null);
@@ -209,7 +206,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
+            GUILayout.Space(6);
             GUILayout.BeginVertical(options: null);
             {
                 GUILayout.BeginHorizontal(options: null);
@@ -225,7 +222,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
+            GUILayout.Space(6);
             GUILayout.BeginVertical(options: null);
             GUILayout.BeginHorizontal(options: null);
             {
@@ -253,7 +250,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     {
                         creator.RemoveDeferred(creatorWithAll.Current, type);
                     }
-                    GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(40f));
+                    GUILayout.Space(40);
                     GUILayout.EndHorizontal();
                 }
             }

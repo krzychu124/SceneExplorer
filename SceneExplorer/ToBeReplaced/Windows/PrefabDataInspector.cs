@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Game.Prefabs;
+﻿using Game.Prefabs;
 using SceneExplorer.Services;
 using SceneExplorer.ToBeReplaced.Helpers;
-using SceneExplorer.ToBeReplaced.Helpers.ContentItems;
+using System.Collections.Generic;
+using System.Reflection;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace SceneExplorer.ToBeReplaced.Windows
 {
@@ -28,8 +25,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private InspectableObjectRenderer _objectRenderer;
 
         public PrefabDataInspector() {
-            _minSize = new Vector2(ModEntryPoint.Settings.CalculateUIScaledValue(200), ModEntryPoint.Settings.CalculateUIScaledValue(300));
-            ForceSize(ModEntryPoint.Settings.CalculateUIScaledValue(420), ModEntryPoint.Settings.CalculateUIScaledValue(460));
+            _minSize = new Vector2(200, 300);
+            ForceSize(420, 460);
         }
 
         protected override string Title { get; } = "PrefabData Inspector";
@@ -201,7 +198,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             //
             if (_complexObject != null)
             {
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(20f));
+                GUILayout.Space(20);
                 _complexObject.IsActive = true;
                 _objectRenderer.Render(_complexObject, this, -1, HasFocus ? Rect : Rect.zero, out _);
             }

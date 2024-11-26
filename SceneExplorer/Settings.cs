@@ -1,14 +1,9 @@
 ﻿using Colossal.IO.AssetDatabase;
-
 using Game.Input;
 using Game.Modding;
 using Game.Settings;
 using Game.UI;
-
-using SceneExplorer.ToBeReplaced.Helpers;
-
 using System;
-
 using UnityEngine;
 
 namespace SceneExplorer
@@ -37,23 +32,23 @@ namespace SceneExplorer
         [SettingsUIHidden]
         internal string SwitchToolModeKeybind => _switchToolModeKeybindingName;
         
-        [SettingsUIKeyboardBinding(BindingKeyboard.E, ToggleToolAction, ctrl: true)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.E, ToggleToolAction, alt: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding ToggleSceneExplorerTool { get; set; }
         
-        [SettingsUIKeyboardBinding(BindingKeyboard.D, ChangeToolModeAction, ctrl: true)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.D, ChangeToolModeAction, alt: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding ChangeSceneExplorerToolMode { get; set; }
         
-        [SettingsUIKeyboardBinding(BindingKeyboard.W, ToggleComponentSearchAction, ctrl: true)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.W, ToggleComponentSearchAction, alt: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding ToggleComponentSearch { get; set; }
         
-        [SettingsUIKeyboardBinding(BindingKeyboard.S, MakeSnapshotAction, ctrl: true)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.S, MakeSnapshotAction, alt: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding MakeSnapshot { get; set; }
 
-        [SettingsUISlider(min = 0.5f, max = 3.0f, step = 0.1f, scalarMultiplier = 1, unit = Unit.kFloatSingleFraction)]
+        [SettingsUISlider(min = 0.5f, max = 2.0f, step = 0.05f, scalarMultiplier = 1, unit = Unit.kFloatSingleFraction)]
         [SettingsUISection(Section, UIGroup)]
         public float UIScalingSlider 
         { 
@@ -65,11 +60,11 @@ namespace SceneExplorer
             set
             {
                 _uiScalingValue = value;
-
-                // Reset the cached UIStyle
-                UIStyle.ResetStaticInstance();
+                NormalizedScaling = Screen.width / 1920 * _uiScalingValue;
             }
         }
+
+        public float NormalizedScaling { get; private set; }
 
         [SettingsUISection(Section, AboutSection)]
         public string ModVersion => ModEntryPoint.Version;
@@ -113,21 +108,6 @@ namespace SceneExplorer
         {
             UseShortComponentNames = false;
             UIScalingSlider = 1.0f;
-        }
-
-        public int CalculateUIScaledValue(int value)
-        {
-            return (int)(UIScalingSlider * value);
-        }
-
-        public uint CalculateUIScaledValue(uint value)
-        {
-            return (uint)(UIScalingSlider * value);
-        }
-
-        public float CalculateUIScaledValue(float value)
-        {
-            return UIScalingSlider * value;
         }
 
         internal void ApplyLoadedSettings()

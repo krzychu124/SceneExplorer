@@ -1,14 +1,10 @@
 ﻿using Colossal.IO.AssetDatabase;
-
 using Game;
 using Game.Common;
 using Game.Modding;
 using Game.SceneFlow;
-
 using JetBrains.Annotations;
-
 using SceneExplorer.System;
-
 using System.Reflection;
 
 

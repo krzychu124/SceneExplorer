@@ -1,8 +1,5 @@
-﻿using Game.Prefabs;
-using SceneExplorer.ToBeReplaced.Windows;
-using Unity.Entities;
+﻿using SceneExplorer.ToBeReplaced.Windows;
 using UnityEngine;
-using Object = System.Object;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
 {
@@ -50,7 +47,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         {
             _expanded = !_expanded;
         }
-        GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(4f));
+        GUILayout.Space(4);
         GUILayout.Label(_title, options: null);
         GUILayout.EndHorizontal();
 

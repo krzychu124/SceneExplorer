@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Game.Prefabs;
+﻿using Game.Prefabs;
 using SceneExplorer.Services;
 using SceneExplorer.ToBeReplaced.Helpers;
+using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
@@ -30,8 +29,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public static Watchers Instance = new GameObject("SceneManager Watchers").AddComponent<Watchers>();
 
         public Watchers() {
-            _minSize = new Vector2(ModEntryPoint.Settings.CalculateUIScaledValue(300), ModEntryPoint.Settings.CalculateUIScaledValue(250));
-            ForceSize(ModEntryPoint.Settings.CalculateUIScaledValue(400), ModEntryPoint.Settings.CalculateUIScaledValue(350));
+            _minSize = new Vector2(300, 250);
+            ForceSize(400, 350);
             _items = new List<WatcherService.IWatchable>();
             _results = new List<WatcherService.IWatchable>();
         }
@@ -62,7 +61,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 _updateResults = true;
             }
             GUILayout.EndHorizontal();
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
+            GUILayout.Space(8);
 
             int first = 1 + _pagination.ItemPerPage * (_pagination.CurrentPage - 1);
             int last = first + (_pagination.ItemPerPage - 1) > _pagination.ItemCount ? _pagination.ItemCount : first + (_pagination.ItemPerPage);
@@ -72,10 +71,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (!_updateResults && _pagination.ItemCount > 0)
             {
                 GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
+                GUILayout.Space(12);
                 GUILayout.BeginVertical(options: null);
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(6f));
+                GUILayout.Space(6);
                 int count = _pagination.Data.Count;
                 int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
                 int lastItem = firstItem + _pagination.ItemPerPage;
@@ -88,14 +87,14 @@ namespace SceneExplorer.ToBeReplaced.Windows
                         var data = _pagination.Data[i];
                         GUILayout.BeginHorizontal(options: null);
                         GUILayout.Label(data.Preview(), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
-                        GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
+                        GUILayout.Space(5);
                         GUILayout.Label(data.PrefabName, UIStyle.Instance.focusedReducedPaddingLabelStyle, options: null);
                         GUILayout.FlexibleSpace();
                         if (GUILayout.Button("Inspect", UIStyle.Instance.iconButton, options: null))
                         {
                             data.Inspect();
                         }
-                        GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
+                        GUILayout.Space(5);
                         if (GUILayout.Button("X", UIStyle.Instance.iconButton, options: null))
                         {
                             _watcherService.Remove(data);
@@ -105,7 +104,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     GUILayout.EndScrollView();
                 }
 
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(8f));
+                GUILayout.Space(8);
                 GUILayout.EndVertical();
 
                 GUILayout.EndHorizontal();

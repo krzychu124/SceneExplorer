@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Game.Prefabs;
+﻿using Game.Prefabs;
 using SceneExplorer.Services;
 using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced.Helpers;
+using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -47,8 +47,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private Rect _titleSectionRect;
 
         public EntityInspector() {
-            _minSize = new Vector2(ModEntryPoint.Settings.CalculateUIScaledValue(250), ModEntryPoint.Settings.CalculateUIScaledValue(250));
-            ForceSize(ModEntryPoint.Settings.CalculateUIScaledValue(420), ModEntryPoint.Settings.CalculateUIScaledValue(460));
+            _minSize = new Vector2(250, 250);
+            ForceSize(420, 460);
             _prefabSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
         }
 
@@ -371,7 +371,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
                 GUILayout.BeginHorizontal(options: null);
                 GUILayout.Label("Inspect Entity", options: null);
-                GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(3f));
+                GUILayout.Space(3);
                 GUILayout.Label("index|version", options: null);
                 _manualEntity = GUILayout.TextField(_manualEntity, options: _inputOptions);
                 _manualEntityVersion = GUILayout.TextField(_manualEntityVersion, options: _inputOptions);
@@ -450,7 +450,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUI.color = temp;
             }
 
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(12f));
+            GUILayout.Space(12);
             CommonUI.DrawLine();
             GUILayout.EndVertical();
             Rect cached = _titleSectionRect;
@@ -461,7 +461,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             }
             
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(5f));
+            GUILayout.Space(5);
             _evaluator.RenderComponents(_renderer, SelectedEntity, HasFocus ? cached : Rect.zero);
 
             GUILayout.EndScrollView();

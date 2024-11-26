@@ -1,10 +1,7 @@
 ﻿using Game.Input;
 using Game.SceneFlow;
-
 using SceneExplorer.ToBeReplaced.Helpers;
-
 using System;
-
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -19,19 +16,13 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private static Vector2 _moveDragHandle = Vector2.zero;
         private readonly int _id = ++_uniqueId;
 
-        protected Vector2 _minSize = new Vector2(
-            ModEntryPoint.Settings.CalculateUIScaledValue(160), 
-            ModEntryPoint.Settings.CalculateUIScaledValue(100));
+        protected Vector2 _minSize = new Vector2(260, 100);
 
         private bool _minimize = false;
         private bool _resizable = true;
         private InputManager _inputManager;
         private float _tempWindowHeight;
-        private Rect _windowRect = new Rect(
-            ModEntryPoint.Settings.CalculateUIScaledValue(200),
-            ModEntryPoint.Settings.CalculateUIScaledValue(150), 
-            ModEntryPoint.Settings.CalculateUIScaledValue(160),
-            ModEntryPoint.Settings.CalculateUIScaledValue(100));
+        private Rect _windowRect = new Rect(200, 150, 160, 100);
         public bool CursorOverUI { get; protected set; }
         public int ChainDepth { get; set; } = 0;
         public Rect Rect => _windowRect;
@@ -92,6 +83,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
             var originalSkin = GUI.skin;
             GUI.skin = UIStyle.Instance.Skin;
 
+            var originalMatrix = GUI.matrix;
+            Vector3 scale = new Vector3(ModEntryPoint.Settings.NormalizedScaling, ModEntryPoint.Settings.NormalizedScaling, 1.0f);
+            GUI.matrix = Matrix4x4.TRS(new Vector3(0, 0, 0), Quaternion.identity, scale);
+
             GUIStyle temp = GUI.skin.window;
             GUIStyle temp2 = GUI.skin.box;
             GUI.skin.window = CalculateBackgroundStyle();
@@ -100,6 +95,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             GUI.skin.window = temp;
             GUI.skin.box = temp2;
 
+            GUI.matrix = originalMatrix;
             GUI.skin = originalSkin;
         }
 
@@ -111,8 +107,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private void RenderWindowInternal(int id)
         {
             var mouse = Mouse.current.position;
-            float y = Screen.height - mouse.value.y;
-            Vector2 cursor = new Vector2(mouse.value.x, y);
+            float y = (Screen.height - mouse.value.y) / ModEntryPoint.Settings.NormalizedScaling;
+            Vector2 cursor = new Vector2(mouse.value.x / ModEntryPoint.Settings.NormalizedScaling, y);
             if (Event.current.type == EventType.Repaint)
             {
                 CursorOverUI = InsideUI(cursor);
@@ -124,7 +120,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 OnFocus();
             }
 
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(15f));
+            GUILayout.Space(10);
             try
             {
                 if (!IsMinimized)
@@ -137,7 +133,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 Logging.Info("EXCEPTION: \n" + e);
             }
 
-            GUILayout.Space(ModEntryPoint.Settings.CalculateUIScaledValue(10f));
+            GUILayout.Space(10);
             if (!IsMinimized)
             {
                 DrawBorder();
@@ -159,7 +155,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 if (!wasMinimized && _minimize)
                 {
                     _tempWindowHeight = _windowRect.height;
-                    _windowRect.height = ModEntryPoint.Settings.CalculateUIScaledValue(20f);
+                    _windowRect.height = 20;
                 }
                 else
                 {
@@ -194,17 +190,17 @@ namespace SceneExplorer.ToBeReplaced.Windows
             return UIStyle.Instance.windowDefault;
         }
 
-        private void DrawCloseButton(Vector3 position)
+        private void DrawCloseButton(Vector3 cursorPosition)
         {
             var closeRect = new Rect(
-                _windowRect.x + _windowRect.width - ModEntryPoint.Settings.CalculateUIScaledValue(20.0f), 
+                _windowRect.x + _windowRect.width - 20, 
                 _windowRect.y, 
-                ModEntryPoint.Settings.CalculateUIScaledValue(20.0f), 
-                ModEntryPoint.Settings.CalculateUIScaledValue(20.0f));
+                20, 
+                20);
             var closeTex = UIStyle.Instance.CloseBtnNormalTexture;
 
             bool drawButton = IsOpen;
-            if (!GUIUtility.hasModalWindow && closeRect.Contains(position))
+            if (!GUIUtility.hasModalWindow && closeRect.Contains(cursorPosition))
             {
                 closeTex = UIStyle.Instance.CloseBtnHoverTexture;
                 if (Mouse.current.leftButton.wasReleasedThisFrame)
@@ -218,27 +214,18 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
             if (drawButton)
             {
-                GUI.DrawTexture(new Rect(
-                        _windowRect.width - ModEntryPoint.Settings.CalculateUIScaledValue(20.0f), 
-                        0.0f,
-                        ModEntryPoint.Settings.CalculateUIScaledValue(20.0f),
-                        ModEntryPoint.Settings.CalculateUIScaledValue(20.0f)), 
-                    closeTex, ScaleMode.StretchToFill);
-                GUI.Label(new Rect(_windowRect.width - ModEntryPoint.Settings.CalculateUIScaledValue(16.0f),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(4.0f),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(20.0f),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(20.0f)),
-                    "✖");
+                GUI.DrawTexture(new Rect(_windowRect.width - 20, 0.0f, 20, 20), closeTex, ScaleMode.StretchToFill);
+                GUI.Label(new Rect(_windowRect.width - 16, 4, 20, 20), "✖");
             }
         }
 
         private void DrawMinimizeButton(Vector3 position)
         {
             var minimizeRect = new Rect(
-                _windowRect.x + ModEntryPoint.Settings.CalculateUIScaledValue(2.0f), 
+                _windowRect.x + 2, 
                 _windowRect.y,
-                ModEntryPoint.Settings.CalculateUIScaledValue(16.0f),
-                ModEntryPoint.Settings.CalculateUIScaledValue(8.0f));
+                16,
+                8);
             var minimizeTex = UIStyle.Instance.MinimizeBtnNormalTexture;
 
             if (!GUIUtility.hasModalWindow && minimizeRect.Contains(position))
@@ -255,21 +242,13 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 }
             }
 
-            GUI.DrawTexture(new Rect(
-                    ModEntryPoint.Settings.CalculateUIScaledValue(4f), 
-                    0.0f,
-                    ModEntryPoint.Settings.CalculateUIScaledValue(16.0f),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(8.0f)), 
+            GUI.DrawTexture(new Rect(4, 0f, 16, 8), 
                 minimizeTex, ScaleMode.StretchToFill);
         }
 
         private void DrawTitle(Vector3 position)
         {
-            var moveRect = new Rect(
-                _windowRect.x + ModEntryPoint.Settings.CalculateUIScaledValue(16),
-                _windowRect.y, 
-                _windowRect.width - ModEntryPoint.Settings.CalculateUIScaledValue(22f),
-                ModEntryPoint.Settings.CalculateUIScaledValue(20.0f));
+            var moveRect = new Rect(_windowRect.x + 16, _windowRect.y, _windowRect.width - 22, 20);
             var moveTex = IsMinimized ? UIStyle.Instance.TitleMinimizedTexture : UIStyle.Instance.TitleNormalTexture;
             if (!GUIUtility.hasModalWindow)
             {
@@ -328,14 +307,14 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     0.0f, 
                     0.0f, 
                     _windowRect.width,
-                    ModEntryPoint.Settings.CalculateUIScaledValue(20.0f)), 
+                    20.0f), 
                 moveTex, ScaleMode.StretchToFill);
             GUI.contentColor = Color.white;
             GUI.Label(new Rect(
-                    ModEntryPoint.Settings.CalculateUIScaledValue(30.0f),
+                    30.0f,
                     0.0f, 
                     _windowRect.width,
-                    ModEntryPoint.Settings.CalculateUIScaledValue(20.0f)), 
+                    20.0f), 
                 $"{Title} {(!string.IsNullOrEmpty(Subtitle) ? $"- {Subtitle}" : string.Empty)}", 
                 WindowManager.FocusedWindowId == _id ? UIStyle.Instance.focusedLabelStyle : UIStyle.Instance.defaultLabelStyle);
         }
@@ -343,10 +322,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private void DrawResizeHandle(Vector3 mouse)
         {
             var resizeRect = new Rect(
-                _windowRect.x + _windowRect.width - ModEntryPoint.Settings.CalculateUIScaledValue(16.0f),
-                _windowRect.y + _windowRect.height - ModEntryPoint.Settings.CalculateUIScaledValue(8.0f),
-                ModEntryPoint.Settings.CalculateUIScaledValue(16.0f),
-                ModEntryPoint.Settings.CalculateUIScaledValue(8.0f));
+                _windowRect.x + _windowRect.width - 16.0f,
+                _windowRect.y + _windowRect.height - 8.0f,
+                16.0f,
+                8.0f);
             var resizeTex = UIStyle.Instance.ResizeBtnNormalTexture;
 
             if (!GUIUtility.hasModalWindow)
@@ -403,10 +382,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
             }
 
             GUI.DrawTexture(new Rect(
-                    _windowRect.width - ModEntryPoint.Settings.CalculateUIScaledValue(16.0f),
-                    _windowRect.height - ModEntryPoint.Settings.CalculateUIScaledValue(8.0f),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(16.0f),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(8.0f)), 
+                    _windowRect.width - 16.0f,
+                    _windowRect.height - 8.0f,
+                    16.0f,
+                    8.0f), 
                 resizeTex, ScaleMode.StretchToFill);
         }
 

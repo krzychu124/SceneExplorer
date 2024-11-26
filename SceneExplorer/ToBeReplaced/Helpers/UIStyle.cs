@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-
 using Unity.Entities;
-
 using UnityEngine;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
@@ -103,7 +101,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public UIStyle()
         {
-            _fontSize = ModEntryPoint.Settings.CalculateUIScaledValue(12);
+            _fontSize = 12;
 
             _bgTexture = new Texture2D(1, 1);
             _bgTexture.SetPixel(0, 0, new Color32(26, 29, 34, 255));
@@ -261,16 +259,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             iconButton = new GUIStyle(GUI.skin.button)
             {
-                margin = new RectOffset(
-                    ModEntryPoint.Settings.CalculateUIScaledValue(2), 
-                    ModEntryPoint.Settings.CalculateUIScaledValue(2), 
-                    ModEntryPoint.Settings.CalculateUIScaledValue(2), 
-                    ModEntryPoint.Settings.CalculateUIScaledValue(2)),
-                padding = new RectOffset(
-                    ModEntryPoint.Settings.CalculateUIScaledValue(4),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(4),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(2),
-                    ModEntryPoint.Settings.CalculateUIScaledValue(2)),
+                margin = new RectOffset(2, 2, 2, 2),
+                padding = new RectOffset(4, 4, 2, 2),
                 fontSize = _fontSize,
                 normal = { background = _titleHoverTexture },
                 active = { background = _titleHoverTexture },
