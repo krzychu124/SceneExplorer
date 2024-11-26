@@ -296,3 +296,6 @@ node_modules/
 
 # Mod library dependencies folder
 /Dependencies/
+
+# IL Post Processor temp file
+ilpp.pid
