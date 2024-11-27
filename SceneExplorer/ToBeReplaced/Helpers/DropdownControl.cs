@@ -46,9 +46,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 GUI.skin = UIStyle.Instance.Skin;
 
                 var originalMatrix = GUI.matrix;
-                var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
-                Vector3 scaleVector = new Vector3(normalizedScaling, normalizedScaling, 1.0f);
-                GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scaleVector);
+                GUI.matrix = Utils.GetScalingMatrix();
 
                 _position = GUILayout.Window(_id, _position, RenderWindow, "", options: null);
 

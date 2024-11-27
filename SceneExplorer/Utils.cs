@@ -44,6 +44,13 @@ namespace SceneExplorer
             return ModEntryPoint.Settings.UseShortComponentNames ? type.Name : type.GetFriendlyName();
         }
 
+        internal static Matrix4x4 GetScalingMatrix()
+        {
+            var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
+            Vector3 scaleVector = new Vector3(normalizedScaling, normalizedScaling, 1.0f);
+            return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scaleVector);
+        }
+
         internal static Vector2 GetTransformedMousePosition()
         {
             Vector2 mousePosition = Mouse.current.position.value;
