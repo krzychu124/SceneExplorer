@@ -46,8 +46,9 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 GUI.skin = UIStyle.Instance.Skin;
 
                 var originalMatrix = GUI.matrix;
-                Vector3 scale = new Vector3(ModEntryPoint.Settings.NormalizedScaling, ModEntryPoint.Settings.NormalizedScaling, 1.0f);
-                GUI.matrix = Matrix4x4.TRS(new Vector3(0, 0, 0), Quaternion.identity, scale);
+                var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
+                Vector3 scaleVector = new Vector3(normalizedScaling, normalizedScaling, 1.0f);
+                GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scaleVector);
 
                 _position = GUILayout.Window(_id, _position, RenderWindow, "", options: null);
 
@@ -76,8 +77,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             if (c == _callback && Time.time - _lastCheck > 1f && (Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame))
             {
-                Vector2 v = Mouse.current.position.value;
-                if (!_position.Contains(new Vector2(v.x / ModEntryPoint.Settings.NormalizedScaling, (Screen.height - v.y) / ModEntryPoint.Settings.NormalizedScaling)))
+                if (!_position.Contains(Utils.GetTransformedMousePosition()))
                 {
                     enabled = false;
                 }

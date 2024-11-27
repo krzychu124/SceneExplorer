@@ -84,8 +84,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
             GUI.skin = UIStyle.Instance.Skin;
 
             var originalMatrix = GUI.matrix;
-            Vector3 scale = new Vector3(ModEntryPoint.Settings.NormalizedScaling, ModEntryPoint.Settings.NormalizedScaling, 1.0f);
-            GUI.matrix = Matrix4x4.TRS(new Vector3(0, 0, 0), Quaternion.identity, scale);
+            var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
+            Vector3 scaleVector = new Vector3(normalizedScaling, normalizedScaling, 1.0f);
+            GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scaleVector);
 
             GUIStyle temp = GUI.skin.window;
             GUIStyle temp2 = GUI.skin.box;
@@ -107,8 +108,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private void RenderWindowInternal(int id)
         {
             var mouse = Mouse.current.position;
-            float y = (Screen.height - mouse.value.y) / ModEntryPoint.Settings.NormalizedScaling;
-            Vector2 cursor = new Vector2(mouse.value.x / ModEntryPoint.Settings.NormalizedScaling, y);
+            var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
+            float y = (Screen.height - mouse.value.y) / normalizedScaling;
+            Vector2 cursor = new Vector2(mouse.value.x / normalizedScaling, y);
             if (Event.current.type == EventType.Repaint)
             {
                 CursorOverUI = InsideUI(cursor);

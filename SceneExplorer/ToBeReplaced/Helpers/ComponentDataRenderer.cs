@@ -246,9 +246,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public static bool WasHovered(Rect rect)
         {
             if (Event.current.type != EventType.Repaint) return false;
-            var mouse = Mouse.current.position.value;
-            Vector2 cursor = new Vector2(mouse.x * ModEntryPoint.Settings.NormalizedScaling, (Screen.height - mouse.y) / ModEntryPoint.Settings.NormalizedScaling);
-            return rect.Contains(cursor) &&
+
+            return rect.Contains(Utils.GetTransformedMousePosition()) &&
                 GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition);
         }
 

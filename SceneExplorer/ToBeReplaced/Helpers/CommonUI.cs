@@ -8,16 +8,9 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 {
     public static class CommonUI
     {
-        private static GUILayoutOption[] _expandButtonOptions = new GUILayoutOption[] { 
-            GUILayout.MaxWidth(21), 
-            GUILayout.MaxHeight(22) };
-        private static GUILayoutOption[] _lineOptions = new[] { 
-            GUILayout.ExpandWidth(true), 
-            GUILayout.Height(1f) };
-        private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { 
-            GUILayout.MinWidth(60), 
-            GUILayout.MaxWidth(60), 
-            GUILayout.MaxHeight(22) };
+        private static GUILayoutOption[] _expandButtonOptions = new GUILayoutOption[] { GUILayout.MaxWidth(21), GUILayout.MaxHeight(22) };
+        private static GUILayoutOption[] _lineOptions = new[] { GUILayout.ExpandWidth(true), GUILayout.Height(1f) };
+        private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60), GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
 
         public static GUILayoutOption[] ExpandButtonOptions => _expandButtonOptions;
 
