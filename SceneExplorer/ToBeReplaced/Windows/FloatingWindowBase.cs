@@ -107,13 +107,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         private void RenderWindowInternal(int id)
         {
-            var mouse = Mouse.current.position;
-            var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
-            float y = (Screen.height - mouse.value.y) / normalizedScaling;
-            Vector2 cursor = new Vector2(mouse.value.x / normalizedScaling, y);
+            Vector2 mousePosition = Utils.GetTransformedMousePosition();
             if (Event.current.type == EventType.Repaint)
             {
-                CursorOverUI = InsideUI(cursor);
+                CursorOverUI = InsideUI(mousePosition);
             }
 
             if (WindowManager.FocusedWindowId == -1 || (Mouse.current.leftButton.wasReleasedThisFrame && CursorOverUI))
@@ -141,13 +138,13 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 DrawBorder();
             }
 
-            DrawTitle(cursor);
-            DrawMinimizeButton(cursor);
-            DrawCloseButton(cursor);
+            DrawTitle(mousePosition);
+            DrawMinimizeButton(mousePosition);
+            DrawCloseButton(mousePosition);
 
             if (_resizable && !IsMinimized)
             {
-                DrawResizeHandle(cursor);
+                DrawResizeHandle(mousePosition);
             }
 
             if (Event.current.type == EventType.Repaint && IsMinimized != _minimize)
