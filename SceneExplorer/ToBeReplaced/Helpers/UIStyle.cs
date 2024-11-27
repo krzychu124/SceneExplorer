@@ -8,6 +8,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public class UIStyle
     {
         private static UIStyle _instance;
+
         public static UIStyle Instance
         {
             [MethodImpl(MethodImplOptions.NoInlining)]
@@ -20,12 +21,6 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
                 return _instance;
             }
-
-        }
-
-        public static void ResetStaticInstance()
-        {
-            _instance = null;
         }
 
         public GUISkin Skin => _skin;
@@ -64,8 +59,6 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private readonly Texture2D _rootColorTexture;
         private readonly Texture2D _activeColorTexture;
 
-        private readonly int _fontSize;
-
         public readonly GUIStyle windowDefault;
         public readonly GUIStyle window2;
         public readonly GUIStyle window3;
@@ -101,8 +94,6 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public UIStyle()
         {
-            _fontSize = 12;
-
             _bgTexture = new Texture2D(1, 1);
             _bgTexture.SetPixel(0, 0, new Color32(26, 29, 34, 255));
             _bgTexture.Apply();
@@ -173,7 +164,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             _skin = ScriptableObject.CreateInstance<GUISkin>();
             _skin.box = new GUIStyle(GUI.skin.box) { normal = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _titleHoverTexture }, alignment = TextAnchor.MiddleLeft };
-            _skin.button = new GUIStyle(GUI.skin.button) { fontSize = _fontSize };
+            _skin.button = new GUIStyle(GUI.skin.button);
             _skin.horizontalScrollbar = new GUIStyle(GUI.skin.horizontalScrollbar)
             { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
             _skin.horizontalScrollbarLeftButton = new GUIStyle(GUI.skin.horizontalScrollbarLeftButton);
@@ -188,16 +179,16 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 onHover = { background = _commonHoverTexture }
             };
             _skin.horizontalSlider = new GUIStyle(GUI.skin.horizontalSlider)
-                { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
+            { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
             _skin.horizontalSliderThumb = new GUIStyle(GUI.skin.horizontalSliderThumb)
-                { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
-            _skin.label = new GUIStyle(GUI.skin.label) { margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(0, 0, 1, 1), fontSize = _fontSize, wordWrap = false };
+            { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
+            _skin.label = new GUIStyle(GUI.skin.label) { margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(0, 0, 1, 1), wordWrap = false };
             _skin.scrollView = new GUIStyle(GUI.skin.scrollView);
-            _skin.textArea = new GUIStyle(GUI.skin.textArea) { fontSize = _fontSize };
-            _skin.textField = new GUIStyle(GUI.skin.textField) { fontSize = _fontSize };
-            _skin.toggle = new GUIStyle(GUI.skin.toggle) { fontSize = _fontSize };
+            _skin.textArea = new GUIStyle(GUI.skin.textArea);
+            _skin.textField = new GUIStyle(GUI.skin.textField);
+            _skin.toggle = new GUIStyle(GUI.skin.toggle);
             _skin.verticalScrollbar = new GUIStyle(GUI.skin.verticalScrollbar)
-                { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
+            { normal = { background = _bgTexture }, active = { background = _bgTexture }, onNormal = { background = _bgTexture }, hover = { background = _bgTexture }, onHover = { background = _bgTexture } };
             _skin.verticalScrollbarDownButton = new GUIStyle(GUI.skin.verticalScrollbarDownButton);
             _skin.verticalScrollbarThumb = new GUIStyle(GUI.skin.verticalScrollbarThumb)
             {
@@ -230,38 +221,37 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _skin.settings.selectionColor = GUI.skin.settings.selectionColor;
             _skin.settings.tripleClickSelectsLine = GUI.skin.settings.tripleClickSelectsLine;
 
-            focusedLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = new Color(0.52f, 0.91f, 0.24f) }, fontSize = _fontSize };
+            focusedLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = new Color(0.52f, 0.91f, 0.24f) } };
             focusedLabelStyle.wordWrap = false;
-            defaultLabelStyle = new GUIStyle(GUI.skin.label) { fontSize = _fontSize };
-            reducedPaddingLabelStyle = new GUIStyle(GUI.skin.label) { margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1), fontSize = _fontSize };
+            defaultLabelStyle = new GUIStyle(GUI.skin.label);
+            reducedPaddingLabelStyle = new GUIStyle(GUI.skin.label) { margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1) };
             reducedPaddingLabelStyle.wordWrap = false;
-            reducedPaddingPrivateLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = reducedPaddingLabelStyle.normal.textColor * new Color(1, 1, 1, 0.6f) }, margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1), fontSize = _fontSize };
+            reducedPaddingPrivateLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = reducedPaddingLabelStyle.normal.textColor * new Color(1, 1, 1, 0.6f) }, margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1) };
             reducedPaddingPrivateLabelStyle.wordWrap = false;
-            paginationLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { margin = new RectOffset(3, 3, 3, 1), padding = new RectOffset(1, 1, 1, 1), fontStyle = FontStyle.Bold, fontSize = _fontSize };
-            reducedPaddingHighlightedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { fontStyle = FontStyle.Bold, fontSize = _fontSize };
-            enumValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.59f, 0.83f) }, fontStyle = FontStyle.BoldAndItalic, wordWrap = true, fontSize = _fontSize };
-            entityValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.76f, 0.87f) }, fontStyle = FontStyle.Bold, wordWrap = true, fontSize = _fontSize };
-            numericValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.8f, 0.71f) }, fontStyle = FontStyle.Bold, wordWrap = true, fontSize = _fontSize };
-            booleanValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(16, 167, 178, 255) }, fontStyle = FontStyle.Bold, wordWrap = true, fontSize = _fontSize };
-            focusedReducedPaddingLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = new Color(0.21f, 0.75f, 0f) }, fontStyle = FontStyle.Bold, fontSize = _fontSize, wordWrap = false, margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1) };
-            focusedReducedPaddingHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingLabelStyle) { fontStyle = FontStyle.Bold, fontSize = _fontSize };
+            paginationLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { margin = new RectOffset(3, 3, 3, 1), padding = new RectOffset(1, 1, 1, 1), fontSize = 12, fontStyle = FontStyle.Bold };
+            reducedPaddingHighlightedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { fontStyle = FontStyle.Bold };
+            enumValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.59f, 0.83f) }, fontStyle = FontStyle.BoldAndItalic, wordWrap = true };
+            entityValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.76f, 0.87f) }, fontStyle = FontStyle.Bold, wordWrap = true };
+            numericValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.8f, 0.71f) }, fontStyle = FontStyle.Bold, wordWrap = true };
+            booleanValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(16, 167, 178, 255) }, fontStyle = FontStyle.Bold, wordWrap = true };
+            focusedReducedPaddingLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = new Color(0.21f, 0.75f, 0f) }, fontStyle = FontStyle.Bold, wordWrap = false, margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1) };
+            focusedReducedPaddingHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingLabelStyle) { fontStyle = FontStyle.Bold };
 
-            managedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 232, 115, 255) }, fontSize = _fontSize };
-            managedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 232, 115, 255) }, fontSize = _fontSize };
-            unManagedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 245, 191, 255) }, fontSize = _fontSize };
-            unManagedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 245, 191, 255) }, fontSize = _fontSize };
-            bufferLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(242, 203, 0, 255) }, fontSize = _fontSize };
-            bufferHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(242, 203, 0, 255) }, fontSize = _fontSize };
-            sharedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(120, 252, 255, 255) }, fontSize = _fontSize };
-            sharedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(120, 252, 255, 255) }, fontSize = _fontSize };
-            unknownLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) }, fontSize = _fontSize };
-            unknownHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) }, fontSize = _fontSize };
+            managedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 232, 115, 255) } };
+            managedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 232, 115, 255) } };
+            unManagedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 245, 191, 255) } };
+            unManagedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 245, 191, 255) } };
+            bufferLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(242, 203, 0, 255) } };
+            bufferHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(242, 203, 0, 255) } };
+            sharedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(120, 252, 255, 255) } };
+            sharedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(120, 252, 255, 255) } };
+            unknownLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) } };
+            unknownHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) } };
 
             iconButton = new GUIStyle(GUI.skin.button)
             {
                 margin = new RectOffset(2, 2, 2, 2),
                 padding = new RectOffset(4, 4, 2, 2),
-                fontSize = _fontSize,
                 normal = { background = _titleHoverTexture },
                 active = { background = _titleHoverTexture },
                 onNormal = { background = _titleHoverTexture },
