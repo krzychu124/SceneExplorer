@@ -78,10 +78,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (_pagination.ItemCount > 0)
             {
                 GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-                GUILayout.Space(12f);
+                GUILayout.Space(12);
                 GUILayout.BeginVertical(options: null);
 
-                GUILayout.Space(6f);
+                GUILayout.Space(6);
                 int count = _pagination.Data.Count;
                 int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
                 int lastItem = firstItem + _pagination.ItemPerPage;
