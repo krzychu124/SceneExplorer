@@ -189,11 +189,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         private void DrawCloseButton(Vector3 mousePosition)
         {
-            var closeRect = new Rect(
-                _windowRect.x + _windowRect.width - 20, 
-                _windowRect.y, 
-                20, 
-                20);
+            var closeRect = new Rect(_windowRect.x + _windowRect.width - 20.0f, _windowRect.y, 20.0f, 20.0f);
             var closeTex = UIStyle.Instance.CloseBtnNormalTexture;
 
             bool drawButton = IsOpen;
@@ -212,7 +208,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (drawButton)
             {
                 GUI.DrawTexture(new Rect(_windowRect.width - 20.0f, 0.0f, 20.0f, 20.0f), closeTex, ScaleMode.StretchToFill);
-                GUI.Label(new Rect(_windowRect.width - 16.0f, 4.0f, 20.0f, 20.0f), "✖");
+                GUI.Label(new Rect(_windowRect.width - 17.0f, 2.0f, 20.0f, 20.0f), "✖");
             }
         }
 
