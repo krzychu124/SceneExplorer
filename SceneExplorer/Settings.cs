@@ -32,19 +32,19 @@ namespace SceneExplorer
         [SettingsUIHidden]
         internal string SwitchToolModeKeybind => _switchToolModeKeybindingName;
         
-        [SettingsUIKeyboardBinding(BindingKeyboard.E, ToggleToolAction, alt: true)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.E, ToggleToolAction, ctrl: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding ToggleSceneExplorerTool { get; set; }
         
-        [SettingsUIKeyboardBinding(BindingKeyboard.D, ChangeToolModeAction, alt: true)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.D, ChangeToolModeAction, ctrl: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding ChangeSceneExplorerToolMode { get; set; }
         
-        [SettingsUIKeyboardBinding(BindingKeyboard.W, ToggleComponentSearchAction, alt: true)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.W, ToggleComponentSearchAction, ctrl: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding ToggleComponentSearch { get; set; }
         
-        [SettingsUIKeyboardBinding(BindingKeyboard.S, MakeSnapshotAction, alt: true)]
+        [SettingsUIKeyboardBinding(BindingKeyboard.S, MakeSnapshotAction, ctrl: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding MakeSnapshot { get; set; }
 
