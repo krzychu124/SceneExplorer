@@ -126,8 +126,6 @@ namespace SceneExplorer
 
         private void OnToggleSceneExplorerTool(ProxyAction proxyAction, InputActionPhase inputActionPhase)
         {
-            Logging.Info($"{nameof(OnToggleSceneExplorerTool)} was called");
-
             if (inputActionPhase != InputActionPhase.Performed)
             {
                 return;
@@ -138,8 +136,6 @@ namespace SceneExplorer
 
         private void OnChangeSceneExplorerInspectMode(ProxyAction proxyAction, InputActionPhase inputActionPhase)
         {
-            Logging.Info($"{nameof(OnChangeSceneExplorerInspectMode)} was called");
-
             if (inputActionPhase != InputActionPhase.Performed)
             {
                 return;
@@ -150,8 +146,6 @@ namespace SceneExplorer
         
         private void OnToggleComponentSearchWindow(ProxyAction proxyAction, InputActionPhase inputActionPhase)
         {
-            Logging.Info($"{nameof(OnToggleComponentSearchWindow)} was called");
-
             if (inputActionPhase != InputActionPhase.Performed)
             {
                 return;
