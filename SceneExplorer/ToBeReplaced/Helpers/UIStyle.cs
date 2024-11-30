@@ -7,20 +7,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 {
     public class UIStyle
     {
-        private static UIStyle _instance;
-
         public static UIStyle Instance
         {
             [MethodImpl(MethodImplOptions.NoInlining)]
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = new UIStyle();
-                }
-
-                return _instance;
-            }
+            get;
+            private set;
         }
 
         public GUISkin Skin => _skin;
@@ -92,7 +83,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public readonly GUILayoutOption[] textInputLayoutOptions = new[] { GUILayout.MinWidth(60), GUILayout.MaxWidth(60) };
 
-        public UIStyle()
+        private UIStyle()
         {
             _bgTexture = new Texture2D(1, 1);
             _bgTexture.SetPixel(0, 0, new Color32(26, 29, 34, 255));
@@ -277,6 +268,20 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 normal = { background = _commonHoverTexture },
                 onNormal = { background = _commonHoverTexture }
             };
+        }
+
+        /// <summary>
+        /// Create the singletone UIStyle instance.
+        /// It must be called from an OnGUI call!
+        /// </summary>
+        /// <returns>The newly created or already existing singletone UIStyle instance</returns>
+        public static UIStyle Build()
+        {
+            if (Instance != null)
+            {
+                return Instance;
+            }
+            return Instance = new UIStyle();
         }
 
         public GUIStyle CalculateTextStyle(Type t)

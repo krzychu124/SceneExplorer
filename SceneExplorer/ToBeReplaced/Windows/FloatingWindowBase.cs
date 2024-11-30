@@ -14,6 +14,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private static Vector2 _resizeDragHandle = Vector2.zero;
         private static FloatingWindowBase _movingWindow;
         private static Vector2 _moveDragHandle = Vector2.zero;
+        
+        private static bool _uiStyleWasCreated;
+
         private readonly int _id = ++_uniqueId;
 
         protected Vector2 _minSize = new Vector2(160, 100);
@@ -38,7 +41,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public int ParentWindowId { get; set; } = -1;
 
         public virtual string Subtitle { get; set; } = string.Empty;
-
         public static FloatingWindowsManager WindowManager { get; protected set; }
         protected abstract string Title { get; }
         public Vector2 Position => _windowRect.position;
@@ -77,6 +79,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         public void OnGUI()
         {
+            if (!_uiStyleWasCreated)
+            {
+                UIStyle.Build();
+                _uiStyleWasCreated = true;
+            }
+
             if (!IsOpen)
                 return;
 
