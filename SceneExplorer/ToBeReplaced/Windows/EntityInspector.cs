@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Game.Prefabs;
+﻿using Game.Prefabs;
 using SceneExplorer.Services;
 using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced.Helpers;
+using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -365,7 +365,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUILayout.Label(InspectObjectUtils.GetModeName(_inspectObjectToolSystem.Mode), options: null);
 #endif
                 GUI.color = Color.white;
-                GUILayout.Label($" ({ModEntryPoint._settings.SwitchToolModeKeybind})", options: null);
+                GUILayout.Label($" ({ModEntryPoint.Settings.SwitchToolModeKeybind})", options: null);
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
@@ -405,7 +405,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 Color temp = GUI.color;
                 GUILayout.BeginHorizontal(options: null);
-                GUILayout.Label(_selectedEntity.ToString(), Style.focusedLabelStyle);
+                GUILayout.Label(_selectedEntity.ToString(), UIStyle.Instance.focusedLabelStyle);
                 if (_canJumpTo)
                 {
                     GUILayout.FlexibleSpace();
@@ -426,7 +426,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     GUILayout.Label(InspectObjectUtils.GetModeName(_inspectObjectToolSystem.Mode), options: null);
 #endif
                     GUI.color = temp;
-                    GUILayout.Label($" ({ModEntryPoint._settings.SwitchToolModeKeybind})", options: null);
+                    GUILayout.Label($" ({ModEntryPoint.Settings.SwitchToolModeKeybind})", options: null);
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
                 }

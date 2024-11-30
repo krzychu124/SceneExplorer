@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Game.Prefabs;
+﻿using Game.Prefabs;
 using SceneExplorer.Services;
 using SceneExplorer.ToBeReplaced.Helpers;
-using SceneExplorer.ToBeReplaced.Helpers.ContentItems;
+using System.Collections.Generic;
+using System.Reflection;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace SceneExplorer.ToBeReplaced.Windows
 {

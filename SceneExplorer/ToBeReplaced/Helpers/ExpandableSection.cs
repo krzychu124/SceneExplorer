@@ -1,8 +1,5 @@
-﻿using Game.Prefabs;
-using SceneExplorer.ToBeReplaced.Windows;
-using Unity.Entities;
+﻿using SceneExplorer.ToBeReplaced.Windows;
 using UnityEngine;
-using Object = System.Object;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
 {

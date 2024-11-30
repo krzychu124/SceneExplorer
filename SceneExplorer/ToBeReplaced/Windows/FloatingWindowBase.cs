@@ -1,8 +1,7 @@
-﻿using System;
-using Game.Input;
+﻿using Game.Input;
 using Game.SceneFlow;
-using JetBrains.Annotations;
 using SceneExplorer.ToBeReplaced.Helpers;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,6 +14,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private static Vector2 _resizeDragHandle = Vector2.zero;
         private static FloatingWindowBase _movingWindow;
         private static Vector2 _moveDragHandle = Vector2.zero;
+        
+        private static bool _uiStyleWasCreated;
+
         private readonly int _id = ++_uniqueId;
 
         protected Vector2 _minSize = new Vector2(160, 100);
@@ -39,7 +41,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public int ParentWindowId { get; set; } = -1;
 
         public virtual string Subtitle { get; set; } = string.Empty;
-        protected static UIStyle Style { get; private set; }
         public static FloatingWindowsManager WindowManager { get; protected set; }
         protected abstract string Title { get; }
         public Vector2 Position => _windowRect.position;
@@ -78,16 +79,20 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         public void OnGUI()
         {
-            if (Style == null)
+            if (!_uiStyleWasCreated)
             {
-                Style = UIStyle.Build();
+                UIStyle.Build();
+                _uiStyleWasCreated = true;
             }
 
             if (!IsOpen)
                 return;
 
             var originalSkin = GUI.skin;
-            GUI.skin = Style.Skin;
+            GUI.skin = UIStyle.Instance.Skin;
+
+            var originalMatrix = GUI.matrix;
+            GUI.matrix = Utils.GetScalingMatrix();
 
             GUIStyle temp = GUI.skin.window;
             GUIStyle temp2 = GUI.skin.box;
@@ -97,6 +102,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             GUI.skin.window = temp;
             GUI.skin.box = temp2;
 
+            GUI.matrix = originalMatrix;
             GUI.skin = originalSkin;
         }
 
@@ -107,12 +113,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         private void RenderWindowInternal(int id)
         {
-            var mouse = Mouse.current.position;
-            float y = Screen.height - mouse.value.y;
-            Vector2 cursor = new Vector2(mouse.value.x, y);
+            Vector2 mousePosition = Utils.GetTransformedMousePosition();
             if (Event.current.type == EventType.Repaint)
             {
-                CursorOverUI = InsideUI(cursor);
+                CursorOverUI = InsideUI(mousePosition);
             }
 
             if (WindowManager.FocusedWindowId == -1 || (Mouse.current.leftButton.wasReleasedThisFrame && CursorOverUI))
@@ -140,13 +144,13 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 DrawBorder();
             }
 
-            DrawTitle(cursor);
-            DrawMinimizeButton(cursor);
-            DrawCloseButton(cursor);
+            DrawTitle(mousePosition);
+            DrawMinimizeButton(mousePosition);
+            DrawCloseButton(mousePosition);
 
             if (_resizable && !IsMinimized)
             {
-                DrawResizeHandle(cursor);
+                DrawResizeHandle(mousePosition);
             }
 
             if (Event.current.type == EventType.Repaint && IsMinimized != _minimize)
@@ -191,15 +195,15 @@ namespace SceneExplorer.ToBeReplaced.Windows
             return UIStyle.Instance.windowDefault;
         }
 
-        private void DrawCloseButton(Vector3 position)
+        private void DrawCloseButton(Vector3 mousePosition)
         {
             var closeRect = new Rect(_windowRect.x + _windowRect.width - 20.0f, _windowRect.y, 20.0f, 20.0f);
-            var closeTex = Style.CloseBtnNormalTexture;
+            var closeTex = UIStyle.Instance.CloseBtnNormalTexture;
 
             bool drawButton = IsOpen;
-            if (!GUIUtility.hasModalWindow && closeRect.Contains(position))
+            if (!GUIUtility.hasModalWindow && closeRect.Contains(mousePosition))
             {
-                closeTex = Style.CloseBtnHoverTexture;
+                closeTex = UIStyle.Instance.CloseBtnHoverTexture;
                 if (Mouse.current.leftButton.wasReleasedThisFrame)
                 {
                     drawButton = false;
@@ -212,18 +216,18 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (drawButton)
             {
                 GUI.DrawTexture(new Rect(_windowRect.width - 20.0f, 0.0f, 20.0f, 20.0f), closeTex, ScaleMode.StretchToFill);
-                GUI.Label(new Rect(_windowRect.width - 17.0f, 0.0f, 20.0f, 20.0f), "✖");
+                GUI.Label(new Rect(_windowRect.width - 17.0f, 2.0f, 20.0f, 20.0f), "✖");
             }
         }
 
         private void DrawMinimizeButton(Vector3 position)
         {
             var minimizeRect = new Rect(_windowRect.x + 2.0f, _windowRect.y, 16.0f, 8.0f);
-            var minimizeTex = Style.MinimizeBtnNormalTexture;
+            var minimizeTex = UIStyle.Instance.MinimizeBtnNormalTexture;
 
             if (!GUIUtility.hasModalWindow && minimizeRect.Contains(position))
             {
-                minimizeTex = Style.MinimizeBtnHoverTexture;
+                minimizeTex = UIStyle.Instance.MinimizeBtnHoverTexture;
 
                 if (Mouse.current.leftButton.wasReleasedThisFrame)
                 {
@@ -241,14 +245,14 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private void DrawTitle(Vector3 position)
         {
             var moveRect = new Rect(_windowRect.x + 16, _windowRect.y, _windowRect.width - 22f, 20.0f);
-            var moveTex = IsMinimized ? Style.TitleMinimizedTexture : Style.TitleNormalTexture;
+            var moveTex = IsMinimized ? UIStyle.Instance.TitleMinimizedTexture : UIStyle.Instance.TitleNormalTexture;
             if (!GUIUtility.hasModalWindow)
             {
                 if (_movingWindow != null)
                 {
                     if (_movingWindow == this)
                     {
-                        moveTex = Style.TitleHoverTexture;
+                        moveTex = UIStyle.Instance.TitleHoverTexture;
 
                         if (Mouse.current.leftButton.isPressed)
                         {
@@ -285,7 +289,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 }
                 else if (moveRect.Contains(position) && _inputManager.mouseOnScreen)
                 {
-                    moveTex = Style.TitleHoverTexture;
+                    moveTex = UIStyle.Instance.TitleHoverTexture;
                     if (Mouse.current.leftButton.isPressed && _resizingWindow == null)
                     {
                         _movingWindow = this;
@@ -297,13 +301,15 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
             GUI.DrawTexture(new Rect(0.0f, 0.0f, _windowRect.width, 20.0f), moveTex, ScaleMode.StretchToFill);
             GUI.contentColor = Color.white;
-            GUI.Label(new Rect(30.0f, 0.0f, _windowRect.width, 20.0f), $"{Title} {(!string.IsNullOrEmpty(Subtitle) ? $"- {Subtitle}" : string.Empty)}", WindowManager.FocusedWindowId == _id ? Style.focusedLabelStyle : Style.defaultLabelStyle);
+            GUI.Label(new Rect(30.0f, 0.0f, _windowRect.width, 20.0f), 
+                $"{Title} {(!string.IsNullOrEmpty(Subtitle) ? $"- {Subtitle}" : string.Empty)}", 
+                WindowManager.FocusedWindowId == _id ? UIStyle.Instance.focusedLabelStyle : UIStyle.Instance.defaultLabelStyle);
         }
 
         private void DrawResizeHandle(Vector3 mouse)
         {
             var resizeRect = new Rect(_windowRect.x + _windowRect.width - 16.0f, _windowRect.y + _windowRect.height - 8.0f, 16.0f, 8.0f);
-            var resizeTex = Style.ResizeBtnNormalTexture;
+            var resizeTex = UIStyle.Instance.ResizeBtnNormalTexture;
 
             if (!GUIUtility.hasModalWindow)
             {
@@ -311,7 +317,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 {
                     if (_resizingWindow == this)
                     {
-                        resizeTex = Style.ResizeBtnHoverTexture;
+                        resizeTex = UIStyle.Instance.ResizeBtnHoverTexture;
 
                         if (Mouse.current.leftButton.isPressed)
                         {
@@ -348,7 +354,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 }
                 else if (resizeRect.Contains(mouse))
                 {
-                    resizeTex = Style.ResizeBtnHoverTexture;
+                    resizeTex = UIStyle.Instance.ResizeBtnHoverTexture;
                     if (Mouse.current.leftButton.isPressed)
                     {
                         _resizingWindow = this;
@@ -363,22 +369,15 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         private void DrawBorder()
         {
-            Texture2D texture = IsRoot ? Style.RootColorTexture :
-                (_resizingWindow == this || _movingWindow == this) ? Style.InteractionColorTexture : Style.TitleNormalTexture;
+            Texture2D texture = IsRoot ? UIStyle.Instance.RootColorTexture :
+                (_resizingWindow == this || _movingWindow == this) ? UIStyle.Instance.InteractionColorTexture : UIStyle.Instance.TitleNormalTexture;
             float width = IsRoot ? 2f : 1f;
             GUI.DrawTexture(new Rect(0.0f, 0.0f, width, _windowRect.height), texture);
             GUI.DrawTexture(new Rect(_windowRect.width - width, 0.0f, width, _windowRect.height), texture);
             GUI.DrawTexture(new Rect(0.0f, _windowRect.height - width, _windowRect.width, width), texture);
         }
 
-        protected void ForceSize(Vector2 size)
-        {
-            var p = _windowRect;
-            p.size = size;
-            _windowRect = p;
-        }
-
-        protected void ForceSize(uint width, uint height)
+        protected void ForceSize(int width, int height)
         {
             var p = _windowRect;
             p.width = width;

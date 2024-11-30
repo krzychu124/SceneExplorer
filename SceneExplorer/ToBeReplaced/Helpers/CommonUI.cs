@@ -1,8 +1,6 @@
-﻿using System;
+﻿using Game.Prefabs;
+using System;
 using System.Collections.Generic;
-using Game.Debug;
-using Game.Prefabs;
-using SceneExplorer.ToBeReplaced.Windows;
 using Unity.Entities;
 using UnityEngine;
 

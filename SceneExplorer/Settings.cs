@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Colossal.IO.AssetDatabase;
+﻿using Colossal.IO.AssetDatabase;
 using Game.Input;
 using Game.Modding;
 using Game.Settings;
+using Game.UI;
+using System;
 using UnityEngine;
 
 namespace SceneExplorer
@@ -14,19 +13,21 @@ namespace SceneExplorer
     [SettingsUIKeyboardAction(ChangeToolModeAction, customUsages: new []{Usages.kDefaultUsage, Usages.kToolUsage})]
     [SettingsUIKeyboardAction(ToggleComponentSearchAction, customUsages: new []{Usages.kDefaultUsage, Usages.kToolUsage})]
     [SettingsUIKeyboardAction(MakeSnapshotAction, customUsages: new []{Usages.kToolUsage})]
-    [SettingsUIGroupOrder(KeybindingGroup, OtherSection, AboutSection)]
-    [SettingsUIShowGroupName(KeybindingGroup, OtherSection, AboutSection)]
+    [SettingsUIGroupOrder(KeybindingGroup, UIGroup, OtherSection, AboutSection)]
+    [SettingsUIShowGroupName(KeybindingGroup, UIGroup, OtherSection, AboutSection)]
     public class Settings : ModSetting
     {
         public const string Section = "Main";
         public const string OtherSection = "Other";
         public const string AboutSection = "About";
         public const string KeybindingGroup = "KeyBinding";
+        public const string UIGroup = "UISettings";
         public const string ToggleToolAction = "ToggleToolAction";
         public const string ChangeToolModeAction = "ChangeToolModeAction";
         public const string ToggleComponentSearchAction = "ToggleComponentSearchAction";
         public const string MakeSnapshotAction = "MakeSnapshot";
         private string _switchToolModeKeybindingName = string.Empty;
+        private float _uiScalingValue;
 
         [SettingsUIHidden]
         internal string SwitchToolModeKeybind => _switchToolModeKeybindingName;
@@ -46,7 +47,25 @@ namespace SceneExplorer
         [SettingsUIKeyboardBinding(BindingKeyboard.S, MakeSnapshotAction, ctrl: true)]
         [SettingsUISection(Section, KeybindingGroup)]
         public ProxyBinding MakeSnapshot { get; set; }
-        
+
+        [SettingsUISlider(min = 0.5f, max = 1.5f, step = 0.01f, scalarMultiplier = 1, unit = Unit.kFloatTwoFractions)]
+        [SettingsUISection(Section, UIGroup)]
+        public float UIScalingSlider 
+        { 
+            get
+            {
+                return _uiScalingValue;
+            }
+
+            set
+            {
+                _uiScalingValue = value;
+                NormalizedScaling = Screen.width / 1920 * _uiScalingValue;
+            }
+        }
+
+        public float NormalizedScaling { get; private set; }
+
         [SettingsUISection(Section, AboutSection)]
         public string ModVersion => ModEntryPoint.Version;
         
@@ -88,8 +107,9 @@ namespace SceneExplorer
         public sealed override void SetDefaults()
         {
             UseShortComponentNames = false;
+            UIScalingSlider = 1.0f;
         }
-        
+
         internal void ApplyLoadedSettings()
         {
             UpdateKeybindingString(this);

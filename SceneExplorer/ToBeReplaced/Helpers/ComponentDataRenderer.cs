@@ -1,9 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using Game.Prefabs;
-using SceneExplorer.System;
+﻿using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced.Windows;
+using System;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -249,9 +246,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public static bool WasHovered(Rect rect)
         {
             if (Event.current.type != EventType.Repaint) return false;
-            var mouse = Mouse.current.position.value;
-            Vector2 cursor = new Vector2(mouse.x, Screen.height - mouse.y);
-            return rect.Contains(cursor) &&
+
+            return rect.Contains(Utils.GetTransformedMousePosition()) &&
                 GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition);
         }
 

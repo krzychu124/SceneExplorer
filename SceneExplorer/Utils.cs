@@ -1,8 +1,10 @@
-﻿using System;
-using Colossal.Logging.Utils;
+﻿using Colossal.Logging.Utils;
 using Game.Common;
 using Game.Tools;
+using System;
 using Unity.Entities;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SceneExplorer
 {
@@ -39,7 +41,22 @@ namespace SceneExplorer
 
         internal static string GetTypeName(this Type type)
         {
-            return ModEntryPoint._settings.UseShortComponentNames ? type.Name : type.GetFriendlyName();
-        } 
+            return ModEntryPoint.Settings.UseShortComponentNames ? type.Name : type.GetFriendlyName();
+        }
+
+        internal static Matrix4x4 GetScalingMatrix()
+        {
+            var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
+            Vector3 scaleVector = new Vector3(normalizedScaling, normalizedScaling, 1.0f);
+            return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scaleVector);
+        }
+
+        internal static Vector2 GetTransformedMousePosition()
+        {
+            Vector2 mousePosition = Mouse.current.position.value;
+            var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
+
+            return new Vector2(mousePosition.x / normalizedScaling, (Screen.height - mousePosition.y) / normalizedScaling);
+        }
     }
 }

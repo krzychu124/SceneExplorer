@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using cohtml.Net;
-using Colossal.Entities;
-using Game;
-using Game.Input;
+﻿using Game.Input;
 using Game.Prefabs;
 using Game.SceneFlow;
-using Game.Vehicles;
 using SceneExplorer.Services;
 using SceneExplorer.ToBeReplaced.Helpers;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -61,7 +56,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             _pagination = new Pagination<Item>(_items);
             _pagination.ItemPerPage = 20;
             _queryCreator = new QueryCreator(ComponentSearch._registeredComponents);
-            _snapshotEntities = ModEntryPoint._settings.GetAction(Settings.MakeSnapshotAction);
+            _snapshotEntities = ModEntryPoint.Settings.GetAction(Settings.MakeSnapshotAction);
             _snapshotEntities.onInteraction += OnMakeSnapshot;
         }
 
@@ -142,27 +137,27 @@ namespace SceneExplorer.ToBeReplaced.Windows
                         GUILayout.Space(5);
                         GUILayout.Label(data.PrefabName, UIStyle.Instance.focusedReducedPaddingLabelStyle, options: null);
                         GUILayout.FlexibleSpace();
-                        
+
 #if !DEBUG
                         // allow making entity snapshots only in the Editor
                         if (GameManager.instance.gameMode == GameMode.Editor)
                         {
 #endif
-                            if (data.SnapshotExists)
+                        if (data.SnapshotExists)
+                        {
+                            if (GUILayout.Button("Inspect Snapshot", UIStyle.Instance.iconButton, options: null))
                             {
-                                if (GUILayout.Button("Inspect Snapshot", UIStyle.Instance.iconButton, options: null))
-                                {
-                                    InspectSnapshotManual(data.Entity);
-                                }
+                                InspectSnapshotManual(data.Entity);
                             }
-                            else
+                        }
+                        else
+                        {
+                            if (data.IsValid && GUILayout.Button("Snapshot", UIStyle.Instance.iconButton, options: null))
                             {
-                                if (data.IsValid && GUILayout.Button("Snapshot", UIStyle.Instance.iconButton, options: null))
-                                {
-                                    data.TryMakeSnapshot();
-                                    _pagination.Data[i] = data;
-                                }
+                                data.TryMakeSnapshot();
+                                _pagination.Data[i] = data;
                             }
+                        }
 #if !DEBUG
                         }
 #endif
