@@ -1,4 +1,5 @@
-﻿using Game.SceneFlow;
+﻿using Game;
+using Game.SceneFlow;
 using SceneExplorer.ToBeReplaced.Helpers;
 using System;
 using System.Collections.Generic;
