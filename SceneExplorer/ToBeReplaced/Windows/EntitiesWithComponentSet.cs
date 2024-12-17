@@ -1,4 +1,5 @@
-﻿using Game.Input;
+﻿using Game;
+using Game.Input;
 using Game.Prefabs;
 using Game.SceneFlow;
 using SceneExplorer.Services;
