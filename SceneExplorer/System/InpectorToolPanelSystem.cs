@@ -311,8 +311,8 @@ namespace SceneExplorer.System
 
         public bool SelectEntity(Entity entity)
         {
-            PrefabRef refData;
-            if (entity == Entity.Null || !base.EntityManager.TryGetComponent(entity, out refData))
+            PrefabData prefabData;
+            if (entity == Entity.Null || !base.EntityManager.TryGetComponent(entity, out prefabData))
             {
                 _selectedEntity = Entity.Null;
                 _prefabChanged = _currentPrefab != null;
@@ -324,7 +324,7 @@ namespace SceneExplorer.System
 
             _selectedEntity = entity;
             _parentObject = null;
-            PrefabBase newPrefab = _prefabSystem.GetPrefab<PrefabBase>(refData);
+            PrefabBase newPrefab = _prefabSystem.GetPrefab<PrefabBase>(prefabData);
             if (newPrefab != _currentPrefab)
             {
                 SelectObjectForEntity(entity);

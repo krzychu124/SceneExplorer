@@ -4,6 +4,7 @@ using SceneExplorer.ToBeReplaced.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Game;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;

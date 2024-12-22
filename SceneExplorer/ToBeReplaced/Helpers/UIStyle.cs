@@ -78,6 +78,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public readonly GUIStyle bufferLabelStyle;
         public readonly GUIStyle sharedLabelStyle;
         public readonly GUIStyle sharedHighlightedLabelStyle;
+        public readonly GUIStyle missingPrefabLabelStyle;
+        public readonly GUIStyle missingPrefabHighlightedLabelStyle;
         public readonly GUIStyle unknownLabelStyle;
         public readonly GUIStyle unknownHighlightedLabelStyle;
 
@@ -238,6 +240,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             sharedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(120, 252, 255, 255) } };
             unknownLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) } };
             unknownHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) } };
+            missingPrefabLabelStyle = new GUIStyle(focusedReducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) } };
+            missingPrefabHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 89, 98, 255) }, fontStyle = FontStyle.Bold };
 
             iconButton = new GUIStyle(GUI.skin.button)
             {

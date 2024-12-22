@@ -441,8 +441,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUILayout.Label("[Buffer] ", style, options: null);
                 GUI.color = UIStyle.Instance.sharedLabelStyle.normal.textColor;
                 GUILayout.Label("[Shared] ", style, options: null);
-                GUI.color = UIStyle.Instance.unknownLabelStyle.normal.textColor;
-                GUILayout.Label("[Not Supported] ", style, options: null);
+                // very unlikely
+                // GUI.color = UIStyle.Instance.unknownLabelStyle.normal.textColor;
+                // GUILayout.Label("[Not Supported] ", style, options: null);
                 GUI.color = Color.white;
                 GUILayout.Label("[Tag] ", style, options: null);
                 GUILayout.FlexibleSpace();

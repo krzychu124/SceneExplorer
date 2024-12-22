@@ -63,19 +63,23 @@ namespace SceneExplorer.System
                 using (NativeArray<ComponentType> componentTypes = EntityManager.GetComponentTypes(e, Allocator.Temp))
                 {
                     string prefabName = EntityManager.GetName(e);
-                    if (EntityManager.TryGetComponent(e, out PrefabRef refData))
+                    bool valid = false;
+                    if (EntityManager.TryGetComponent(e, out PrefabRef refData) &&
+                        EntityManager.TryGetComponent(refData.m_Prefab, out PrefabData prefabData))
                     {
-                        PrefabBase prefab = _prefabSystem.GetPrefab<PrefabBase>(refData);
-                        if (prefab != null)
+                        
+                        valid = prefabData.m_Index >= 0;
+                        prefabName = _prefabSystem.GetPrefabName(refData.m_Prefab);
+                        if (!valid)
                         {
-                            prefabName = prefab.prefab ? prefab.prefab.name : prefab.name;
+                            prefabName = "[Missing] " + prefabName;
                         }
                     }
                     var pos = WorldToTooltipPos(_inspectObjectTool.LastPos, out _);
                     _tooltipGroup.position = new float2(pos.x + 5, pos.y + 20);
                     _tooltipGroup.children.Add(new StringTooltip
                     {
-                        color = TooltipColor.Success,
+                        color = valid? TooltipColor.Success : TooltipColor.Error,
                         path = "title1",
                         value = $"Prefab: \"{prefabName}\" [{e.Index}:{e.Version}]"
                 
@@ -83,18 +87,21 @@ namespace SceneExplorer.System
                 
                     if (EntityManager.HasComponent<Owner>(e) &&
                         EntityManager.TryGetComponent<Owner>(e, out Owner owner) &&
-                        EntityManager.TryGetComponent(owner.m_Owner, out PrefabRef ownerRef))
+                        EntityManager.TryGetComponent(owner.m_Owner, out PrefabRef ownerRef) &&
+                        EntityManager.TryGetComponent(ownerRef.m_Prefab, out PrefabData prefabOwnerData))
                     {
-                        PrefabBase ownerPrefab = _prefabSystem.GetPrefab<PrefabBase>(ownerRef);
-                        if (ownerPrefab != null)
+                        bool validOwner = prefabOwnerData.m_Index >= 0;
+                        string name = _prefabSystem.GetPrefabName(ownerRef.m_Prefab);
+                        if (!validOwner)
                         {
-                            _tooltipGroup.children.Add(new StringTooltip
-                            {
-                                color = TooltipColor.Success,
-                                path = "title1_1",
-                                value = $"Owner prefab: \"{ownerPrefab.name}\" [{owner.m_Owner.Index}:{owner.m_Owner.Version}]"
-                            });
+                            name = "[Missing] " + name;
                         }
+                        _tooltipGroup.children.Add(new StringTooltip
+                        {
+                            color = validOwner ? TooltipColor.Success : TooltipColor.Error,
+                            path = "title1_1",
+                            value = $"Owner prefab: \"{name}\" [{owner.m_Owner.Index}:{owner.m_Owner.Version}]"
+                        });
                     }
                 
                     _tooltipGroup.children.Add(new StringTooltip

@@ -273,10 +273,17 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public static GUIStyle CalculateTextStyle(SpecialComponentType type, bool highlight)
         {
+            bool isInvalid = (type & SpecialComponentType.Invalid) != 0;
             switch (type)
             {
                 case SpecialComponentType.PrefabRef:
                 case SpecialComponentType.PrefabData:
+                case SpecialComponentType.PrefabRef | SpecialComponentType.Invalid:
+                case SpecialComponentType.PrefabData | SpecialComponentType.Invalid:
+                    if (isInvalid)
+                    {
+                        return !highlight ? UIStyle.Instance.missingPrefabLabelStyle : UIStyle.Instance.missingPrefabHighlightedLabelStyle;
+                    }
                     return !highlight ? UIStyle.Instance.focusedReducedPaddingLabelStyle : UIStyle.Instance.focusedReducedPaddingHighlightedLabelStyle;
                 case SpecialComponentType.Managed:
                     return !highlight ? UIStyle.Instance.managedLabelStyle : UIStyle.Instance.managedHighlightedLabelStyle;

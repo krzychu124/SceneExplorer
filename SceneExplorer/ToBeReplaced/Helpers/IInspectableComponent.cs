@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Colossal.Entities;
 using Game.Prefabs;
 using SceneExplorer.Services;
 using Unity.Entities;
@@ -226,6 +227,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public sealed class PrefabRefComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public string PrefabRefDataName { get; private set; }
+        public bool MissingPrefab { get; private set; }
 
         public PrefabRefComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
             Logging.DebugEvaluation($"[Component-PrefabRef] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
@@ -233,23 +235,35 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         }
 
         public override object UpdateBindingsInternal(Entity entity) {
-            PrefabRef data;
+            PrefabRef prefabRef;
+            PrefabData data = new PrefabData() {m_Index = -1};
             if (IsSnapshot)
             {
-                data = SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData snapshot) && snapshot.TryGetData(Type, out object val) && val != null
+                prefabRef = SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData snapshot) && snapshot.TryGetData(Type, out object val) && val != null
                     ? (PrefabRef)val
                     : new PrefabRef();
             }
             else
             {
-                data = (PrefabRef)Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
+                EntityManager entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+                prefabRef = entityManager.GetComponentData<PrefabRef>(entity);
+                if (entityManager.Exists(prefabRef) && entityManager.TryGetComponent(prefabRef.m_Prefab, out PrefabData prefabData))
+                {
+                    data = prefabData;
+                }
             }
             PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
-            if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
+            if (prefabSystem.TryGetPrefab(prefabRef, out PrefabBase prefab))
             {
                 PrefabRefDataName = prefab.name;
             }
-            return data;
+            else if (data.m_Index < 0)
+            {
+                MissingPrefab = true;
+                SpecialType |= SpecialComponentType.Invalid;
+                PrefabRefDataName = $"[Missing] {prefabSystem.GetPrefabName(prefabRef.m_Prefab)}";
+            }
+            return prefabRef;
         }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
@@ -264,6 +278,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public sealed class PrefabDataComponentInfo : ComponentInfoBase, IEntityComponent
     {
         public string PrefabDataName { get; private set; }
+        public bool MissingPrefab { get; private set; }
 
         public PrefabDataComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
             Logging.DebugEvaluation($"[Component-PrefabData] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
@@ -286,6 +301,16 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             if (prefabSystem.TryGetPrefab(data, out PrefabBase prefab))
             {
                 PrefabDataName = prefab.name;
+            }
+            else if (data.m_Index < 0)
+            {
+                if (Objects.Count > 0)
+                {
+                    Objects[0].CanInspectValue = false;
+                }
+                MissingPrefab = true;
+                SpecialType |= SpecialComponentType.Invalid;
+                PrefabDataName = $"[Missing] {prefabSystem.GetPrefabName(entity)}";
             }
             return data;
         }
@@ -468,5 +493,6 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         Managed = 1 << 5,
         Shared = 1 << 6,
         Unknown = 1 << 7,
+        Invalid = 1 << 8,
     }
 }

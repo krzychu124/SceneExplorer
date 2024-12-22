@@ -20,7 +20,9 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using CarLane = Game.Net.CarLane;
+using EditorContainer = Game.Tools.EditorContainer;
 using Node = Game.Net.Node;
+using SubArea = Game.Areas.SubArea;
 using SubLane = Game.Net.SubLane;
 using SubNet = Game.Net.SubNet;
 
@@ -115,7 +117,7 @@ namespace SceneExplorer.System
                 Mode = GetNextMode();
             }
         }
-        
+
         public override void SetUnderground(bool isUnderground)
         {
             Underground = isUnderground;
@@ -164,7 +166,7 @@ namespace SceneExplorer.System
             {
                 return;
             }
-            
+
             if (Underground)
             {
                 m_ToolRaycastSystem.collisionMask = CollisionMask.Underground;
@@ -178,8 +180,8 @@ namespace SceneExplorer.System
             {
                 case 0:
                     m_ToolRaycastSystem.typeMask = (TypeMask.Lanes | TypeMask.Net | TypeMask.MovingObjects | TypeMask.StaticObjects | TypeMask.MovingObjects);
-                    m_ToolRaycastSystem.raycastFlags = (RaycastFlags.SubElements | RaycastFlags.Decals | RaycastFlags.Placeholders | RaycastFlags.UpgradeIsMain | RaycastFlags.Outside |
-                        RaycastFlags.Cargo | RaycastFlags.Passenger);
+                    m_ToolRaycastSystem.raycastFlags = RaycastFlags.SubElements | RaycastFlags.Decals | RaycastFlags.Placeholders | RaycastFlags.Outside |
+                        RaycastFlags.Cargo | RaycastFlags.Passenger | RaycastFlags.BuildingLots | RaycastFlags.IgnoreSecondary;
                     m_ToolRaycastSystem.netLayerMask = Layer.All;
                     m_ToolRaycastSystem.iconLayerMask = IconLayerMask.None;
                     break;
@@ -192,7 +194,7 @@ namespace SceneExplorer.System
                     break;
                 case 2:
                     m_ToolRaycastSystem.typeMask = (TypeMask.MovingObjects | TypeMask.StaticObjects | TypeMask.MovingObjects);
-                    m_ToolRaycastSystem.raycastFlags = (RaycastFlags.SubElements | RaycastFlags.Decals | RaycastFlags.Markers | RaycastFlags.Outside | RaycastFlags.Placeholders | RaycastFlags.UpgradeIsMain);
+                    m_ToolRaycastSystem.raycastFlags = (RaycastFlags.SubElements | RaycastFlags.SubBuildings | RaycastFlags.Decals | RaycastFlags.Markers | RaycastFlags.Outside | RaycastFlags.Placeholders | RaycastFlags.UpgradeIsMain);
                     m_ToolRaycastSystem.netLayerMask = Layer.None;
                     m_ToolRaycastSystem.iconLayerMask = IconLayerMask.None;
                     break;
@@ -310,66 +312,160 @@ namespace SceneExplorer.System
                 LastPos = float3.zero;
             }
 
+            //TODO Move to custom overlay render system, handle via singleton component with hovered entity data
+
             JobHandle deps = inputDeps;
             var hovered = HoverData;
             if (hovered.entity != Entity.Null && hovered.DataType != ComponentDataRenderer.HoverData.HoverType.None)
             {
                 ComponentType type = (ComponentType)hovered.Type;
                 Type managedType = type.GetManagedType();
-                if (managedType == typeof(SubLane))
+                if (RenderByManagedType(managedType, hovered, inputDeps, out JobHandle resultDeps))
                 {
-                    var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-                    deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                    RenderSubLanes(hovered, buffer);
-                    return deps;
+                    return resultDeps;
                 }
-                if (managedType == typeof(SubNet))
+            }
+            else if (HoveredEntity != Entity.Null || Selected != Entity.Null)
+            {
+                JobHandle resultDeps = inputDeps;
+                if (HoveredEntity != Entity.Null && HoveredEntity != Selected && RequireManualHighlight(HoveredEntity, out ComponentType componentType, out bool isBuffer))
                 {
-                    var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-                    deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                    RenderSubNets(hovered.entity, hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer, hovered, buffer);
-                    return deps;
-                }
-                if (managedType == typeof(ConnectedEdge))
-                {
-                    var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-                    deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                    RenderConnectedEdges(hovered.entity, hovered, buffer);
-                    return deps;
-                }
-                if (managedType == typeof(ConnectedNode))
-                {
-                    var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-                    deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                    RenderConnectedNodes(hovered.entity, hovered, buffer);
-                    return deps;
-                }
-                if (managedType == typeof(Node))
-                {
-                    var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-                    deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                    RenderNode(hovered.entity, buffer);
-                    return deps;
-                }
-                if (managedType == typeof(Edge))
-                {
-                    switch (hovered.DataType)
+                    Type managedType = componentType.GetManagedType();
+                    hovered = new ComponentDataRenderer.HoverData()
                     {
-                        case ComponentDataRenderer.HoverData.HoverType.Component:
-                            var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-                            deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                            RenderEdgeNode(hovered.entity, null, buffer);
-                            return deps;
-                        case ComponentDataRenderer.HoverData.HoverType.ComponentItem:
-                            var buffer2 = _overlayRenderSystem.GetBuffer(out JobHandle dependencies2);
-                            deps = JobHandle.CombineDependencies(inputDeps, dependencies2);
-                            RenderEdgeNode(hovered.entity, hovered.Index == 0, buffer2);
-                            return deps;
+                        entity = HoveredEntity,
+                        DataType = isBuffer ? ComponentDataRenderer.HoverData.HoverType.Buffer : ComponentDataRenderer.HoverData.HoverType.Component,
+                        Type = managedType
+                    };
+                    if (RenderByManagedType(managedType, hovered, resultDeps, out resultDeps, true) && HoveredEntity == Selected)
+                    {
+                        return resultDeps;
+                    }
+                }
+
+                if (Selected != Entity.Null && RequireManualHighlight(Selected, out ComponentType componentType2, out bool isBuffer2))
+                {
+                    Type managedType = componentType2.GetManagedType();
+                    hovered = new ComponentDataRenderer.HoverData()
+                    {
+                        entity = Selected,
+                        DataType = isBuffer2 ? ComponentDataRenderer.HoverData.HoverType.Buffer : ComponentDataRenderer.HoverData.HoverType.Component,
+                        Type = managedType
+                    };
+                    if (RenderByManagedType(managedType, hovered, resultDeps, out resultDeps))
+                    {
+                        return resultDeps;
                     }
                 }
             }
 
             return deps;
+        }
+
+        private bool RequireManualHighlight(Entity entity, out ComponentType componentType, out bool buffer)
+        {
+            buffer = false;
+            if (EntityManager.HasComponent<EditorContainer>(entity))
+            {
+                if (EntityManager.HasComponent<Edge>(entity) && EntityManager.HasBuffer<SubLane>(entity))
+                {
+                    componentType = ComponentType.ReadOnly<SubLane>();
+                    buffer = true;
+                    return true;
+                }
+                if (EntityManager.HasComponent<Node>(entity))
+                {
+                    componentType = ComponentType.ReadOnly<Node>();
+                    buffer = false;
+                    return true;
+                }
+            }
+            else if (EntityManager.HasComponent<Game.Areas.Area>(entity) && EntityManager.HasBuffer<Game.Areas.Triangle>(entity))
+            {
+                componentType = ComponentType.ReadOnly<Triangle>();
+                buffer = true;
+                return true;
+            }
+            componentType = default;
+            return false;
+        }
+
+        private bool RenderByManagedType(Type managedType, ComponentDataRenderer.HoverData hovered, JobHandle inputDeps, out JobHandle deps, bool highlight = false)
+        {
+            if (managedType == typeof(SubLane))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderSubLanes(hovered, buffer);
+                return true;
+            }
+            if (managedType == typeof(SubNet))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderSubNets(hovered.entity, hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer, hovered, buffer);
+                return true;
+            }
+            if (managedType == typeof(ConnectedEdge))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderConnectedEdges(hovered.entity, hovered, buffer);
+                return true;
+            }
+            if (managedType == typeof(ConnectedNode))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderConnectedNodes(hovered.entity, hovered, buffer);
+                return true;
+            }
+            if (managedType == typeof(Node))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderNode(hovered.entity, buffer, highlight);
+                return true;
+            }
+            if (managedType == typeof(SubArea))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderSubAreas(hovered.entity, hovered, buffer, highlight);
+                return true;
+            }
+            if (managedType == typeof(Game.Areas.Node))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderAreaNodes(hovered.entity, hovered, buffer);
+                return true;
+            }
+            if (managedType == typeof(Game.Areas.Triangle))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderAreaTriangles(hovered.entity, hovered, buffer, highlight);
+                return true;
+            }
+            if (managedType == typeof(Edge))
+            {
+                switch (hovered.DataType)
+                {
+                    case ComponentDataRenderer.HoverData.HoverType.Component:
+                        var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                        deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                        RenderEdgeNode(hovered.entity, null, buffer);
+                        return true;
+                    case ComponentDataRenderer.HoverData.HoverType.ComponentItem:
+                        var buffer2 = _overlayRenderSystem.GetBuffer(out JobHandle dependencies2);
+                        deps = JobHandle.CombineDependencies(inputDeps, dependencies2);
+                        RenderEdgeNode(hovered.entity, hovered.Index == 0, buffer2);
+                        return true;
+                }
+            }
+            deps = new JobHandle();
+            return false;
         }
 
         private void RenderSubNets(Entity entity, bool isBufferType, ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
@@ -529,7 +625,7 @@ namespace SceneExplorer.System
             {
                 return;
             }
-            
+
             if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer)
             {
                 foreach (ConnectedEdge connectedEdge in connectedEdges)
@@ -560,18 +656,35 @@ namespace SceneExplorer.System
                     isElevated = math.any(elevation.m_Elevation > 0.5f);
                 }
 
-                PrefabRef prefabRef = EntityManager.GetComponentData<PrefabRef>(entity);
-                if (!EntityManager.TryGetComponent(prefabRef, out NetGeometryData netGeometryData))
+                float defaultWidth = 0;
+                float elevatedWidth = 0;
+                if (EntityManager.HasComponent<EdgeGeometry>(entity))
+                {
+                    PrefabRef prefabRef = EntityManager.GetComponentData<PrefabRef>(entity);
+                    if (!EntityManager.TryGetComponent(prefabRef, out NetGeometryData netGeometryData))
+                    {
+                        return;
+                    }
+                    defaultWidth = netGeometryData.m_DefaultWidth;
+                    elevatedWidth = netGeometryData.m_ElevatedWidth;
+                }
+                else if (EntityManager.TryGetComponent<EditorContainer>(entity, out EditorContainer editorContainer) &&
+                    editorContainer.m_Prefab != Entity.Null &&
+                    EntityManager.TryGetComponent(editorContainer.m_Prefab, out NetLaneGeometryData laneGeometryData))
+                {
+                    defaultWidth = laneGeometryData.m_Size.x * 0.5f;
+                }
+                else
                 {
                     return;
                 }
 
                 Curve curve = EntityManager.GetComponentData<Curve>(entity);
-                float baseWidth = isElevated ? netGeometryData.m_ElevatedWidth : netGeometryData.m_DefaultWidth;
-                float width = baseWidth > 0 ? baseWidth : 0.5f;
+                float baseWidth = isElevated ? elevatedWidth : defaultWidth;
+                float width = baseWidth > 0.01f ? baseWidth : 0.5f;
                 buffer.DrawCurve(Color.white,
                     new Color(0.79f, 0.79f, 0.79f, 0.1f),
-                    0.25f,
+                    math.select(0.25f, 0.1f, width <= 1f),
                     OverlayRenderSystem.StyleFlags.Projected,
                     curve.m_Bezier,
                     width,
@@ -589,7 +702,7 @@ namespace SceneExplorer.System
             {
                 return;
             }
-            
+
             if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer)
             {
                 foreach (ConnectedNode connectedNode in connectedNodes)
@@ -610,26 +723,158 @@ namespace SceneExplorer.System
             }
         }
 
-        private void RenderNode(Entity entity, OverlayRenderSystem.Buffer buffer)
+        private void RenderNode(Entity entity, OverlayRenderSystem.Buffer buffer, bool highlight = false)
         {
             if (EntityManager.HasComponent<Node>(entity))
             {
-                float diameter = 10f;
+                float diameter = 1f;
+                Node node = EntityManager.GetComponentData<Node>(entity);
+                float3 position = node.m_Position;
                 if (EntityManager.TryGetComponent(entity, out NodeGeometry nodeGeometry))
                 {
                     diameter = MathUtils.Size(nodeGeometry.m_Bounds).x + 1f;
                 }
+                else if (EntityManager.TryGetComponent<EditorContainer>(entity, out EditorContainer editorContainer) &&
+                    editorContainer.m_Prefab != Entity.Null &&
+                    EntityManager.TryGetComponent(editorContainer.m_Prefab, out NetLaneGeometryData laneGeometryData))
+                {
+                    diameter = laneGeometryData.m_Size.x * 0.75f;
+                    if (highlight && EntityManager.HasBuffer<ConnectedEdge>(entity))
+                    {
+                        position += new float3(0, 0.2f, 0);
+                        ComponentDataRenderer.HoverData data = new ComponentDataRenderer.HoverData()
+                        {
+                            entity = entity,
+                            DataType = ComponentDataRenderer.HoverData.HoverType.Buffer,
+                        };
+                        RenderConnectedEdges(entity, data, buffer);
+                    }
+                }
 
-                Node node = EntityManager.GetComponentData<Node>(entity);
                 buffer.DrawCircle(
                     new Color(0f, 0.43f, 1f),
                     new Color(0f, 0.09f, 0.85f, 0.24f),
-                    0.25f,
+                    math.select(0.25f, 0.1f, diameter <= 1f),
+                    0,
+                    new float2(0, 1),
+                    position,
+                    diameter);
+            }
+        }
+
+        private void RenderSubAreas(Entity entity, ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer, bool highlight = false) 
+        {
+            if (entity == Entity.Null)
+                return;
+
+            DynamicBuffer<Game.Areas.SubArea> areas = EntityManager.GetBuffer<Game.Areas.SubArea>(entity);
+            if (areas.Length == 0)
+            {
+                return;
+            }
+            if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer)
+            {
+                foreach (SubArea subArea in areas)
+                {
+                    RenderAreaTriangles(subArea.m_Area, hovered, buffer, highlight);
+                }
+            } 
+            else if (hovered.Index >= 0 && hovered.Index < areas.Length)
+            {
+                ComponentDataRenderer.HoverData data = hovered;
+                data.DataType = ComponentDataRenderer.HoverData.HoverType.Buffer;
+                RenderAreaTriangles(areas[hovered.Index].m_Area, data, buffer, highlight);
+            }
+        }
+
+        private void RenderAreaNodes(Entity entity, ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        {
+            if (entity == Entity.Null)
+                return;
+
+            DynamicBuffer<Game.Areas.Node> areaNodes = EntityManager.GetBuffer<Game.Areas.Node>(entity);
+            if (areaNodes.Length == 0)
+            {
+                return;
+            }
+
+            if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer)
+            {
+                for (int index = 0; index < areaNodes.Length - 1; index++)
+                {
+                    Game.Areas.Node node = areaNodes[index];
+                    RenderAreaNode(node, buffer);
+                    Game.Areas.Node node2 = areaNodes[index + 1];
+                    RenderLine(node.m_Position, node2.m_Position, buffer, new Color(0f, 0.58f, 1f),  new Color(0f, 0.09f, 0.85f, 0.24f));
+                }
+                if (areaNodes.Length - 1 > 0)
+                {
+                    Game.Areas.Node node = areaNodes[0];
+                    Game.Areas.Node node2 = areaNodes[areaNodes.Length - 1];
+                    RenderAreaNode(node2, buffer);
+                    RenderLine(node.m_Position, node2.m_Position, buffer, new Color(0f, 0.58f, 1f),  new Color(0f, 0.09f, 0.85f, 0.24f));
+                }
+            }
+            else if (hovered.Index >= 0 && hovered.Index < areaNodes.Length)
+            {
+                RenderAreaNode(areaNodes[hovered.Index], buffer);
+            }
+        }
+
+        private void RenderAreaTriangles(Entity entity, ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer, bool highlight = false)
+        {
+            if (entity == Entity.Null || !EntityManager.HasBuffer<Triangle>(entity) || !EntityManager.HasBuffer<Game.Areas.Node>(entity))
+                return;
+
+            DynamicBuffer<Game.Areas.Node> areaNodes = EntityManager.GetBuffer<Game.Areas.Node>(entity);
+            DynamicBuffer<Game.Areas.Triangle> areaTriangles = EntityManager.GetBuffer<Game.Areas.Triangle>(entity);
+            if (areaNodes.IsEmpty || areaTriangles.IsEmpty)
+            {
+                return;
+            }
+
+            if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer)
+            {
+                foreach (Game.Areas.Triangle triangle in areaTriangles)
+                {
+                    RenderAreaTriangle(triangle, ref areaNodes, buffer, highlight);
+                }
+            }
+            else if (hovered.Index >= 0 && hovered.Index < areaNodes.Length)
+            {
+                RenderAreaTriangle(areaTriangles[hovered.Index], ref areaNodes, buffer, highlight);
+            }
+        }
+
+        private void RenderAreaTriangle(Game.Areas.Triangle triangle, ref DynamicBuffer<Game.Areas.Node> nodes, OverlayRenderSystem.Buffer buffer, bool highlight = false)
+        {
+            if (math.any(triangle.m_Indices > new int3(nodes.Length)))
+            {
+                return;
+            }
+            Color outline = highlight ? new Color(0.21f, 1f, 0.36f) : new Color(0f, 0.58f, 1f);
+            Color fill = highlight ? new Color(0.21f, 1f, 0.36f, 0.24f) : new Color(0f, 0.09f, 0.85f, 0.24f);
+            RenderLine(nodes[triangle.m_Indices.x].m_Position, nodes[triangle.m_Indices.y].m_Position, buffer, outline, fill);
+            RenderLine(nodes[triangle.m_Indices.y].m_Position, nodes[triangle.m_Indices.z].m_Position, buffer, outline, fill);
+            RenderLine(nodes[triangle.m_Indices.z].m_Position, nodes[triangle.m_Indices.x].m_Position, buffer, outline, fill);
+        }
+
+        private void RenderLine(float3 from, float3 to, OverlayRenderSystem.Buffer buffer, Color outline, Color fill, float width = 0.1f)
+        {
+            Line3.Segment line= new Line3.Segment(from, to);
+            buffer.DrawLine( outline, fill, 0f, 0f, line, width, new float2(1f));
+        }
+        
+        private void RenderAreaNode(Game.Areas.Node node, OverlayRenderSystem.Buffer buffer)
+        {
+                buffer.DrawCircle(
+                    new Color(0.01f, 0.31f, 0.85f),
+                    new Color(0f, 0.09f, 0.85f, 0.24f),
+                    0.1f,
                     0,
                     new float2(0,1),
                     node.m_Position,
-                    diameter);
-            }
+                    0.4f);
         }
 
         private void RenderEdgeNode(Entity entity, bool? start, OverlayRenderSystem.Buffer buffer)
