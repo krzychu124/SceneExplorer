@@ -256,17 +256,20 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
                         if (Mouse.current.leftButton.isPressed)
                         {
+                            var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
                             var pos = new Vector2(position.x, position.y) + _moveDragHandle;
                             _windowRect.x = pos.x;
                             _windowRect.y = pos.y;
+                            float normalizedScreenWidth = Screen.width / normalizedScaling;
+                            float normalizedScreenHeight = Screen.height / normalizedScaling;
                             if (_windowRect.x < 0.0f)
                             {
                                 _windowRect.x = 0.0f;
                             }
 
-                            if (_windowRect.x + _windowRect.width > Screen.width)
+                            if (_windowRect.x + _windowRect.width > normalizedScreenWidth)
                             {
-                                _windowRect.x = Screen.width - _windowRect.width;
+                                _windowRect.x = normalizedScreenWidth - _windowRect.width;
                             }
 
                             if (_windowRect.y < 0.0f)
@@ -274,16 +277,14 @@ namespace SceneExplorer.ToBeReplaced.Windows
                                 _windowRect.y = 0.0f;
                             }
 
-                            if (_windowRect.y + _windowRect.height > Screen.height)
+                            if (_windowRect.y + _windowRect.height > normalizedScreenHeight)
                             {
-                                _windowRect.y = Screen.height - _windowRect.height;
+                                _windowRect.y = normalizedScreenHeight - _windowRect.height;
                             }
                         }
                         else
                         {
                             _movingWindow = null;
-
-                            // OnWindowMoved(windowRect.position);
                         }
                     }
                 }

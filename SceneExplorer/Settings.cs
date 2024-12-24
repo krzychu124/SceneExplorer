@@ -4,6 +4,7 @@ using Game.Modding;
 using Game.Settings;
 using Game.UI;
 using System;
+using Game.SceneFlow;
 using UnityEngine;
 
 namespace SceneExplorer
@@ -28,6 +29,7 @@ namespace SceneExplorer
         public const string MakeSnapshotAction = "MakeSnapshot";
         private string _switchToolModeKeybindingName = string.Empty;
         private float _uiScalingValue;
+        private ScreenResolution _lastScreenResolution;
 
         [SettingsUIHidden]
         internal string SwitchToolModeKeybind => _switchToolModeKeybindingName;
@@ -60,7 +62,7 @@ namespace SceneExplorer
             set
             {
                 _uiScalingValue = value;
-                NormalizedScaling = Screen.width / 1920 * _uiScalingValue;
+                NormalizedScaling = Screen.height / 1080f * _uiScalingValue;
             }
         }
 
@@ -115,11 +117,27 @@ namespace SceneExplorer
             UpdateKeybindingString(this);
             onSettingsApplied -= UpdateKeybindingString;
             onSettingsApplied += UpdateKeybindingString;
+            _lastScreenResolution = SharedSettings.instance.graphics.resolution;
+            SharedSettings.instance.graphics.onSettingsApplied -= OnGraphicSettingsUpdated;
+            SharedSettings.instance.graphics.onSettingsApplied += OnGraphicSettingsUpdated;
         }
 
         private void UpdateKeybindingString(Setting setting)
         {
             _switchToolModeKeybindingName = string.Join("+", ChangeSceneExplorerToolMode.ToHumanReadablePath());
+        }
+
+        private void OnGraphicSettingsUpdated(Setting setting)
+        {
+            if (setting is GraphicsSettings gs && gs.resolution != _lastScreenResolution)
+            {
+                Logging.Info($"OnGraphicSettingsUpdated: Resolution changed from {_lastScreenResolution} to {gs.resolution}");
+                _lastScreenResolution = gs.resolution;
+                GameManager.instance.RunOnMainThread(() => {
+                    // updating resolution takes time and runs on a separate thread, use new values instead of reading Screen.height directly
+                    NormalizedScaling = _lastScreenResolution.height / 1080f * _uiScalingValue;
+                });
+            }
         }
     }
 }
