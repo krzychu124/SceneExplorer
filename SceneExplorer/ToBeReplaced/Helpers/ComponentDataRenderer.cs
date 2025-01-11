@@ -56,7 +56,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             if (titleHovered)
             {
                 var c = component as ComponentInfoBase;
-                lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.Component, Type = c.Type };
+                lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.Component, ComponentType = c.Type };
             }
             if (component.DetailedView)
             {
@@ -71,11 +71,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     // var field = component.Fields[i];
                     if (component.Objects?.Count > i)
                     {
-                        _objectRenderer.Render(component.Objects[i], _inspector, -1, rect, out bool hovered);
-                        if (hovered)
+                        _objectRenderer.Render(component.Objects[i], _inspector, -1, rect, out var hoveredObject);
+                        if (hoveredObject != null)
                         {
                             var c = component as ComponentInfoBase;
-                            lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.ComponentItem, Type = c.Type, Index = i };
+                            lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.ComponentItem, ComponentType = c.Type, ComponentItem = hoveredObject, Index = i };
                         }
                         if (i < component.DataFields.Count - 1)
                         {
@@ -122,7 +122,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             if (titleHovered)
             {
                 var c = component as EntityBufferComponentInfo;
-                lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.Buffer, Type = c.Type };
+                lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.Buffer, ComponentType = c.Type };
             }
 
             if (component.DetailedView)
@@ -162,11 +162,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     int max = lastItem > count ? count : lastItem;
                     for (int i = firstItem; i < max; i++)
                     {
-                        _objectRenderer.Render(component.DataArray[i], _inspector, i, rect, out bool hovered);
-                        if (hovered)
+                        _objectRenderer.Render(component.DataArray[i], _inspector, i, rect, out var hoveredObject);
+                        if (hoveredObject != null)
                         {
                             var c = component as EntityBufferComponentInfo;
-                            lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.BufferItem, Type = c.Type, Index = i };
+                            lastHovered = new HoverData() { entity = entity, DataType = HoverData.HoverType.BufferItem, ComponentType = c.Type, Index = i };
                         }
                     }
                 }
@@ -255,7 +255,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         {
             public Entity entity;
             public HoverType DataType;
-            public object Type;
+            public ComponentType ComponentType;
+            public IInspectableObject ComponentItem;
             public int Index;
 
             public enum HoverType
@@ -273,9 +274,9 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     {
         private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60), GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
 
-        public bool Render(IInspectableObject obj, IValueInspector valueInspector, int index, Rect rect, out bool hovered)
+        public bool Render(IInspectableObject obj, IValueInspector valueInspector, int index, Rect rect, out IInspectableObject hoveredObject)
         {
-            hovered = false;
+            hoveredObject = null;
             if (obj is InspectableEntity entity)
             {
                 GUILayout.BeginHorizontal(options: null);
@@ -306,7 +307,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 GUILayout.EndHorizontal();
                 if (ComponentDataRenderer.WasHovered(rect))
                 {
-                    hovered = true;
+                    hoveredObject = obj;
                 }
             }
             else if (obj is CommonInspectableObject common)
@@ -333,12 +334,18 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 object valueCached = complex.GetValueCached();
                 GUI.enabled = valueCached != null;
                 if (CommonUI.CollapsibleHeader(
-                    $"{(!string.IsNullOrEmpty(fieldName) ? $"{fieldName}{(valueCached == null ? " <NULL>" : string.Empty)}" : $"{complex.RootType.Name} {(index >= 0 ? $"[{index}] {(!string.IsNullOrEmpty(complex.PrefabName) ? $"- {complex.PrefabName}" : string.Empty)}" : string.Empty)}")}",
-                    complex.IsActive, rect, out hovered, CommonUI.ButtonLocation.Start,
+                    $"{(!string.IsNullOrEmpty(fieldName) ? $"{fieldName} ({obj.FieldInfo?.FieldType}) {(valueCached == null ? " <NULL>" : string.Empty)}" : $"{complex.RootType.Name} {(index >= 0 ? $"[{index}] {(!string.IsNullOrEmpty(complex.PrefabName) ? $"- {complex.PrefabName}" : string.Empty)}" : string.Empty)}")}",
+                    complex.IsActive, rect, out bool headerHovered, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(complex.RootType.Name, complex.IsActive), focused: obj.IsActive))
                 {
                     complex.IsActive = !complex.IsActive;
                 }
+
+                if (headerHovered)
+                {
+                    hoveredObject = obj;
+                }
+
                 GUI.enabled = true;
                 if (complex.IsActive && complex.Children != null)
                 {
@@ -348,10 +355,15 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     GUILayout.BeginVertical(options: null);
                     for (var i = 0; i < complex.Children.Length; i++)
                     {
-                        Render(complex.Children[i], valueInspector, i, rect, out _);
+                        Render(complex.Children[i], valueInspector, i, rect, out var hoveredChildObject);
                         if (i < complex.Children.Length - 1)
                         {
                             CommonUI.DrawLine();
+                        }
+
+                        if (hoveredChildObject != null)
+                        {
+                            hoveredObject = hoveredChildObject;
                         }
                     }
                     GUILayout.EndVertical();
@@ -406,7 +418,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         int max = lastItem > count ? count : lastItem;
                         for (int i = firstItem; i < max; i++)
                         {
-                            Render(iterable.DataArray[i], valueInspector, i, rect, out _);
+                            Render(iterable.DataArray[i], valueInspector, i, rect, out hoveredObject);
                         }
                     }
 

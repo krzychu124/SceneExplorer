@@ -318,9 +318,22 @@ namespace SceneExplorer.System
             var hovered = HoverData;
             if (hovered.entity != Entity.Null && hovered.DataType != ComponentDataRenderer.HoverData.HoverType.None)
             {
-                ComponentType type = (ComponentType)hovered.Type;
-                Type managedType = type.GetManagedType();
-                if (RenderByManagedType(managedType, hovered, inputDeps, out JobHandle resultDeps))
+                JobHandle resultDeps;
+                Type managedType;
+
+                // Try to render a component item (if there is a specific renderer for the item type)
+                if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.ComponentItem && hovered.ComponentItem != null)
+                {
+                    managedType = hovered.ComponentItem.FieldInfo.FieldType;
+                    if (RenderByManagedType(managedType, hovered, inputDeps, out resultDeps))
+                    {
+                        return resultDeps;
+                    }
+                }
+
+                // If there is no specific item renderer then fall back to the component's type
+                managedType = hovered.ComponentType.GetManagedType();
+                if (RenderByManagedType(managedType, hovered, inputDeps, out resultDeps))
                 {
                     return resultDeps;
                 }
@@ -335,7 +348,7 @@ namespace SceneExplorer.System
                     {
                         entity = HoveredEntity,
                         DataType = isBuffer ? ComponentDataRenderer.HoverData.HoverType.Buffer : ComponentDataRenderer.HoverData.HoverType.Component,
-                        Type = managedType
+                        ComponentType = managedType
                     };
                     if (RenderByManagedType(managedType, hovered, resultDeps, out resultDeps, true) && HoveredEntity == Selected)
                     {
@@ -350,7 +363,7 @@ namespace SceneExplorer.System
                     {
                         entity = Selected,
                         DataType = isBuffer2 ? ComponentDataRenderer.HoverData.HoverType.Buffer : ComponentDataRenderer.HoverData.HoverType.Component,
-                        Type = managedType
+                        ComponentType = managedType
                     };
                     if (RenderByManagedType(managedType, hovered, resultDeps, out resultDeps))
                     {
@@ -392,6 +405,27 @@ namespace SceneExplorer.System
 
         private bool RenderByManagedType(Type managedType, ComponentDataRenderer.HoverData hovered, JobHandle inputDeps, out JobHandle deps, bool highlight = false)
         {
+            if (managedType == typeof(Bezier4x3))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderCurve(hovered, buffer);
+                return true;
+            }
+            if (managedType == typeof(Bounds3))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderBounds(hovered, buffer);
+                return true;
+            }
+            if (managedType == typeof(Segment))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderSegment(hovered, buffer);
+                return true;
+            }
             if (managedType == typeof(SubLane))
             {
                 var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
@@ -864,7 +898,53 @@ namespace SceneExplorer.System
             Line3.Segment line= new Line3.Segment(from, to);
             buffer.DrawLine( outline, fill, 0f, 0f, line, width, new float2(1f));
         }
-        
+
+        private void RenderCurve(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        {
+            Bezier4x3 bezierCurve = (Bezier4x3)hovered.ComponentItem.GetValueCached();
+            buffer.DrawCurve(new Color(0.9f, 0.1f, 0.1f, 0.8f), bezierCurve, 0.5f);
+        }
+
+        private void RenderBounds(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        {
+            Bounds3 bounds = (Bounds3)hovered.ComponentItem.GetValueCached();
+            Color color = new Color(0.9f, 0.1f, 0.1f, 0.8f);
+            float width = 0.3f;
+
+            var corner1 = bounds.min;
+            var corner2 = new float3(bounds.min.x, bounds.min.y, bounds.max.z);
+            var corner3 = new float3(bounds.min.x, bounds.max.y, bounds.min.z);
+            var corner4 = new float3(bounds.min.x, bounds.max.y, bounds.max.z);
+            var corner5 = new float3(bounds.max.x, bounds.min.y, bounds.min.z);
+            var corner6 = new float3(bounds.max.x, bounds.min.y, bounds.max.z);
+            var corner7 = new float3(bounds.max.x, bounds.max.y, bounds.min.z);
+            var corner8 = bounds.max;
+
+            buffer.DrawLine(color, new Line3.Segment(corner1, corner5), width);
+            buffer.DrawLine(color, new Line3.Segment(corner5, corner6), width);
+            buffer.DrawLine(color, new Line3.Segment(corner6, corner2), width);
+            buffer.DrawLine(color, new Line3.Segment(corner2, corner1), width);
+            buffer.DrawLine(color, new Line3.Segment(corner3, corner7), width);
+            buffer.DrawLine(color, new Line3.Segment(corner7, corner8), width);
+            buffer.DrawLine(color, new Line3.Segment(corner8, corner4), width);
+            buffer.DrawLine(color, new Line3.Segment(corner4, corner3), width);
+
+            // I leave these here, but they do nothing. The OverlayRenderSystem just cannot draw vertical lines :(((
+            buffer.DrawLine(color, new Line3.Segment(corner3, corner1), width);
+            buffer.DrawLine(color, new Line3.Segment(corner5, corner7), width);
+            buffer.DrawLine(color, new Line3.Segment(corner6, corner8), width);
+            buffer.DrawLine(color, new Line3.Segment(corner2, corner4), width);
+        }
+
+        private void RenderSegment(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        {
+            Segment segment = (Segment)hovered.ComponentItem.GetValueCached();
+            var color = new Color(0.9f, 0.1f, 0.1f, 0.8f);
+
+            buffer.DrawCurve(color, segment.m_Left, 0.5f);
+            buffer.DrawCurve(color, segment.m_Right, 0.5f);
+        }
+
         private void RenderAreaNode(Game.Areas.Node node, OverlayRenderSystem.Buffer buffer)
         {
                 buffer.DrawCircle(
