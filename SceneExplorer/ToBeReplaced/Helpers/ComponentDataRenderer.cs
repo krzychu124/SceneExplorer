@@ -316,7 +316,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 GUILayout.Label((common.FieldInfo?.Name ?? common.ValueType.Name) + ":", UIStyle.Instance.CalculateLabelStyle(common.FieldInfo?.IsPublic ?? true), options: null);
                 GUILayout.Space(2);
                 var value = common.GetValueCached();
-                GUILayout.Label(value != null ? value.ToString() : "<NULL>", UIStyle.Instance.CalculateTextStyle((common.FieldInfo?.FieldType ?? common.ValueType)), options: null);
+                GUILayout.Label(value != null ? value.ToString() : "<NULL>", UIStyle.Instance.CalculateTextStyle(common.FieldInfo?.FieldType ?? common.ValueType), options: null);
                 GUILayout.FlexibleSpace();
                 if (common.CanInspectValue && GUILayout.Button("Preview", UIStyle.Instance.iconButton, options: null))
                 {
@@ -327,6 +327,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     common.InspectorPopupRef = valueInspector.Inspect(common.GetValueCached(), common, InspectMode.Standalone);
                 }
                 GUILayout.EndHorizontal();
+                if (ComponentDataRenderer.WasHovered(rect))
+                {
+                    hoveredObject = obj;
+                }
             }
             else if (obj is ComplexObject complex)
             {
@@ -356,14 +360,14 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     for (var i = 0; i < complex.Children.Length; i++)
                     {
                         Render(complex.Children[i], valueInspector, i, rect, out var hoveredChildObject);
-                        if (i < complex.Children.Length - 1)
-                        {
-                            CommonUI.DrawLine();
-                        }
-
                         if (hoveredChildObject != null)
                         {
                             hoveredObject = hoveredChildObject;
+                        }
+
+                        if (i < complex.Children.Length - 1)
+                        {
+                            CommonUI.DrawLine();
                         }
                     }
                     GUILayout.EndVertical();
@@ -418,7 +422,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         int max = lastItem > count ? count : lastItem;
                         for (int i = firstItem; i < max; i++)
                         {
-                            Render(iterable.DataArray[i], valueInspector, i, rect, out hoveredObject);
+                            Render(iterable.DataArray[i], valueInspector, i, rect, out var hoveredChildObject);
+                            if (hoveredChildObject != null)
+                            {
+                                hoveredObject = hoveredChildObject;
+                            }
                         }
                     }
 

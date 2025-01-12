@@ -25,6 +25,7 @@ using Node = Game.Net.Node;
 using SubArea = Game.Areas.SubArea;
 using SubLane = Game.Net.SubLane;
 using SubNet = Game.Net.SubNet;
+using PathElement = Game.Pathfind.PathElement;
 
 namespace SceneExplorer.System
 {
@@ -419,11 +420,53 @@ namespace SceneExplorer.System
                 RenderBounds(hovered, buffer);
                 return true;
             }
+            if (managedType == typeof(float3))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderPoint(hovered, buffer);
+                return true;
+            }
             if (managedType == typeof(Segment))
             {
                 var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
                 RenderSegment(hovered, buffer);
+                return true;
+            }
+            if (managedType == typeof(PathElement))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderPathElements(hovered.entity, buffer);
+                return true;
+            }
+            if (managedType == typeof(Game.Vehicles.CarNavigationLane))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderCarNavigationLanes(hovered.entity, buffer);
+                return true;
+            }
+            if (managedType == typeof(Game.Vehicles.TrainNavigationLane))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderTrainNavigationLanes(hovered.entity, buffer);
+                return true;
+            }
+            if (managedType == typeof(Game.Vehicles.WatercraftNavigationLane))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderWatercraftNavigationLanes(hovered.entity, buffer);
+                return true;
+            }
+            if (managedType == typeof(Game.Vehicles.AircraftNavigationLane))
+            {
+                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderAircraftNavigationLanes(hovered.entity, buffer);
                 return true;
             }
             if (managedType == typeof(SubLane))
@@ -567,6 +610,101 @@ namespace SceneExplorer.System
                 {
                     RenderNet(subLane.m_SubLane, hovered, buffer, false, isElevated);
                 }
+            }
+        }
+
+        private void RenderPathElements(Entity entityWithPathElements, OverlayRenderSystem.Buffer buffer)
+        {
+            var pathElements = EntityManager.GetBuffer<PathElement>(entityWithPathElements);
+            foreach (var pathElement in pathElements)
+            {
+                RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, buffer);
+            }
+        }
+
+        private void RenderCarNavigationLanes(Entity entityWithCarNavigationLanes, OverlayRenderSystem.Buffer buffer)
+        {
+            var carNavigationLanes = EntityManager.GetBuffer<Game.Vehicles.CarNavigationLane>(entityWithCarNavigationLanes);
+            foreach (var carNavigationLane in carNavigationLanes)
+            {
+                RenderPath(carNavigationLane.m_Lane, carNavigationLane.m_CurvePosition, buffer);
+            }
+        }
+
+        private void RenderTrainNavigationLanes(Entity entityWithTrainNavigationLanes, OverlayRenderSystem.Buffer buffer)
+        {
+            var trainNavigationLanes = EntityManager.GetBuffer<Game.Vehicles.TrainNavigationLane>(entityWithTrainNavigationLanes);
+            foreach (var trainNavigationLane in trainNavigationLanes)
+            {
+                RenderPath(trainNavigationLane.m_Lane, trainNavigationLane.m_CurvePosition, buffer);
+            }
+        }
+
+        private void RenderWatercraftNavigationLanes(Entity entityWithWatercraftNavigationLanes, OverlayRenderSystem.Buffer buffer)
+        {
+            var watercraftNavigationLanes = EntityManager.GetBuffer<Game.Vehicles.WatercraftNavigationLane>(entityWithWatercraftNavigationLanes);
+            foreach (var watercraftNavigationLane in watercraftNavigationLanes)
+            {
+                RenderPath(watercraftNavigationLane.m_Lane, watercraftNavigationLane.m_CurvePosition, buffer);
+            }
+        }
+
+        private void RenderAircraftNavigationLanes(Entity entityWithAircraftNavigationLanes, OverlayRenderSystem.Buffer buffer)
+        {
+            var aircraftNavigationLanes = EntityManager.GetBuffer<Game.Vehicles.AircraftNavigationLane>(entityWithAircraftNavigationLanes);
+            foreach (var aircraftNavigationLane in aircraftNavigationLanes)
+            {
+                RenderPath(aircraftNavigationLane.m_Lane, aircraftNavigationLane.m_CurvePosition, buffer);
+            }
+        }
+
+        private void RenderPath(Entity pathEntity, float2 usedInterval, OverlayRenderSystem.Buffer buffer)
+        {
+            if (EntityManager.HasComponent<Curve>(pathEntity))
+            {
+                // Normal lanes components have a curve
+                var curve = EntityManager.GetComponentData<Curve>(pathEntity);
+
+                buffer.DrawCurve(Color.green, MathUtils.Cut(curve.m_Bezier, usedInterval), 0.5f);
+            }
+            // Handle transit lines
+            else if (EntityManager.HasComponent<Game.Routes.Waypoint>(pathEntity) && EntityManager.HasComponent<Owner>(pathEntity))
+            {
+                var transitLineEntity = EntityManager.GetComponentData<Owner>(pathEntity).m_Owner;
+                if (EntityManager.HasComponent<Game.Routes.RouteSegment>(transitLineEntity))
+                {
+                    var routeSegments = EntityManager.GetBuffer<Game.Routes.RouteSegment>(transitLineEntity);
+                    foreach (var routeSegment in routeSegments)
+                    {
+                        if (EntityManager.HasComponent<PathElement>(routeSegment.m_Segment))
+                        {
+                            RenderPathElements(routeSegment.m_Segment, buffer);
+                        }
+                    }
+                }
+            }
+            else if ((EntityManager.HasComponent<Game.Routes.TakeoffLocation>(pathEntity) || EntityManager.HasComponent<Game.Objects.SpawnLocation>(pathEntity))
+                && EntityManager.HasComponent<CullingInfo>(pathEntity))
+            {
+                var locationBounds = EntityManager.GetComponentData<CullingInfo>(pathEntity).m_Bounds;
+
+                var color = Color.green;
+                var width = 0.5f;
+
+                var corner1 = locationBounds.min;
+                var corner2 = new float3(locationBounds.min.x, locationBounds.min.y, locationBounds.max.z);
+                var corner5 = new float3(locationBounds.max.x, locationBounds.min.y, locationBounds.min.z);
+                var corner6 = new float3(locationBounds.max.x, locationBounds.min.y, locationBounds.max.z);
+
+                // Draw only the bottom of the bounding box
+                buffer.DrawLine(color, new Line3.Segment(corner1, corner5), width);
+                buffer.DrawLine(color, new Line3.Segment(corner5, corner6), width);
+                buffer.DrawLine(color, new Line3.Segment(corner6, corner2), width);
+                buffer.DrawLine(color, new Line3.Segment(corner2, corner1), width);
+            }
+            else
+            {
+                Logging.Warning($"Path segment entity {pathEntity} has no Curve or Waypoint component, thus it cannot be rendered.");
             }
         }
 
@@ -901,15 +1039,29 @@ namespace SceneExplorer.System
 
         private void RenderCurve(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
         {
-            Bezier4x3 bezierCurve = (Bezier4x3)hovered.ComponentItem.GetValueCached();
-            buffer.DrawCurve(new Color(0.9f, 0.1f, 0.1f, 0.8f), bezierCurve, 0.5f);
+            var bezierCurve = (Bezier4x3)hovered.ComponentItem.GetValueCached();
+            buffer.DrawCurve(Color.red, bezierCurve, 0.5f);
+        }
+
+        private void RenderPoint(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        {
+            var point = (float3)hovered.ComponentItem.GetValueCached();
+            RenderPoint(point, buffer);
+        }
+
+        private void RenderPoint(float3 point, OverlayRenderSystem.Buffer buffer)
+        {
+            var width = 0.2f;
+
+            buffer.DrawLine(Color.red, new Line3.Segment(new float3(point.x - 1, point.y, point.z), new float3(point.x + 1, point.y, point.z)), width);
+            buffer.DrawLine(Color.red, new Line3.Segment(new float3(point.x, point.y, point.z - 1), new float3(point.x, point.y, point.z + 1)), width);
         }
 
         private void RenderBounds(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
         {
-            Bounds3 bounds = (Bounds3)hovered.ComponentItem.GetValueCached();
-            Color color = new Color(0.9f, 0.1f, 0.1f, 0.8f);
-            float width = 0.3f;
+            var bounds = (Bounds3)hovered.ComponentItem.GetValueCached();
+            var color = Color.red;
+            var width = 0.2f;
 
             var corner1 = bounds.min;
             var corner2 = new float3(bounds.min.x, bounds.min.y, bounds.max.z);
@@ -920,6 +1072,7 @@ namespace SceneExplorer.System
             var corner7 = new float3(bounds.max.x, bounds.max.y, bounds.min.z);
             var corner8 = bounds.max;
 
+            // Unfortunatelly the OverlayRenderSystem does not support drawing vertical lines, so I only deaw the top and the bottom lines
             buffer.DrawLine(color, new Line3.Segment(corner1, corner5), width);
             buffer.DrawLine(color, new Line3.Segment(corner5, corner6), width);
             buffer.DrawLine(color, new Line3.Segment(corner6, corner2), width);
@@ -928,12 +1081,6 @@ namespace SceneExplorer.System
             buffer.DrawLine(color, new Line3.Segment(corner7, corner8), width);
             buffer.DrawLine(color, new Line3.Segment(corner8, corner4), width);
             buffer.DrawLine(color, new Line3.Segment(corner4, corner3), width);
-
-            // I leave these here, but they do nothing. The OverlayRenderSystem just cannot draw vertical lines :(((
-            buffer.DrawLine(color, new Line3.Segment(corner3, corner1), width);
-            buffer.DrawLine(color, new Line3.Segment(corner5, corner7), width);
-            buffer.DrawLine(color, new Line3.Segment(corner6, corner8), width);
-            buffer.DrawLine(color, new Line3.Segment(corner2, corner4), width);
         }
 
         private void RenderSegment(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
