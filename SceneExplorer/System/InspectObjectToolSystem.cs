@@ -10,6 +10,7 @@ using Game.Prefabs;
 using Game.Rendering;
 using Game.Tools;
 using Game.UI.Editor;
+using Game.Vehicles;
 using SceneExplorer.ToBeReplaced;
 using SceneExplorer.ToBeReplaced.Helpers;
 using System;
@@ -20,12 +21,13 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using CarLane = Game.Net.CarLane;
+using CarLaneFlags = Game.Net.CarLaneFlags;
 using EditorContainer = Game.Tools.EditorContainer;
 using Node = Game.Net.Node;
+using PathElement = Game.Pathfind.PathElement;
 using SubArea = Game.Areas.SubArea;
 using SubLane = Game.Net.SubLane;
 using SubNet = Game.Net.SubNet;
-using PathElement = Game.Pathfind.PathElement;
 
 namespace SceneExplorer.System
 {
@@ -615,46 +617,61 @@ namespace SceneExplorer.System
 
         private void RenderPathElements(Entity entityWithPathElements, OverlayRenderSystem.Buffer buffer)
         {
-            var pathElements = EntityManager.GetBuffer<PathElement>(entityWithPathElements);
-            foreach (var pathElement in pathElements)
+            if (EntityManager.TryGetBuffer(entityWithPathElements, true, out DynamicBuffer<PathElement> pathElements))
             {
-                RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, buffer);
+                foreach (var pathElement in pathElements)
+                {
+                    RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, buffer);
+
+                    if (pathElements.IsCreated == false)
+                    {
+                        break;
+                    }
+                }
             }
         }
 
         private void RenderCarNavigationLanes(Entity entityWithCarNavigationLanes, OverlayRenderSystem.Buffer buffer)
         {
-            var carNavigationLanes = EntityManager.GetBuffer<Game.Vehicles.CarNavigationLane>(entityWithCarNavigationLanes);
-            foreach (var carNavigationLane in carNavigationLanes)
+            if (EntityManager.TryGetBuffer(entityWithCarNavigationLanes, true, out DynamicBuffer<CarNavigationLane> carNavigationLanes))
             {
-                RenderPath(carNavigationLane.m_Lane, carNavigationLane.m_CurvePosition, buffer);
+                foreach (var carNavigationLane in carNavigationLanes)
+                {
+                    RenderPath(carNavigationLane.m_Lane, carNavigationLane.m_CurvePosition, buffer);
+                }
             }
         }
 
         private void RenderTrainNavigationLanes(Entity entityWithTrainNavigationLanes, OverlayRenderSystem.Buffer buffer)
         {
-            var trainNavigationLanes = EntityManager.GetBuffer<Game.Vehicles.TrainNavigationLane>(entityWithTrainNavigationLanes);
-            foreach (var trainNavigationLane in trainNavigationLanes)
+            if (EntityManager.TryGetBuffer(entityWithTrainNavigationLanes, true, out DynamicBuffer<TrainNavigationLane> trainNavigationLanes))
             {
-                RenderPath(trainNavigationLane.m_Lane, trainNavigationLane.m_CurvePosition, buffer);
+                foreach (var trainNavigationLane in trainNavigationLanes)
+                {
+                    RenderPath(trainNavigationLane.m_Lane, trainNavigationLane.m_CurvePosition, buffer);
+                }
             }
         }
 
         private void RenderWatercraftNavigationLanes(Entity entityWithWatercraftNavigationLanes, OverlayRenderSystem.Buffer buffer)
         {
-            var watercraftNavigationLanes = EntityManager.GetBuffer<Game.Vehicles.WatercraftNavigationLane>(entityWithWatercraftNavigationLanes);
-            foreach (var watercraftNavigationLane in watercraftNavigationLanes)
+            if (EntityManager.TryGetBuffer(entityWithWatercraftNavigationLanes, true, out DynamicBuffer<WatercraftNavigationLane> watercraftNavigationLanes))
             {
-                RenderPath(watercraftNavigationLane.m_Lane, watercraftNavigationLane.m_CurvePosition, buffer);
+                foreach (var watercraftNavigationLane in watercraftNavigationLanes)
+                {
+                    RenderPath(watercraftNavigationLane.m_Lane, watercraftNavigationLane.m_CurvePosition, buffer);
+                }
             }
         }
 
         private void RenderAircraftNavigationLanes(Entity entityWithAircraftNavigationLanes, OverlayRenderSystem.Buffer buffer)
         {
-            var aircraftNavigationLanes = EntityManager.GetBuffer<Game.Vehicles.AircraftNavigationLane>(entityWithAircraftNavigationLanes);
-            foreach (var aircraftNavigationLane in aircraftNavigationLanes)
+            if (EntityManager.TryGetBuffer(entityWithAircraftNavigationLanes, true, out DynamicBuffer<AircraftNavigationLane> aircraftNavigationLanes))
             {
-                RenderPath(aircraftNavigationLane.m_Lane, aircraftNavigationLane.m_CurvePosition, buffer);
+                foreach (var aircraftNavigationLane in aircraftNavigationLanes)
+                {
+                    RenderPath(aircraftNavigationLane.m_Lane, aircraftNavigationLane.m_CurvePosition, buffer);
+                }
             }
         }
 
