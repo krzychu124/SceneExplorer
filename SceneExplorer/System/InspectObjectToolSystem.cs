@@ -396,7 +396,7 @@ namespace SceneExplorer.System
                     return true;
                 }
             }
-            else if (EntityManager.HasComponent<Game.Areas.Area>(entity) && EntityManager.HasBuffer<Game.Areas.Triangle>(entity))
+            else if (EntityManager.HasComponent<Area>(entity) && EntityManager.HasBuffer<Triangle>(entity))
             {
                 componentType = ComponentType.ReadOnly<Triangle>();
                 buffer = true;
@@ -443,28 +443,28 @@ namespace SceneExplorer.System
                 RenderPathElements(hovered.entity, buffer);
                 return true;
             }
-            if (managedType == typeof(Game.Vehicles.CarNavigationLane))
+            if (managedType == typeof(CarNavigationLane))
             {
                 var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
                 RenderCarNavigationLanes(hovered.entity, buffer);
                 return true;
             }
-            if (managedType == typeof(Game.Vehicles.TrainNavigationLane))
+            if (managedType == typeof(TrainNavigationLane))
             {
                 var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
                 RenderTrainNavigationLanes(hovered.entity, buffer);
                 return true;
             }
-            if (managedType == typeof(Game.Vehicles.WatercraftNavigationLane))
+            if (managedType == typeof(WatercraftNavigationLane))
             {
                 var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
                 RenderWatercraftNavigationLanes(hovered.entity, buffer);
                 return true;
             }
-            if (managedType == typeof(Game.Vehicles.AircraftNavigationLane))
+            if (managedType == typeof(AircraftNavigationLane))
             {
                 var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
@@ -520,7 +520,7 @@ namespace SceneExplorer.System
                 RenderAreaNodes(hovered.entity, hovered, buffer);
                 return true;
             }
-            if (managedType == typeof(Game.Areas.Triangle))
+            if (managedType == typeof(Triangle))
             {
                 var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
