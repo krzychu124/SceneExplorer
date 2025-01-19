@@ -8,11 +8,11 @@
         <!--The file where mod information which is required for publishing mod on PDX mods are stored-->
         <PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
         <LangVersion>9</LangVersion>
-        <Version>0.2.9</Version>
+        <Version>0.2.10</Version>
         <Title>Scene Explorer</Title>
         <Authors>krzychu124</Authors>
-        <AssemblyVersion>0.2.9</AssemblyVersion>
-        <FileVersion>0.2.9</FileVersion>
+        <AssemblyVersion>0.2.10</AssemblyVersion>
+        <FileVersion>0.2.10</FileVersion>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -99,10 +99,6 @@
     <ItemGroup>
         <None Include="$(ModPropsFile)" Link="Properties\Mod.props" />
         <None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="CS2-ModdingTools" Version="1.0.3" />
     </ItemGroup>
 
 </Project>
