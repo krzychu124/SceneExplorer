@@ -59,6 +59,8 @@ namespace SceneExplorer.System
         private PrefabToolPanelSystem _prefabToolPanelSystem;
         private OverlayRenderSystem _overlayRenderSystem;
         private bool _eventRegistered;
+        private bool startWaypointSet;
+        private Game.Routes.Waypoint startWayPoint;
         public ComponentDataRenderer.HoverData HoverData;
 
         protected override void OnCreate()
@@ -622,13 +624,11 @@ namespace SceneExplorer.System
                 foreach (var pathElement in pathElements)
                 {
                     RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, buffer);
-
-                    if (pathElements.IsCreated == false)
-                    {
-                        break;
-                    }
                 }
             }
+
+            // For the case if there was only one Waypoint. It is very unlikely because they must come in pairs, but better safe than sorry.
+            startWaypointSet = false; 
         }
 
         private void RenderCarNavigationLanes(Entity entityWithCarNavigationLanes, OverlayRenderSystem.Buffer buffer)
@@ -684,26 +684,50 @@ namespace SceneExplorer.System
 
                 buffer.DrawCurve(Color.green, MathUtils.Cut(curve.m_Bezier, usedInterval), 0.5f);
             }
-            // Handle transit lines
-            else if (EntityManager.HasComponent<Game.Routes.Waypoint>(pathEntity) && EntityManager.HasComponent<Owner>(pathEntity))
+            // Handle transit line segments
+            else if (EntityManager.TryGetComponent<Game.Routes.Waypoint>(pathEntity, out var waypoint) && EntityManager.HasComponent<Owner>(pathEntity))
             {
-                var transitLineEntity = EntityManager.GetComponentData<Owner>(pathEntity).m_Owner;
-                if (EntityManager.HasComponent<Game.Routes.RouteSegment>(transitLineEntity))
+                if (!startWaypointSet)
                 {
-                    var routeSegments = EntityManager.GetBuffer<Game.Routes.RouteSegment>(transitLineEntity);
-                    foreach (var routeSegment in routeSegments)
+                    startWayPoint = waypoint;
+                    startWaypointSet = true;
+                }
+                else 
+                {
+                    startWaypointSet = false;
+                    var startSegmentIndex = startWayPoint.m_Index;
+                    var endSegmentIndex = waypoint.m_Index;
+
+                    if (EntityManager.TryGetComponent<Owner>(pathEntity, out var transitLineEntity) 
+                        && EntityManager.TryGetBuffer<Game.Routes.RouteSegment>(transitLineEntity.m_Owner, true, out var routeSegments))
                     {
-                        if (EntityManager.HasComponent<PathElement>(routeSegment.m_Segment))
+                        // In transit lines the end Waypoint might be beyond the end of the line.
+                        // E.g. the start Waypoint is 2, the end Waypoint is 1, and the routeSegments.Length is 4 (0,1,2,3),
+                        // therefore we need to iterate it like this: 2,3,0,1
+                        var i = startSegmentIndex;
+                        do
                         {
-                            RenderPathElements(routeSegment.m_Segment, buffer);
-                        }
+                            if (i == routeSegments.Length)
+                            {
+                                i = 0;
+                            }
+
+                            var routeSegment = routeSegments[i];
+                            if (EntityManager.HasComponent<PathElement>(routeSegment.m_Segment))
+                            {
+                                RenderPathElements(routeSegment.m_Segment, buffer);
+                            }
+
+                            i++;
+                        } while (i != endSegmentIndex);
                     }
                 }
             }
+            // Handle the others (takoff and spawn locations)
             else if ((EntityManager.HasComponent<Game.Routes.TakeoffLocation>(pathEntity) || EntityManager.HasComponent<Game.Objects.SpawnLocation>(pathEntity))
-                && EntityManager.HasComponent<CullingInfo>(pathEntity))
+                && EntityManager.TryGetComponent<CullingInfo>(pathEntity, out var cullingInfo))
             {
-                var locationBounds = EntityManager.GetComponentData<CullingInfo>(pathEntity).m_Bounds;
+                var locationBounds = cullingInfo.m_Bounds;
 
                 var color = Color.green;
                 var width = 0.5f;
