@@ -1,4 +1,5 @@
-﻿using Colossal.Entities;
+﻿using Colossal;
+using Colossal.Entities;
 using Colossal.Mathematics;
 using Colossal.Serialization.Entities;
 using Game;
@@ -58,6 +59,7 @@ namespace SceneExplorer.System
         private ComponentType[] _selectedEntityComponents = Array.Empty<ComponentType>();
         private PrefabToolPanelSystem _prefabToolPanelSystem;
         private OverlayRenderSystem _overlayRenderSystem;
+        private GizmosSystem _gizmosSystem;
         private bool _eventRegistered;
         private bool startWaypointSet;
         private Game.Routes.Waypoint startWayPoint;
@@ -71,6 +73,7 @@ namespace SceneExplorer.System
             Enabled = false;
             _prefabToolPanelSystem = World.GetExistingSystemManaged<PrefabToolPanelSystem>();
             _overlayRenderSystem = World.GetOrCreateSystemManaged<OverlayRenderSystem>();
+            _gizmosSystem = World.GetOrCreateSystemManaged<GizmosSystem>();
             TryRegisterPrefabSelectedEvent();
         }
 
@@ -412,65 +415,65 @@ namespace SceneExplorer.System
         {
             if (managedType == typeof(Bezier4x3))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderCurve(hovered, buffer);
+                RenderCurve(hovered, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(Bounds3))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderBounds(hovered, buffer);
+                RenderBounds(hovered, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(float3))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderPoint(hovered, buffer);
+                RenderPoint(hovered, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(Segment))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderSegment(hovered, buffer);
+                RenderSegment(hovered, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(PathElement))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderPathElements(hovered.entity, buffer);
+                RenderPathElements(hovered.entity, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(CarNavigationLane))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderCarNavigationLanes(hovered.entity, buffer);
+                RenderCarNavigationLanes(hovered.entity, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(TrainNavigationLane))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderTrainNavigationLanes(hovered.entity, buffer);
+                RenderTrainNavigationLanes(hovered.entity, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(WatercraftNavigationLane))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderWatercraftNavigationLanes(hovered.entity, buffer);
+                RenderWatercraftNavigationLanes(hovered.entity, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(AircraftNavigationLane))
             {
-                var buffer = _overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
                 deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderAircraftNavigationLanes(hovered.entity, buffer);
+                RenderAircraftNavigationLanes(hovered.entity, gizmoBatcher);
                 return true;
             }
             if (managedType == typeof(SubLane))
@@ -617,13 +620,13 @@ namespace SceneExplorer.System
             }
         }
 
-        private void RenderPathElements(Entity entityWithPathElements, OverlayRenderSystem.Buffer buffer)
+        private void RenderPathElements(Entity entityWithPathElements, GizmoBatcher gizmoBatcher)
         {
             if (EntityManager.TryGetBuffer(entityWithPathElements, true, out DynamicBuffer<PathElement> pathElements))
             {
                 foreach (var pathElement in pathElements)
                 {
-                    RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, buffer);
+                    RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, gizmoBatcher);
                 }
             }
 
@@ -631,58 +634,58 @@ namespace SceneExplorer.System
             startWaypointSet = false; 
         }
 
-        private void RenderCarNavigationLanes(Entity entityWithCarNavigationLanes, OverlayRenderSystem.Buffer buffer)
+        private void RenderCarNavigationLanes(Entity entityWithCarNavigationLanes, GizmoBatcher gizmoBatcher)
         {
             if (EntityManager.TryGetBuffer(entityWithCarNavigationLanes, true, out DynamicBuffer<CarNavigationLane> carNavigationLanes))
             {
                 foreach (var carNavigationLane in carNavigationLanes)
                 {
-                    RenderPath(carNavigationLane.m_Lane, carNavigationLane.m_CurvePosition, buffer);
+                    RenderPath(carNavigationLane.m_Lane, carNavigationLane.m_CurvePosition, gizmoBatcher);
                 }
             }
         }
 
-        private void RenderTrainNavigationLanes(Entity entityWithTrainNavigationLanes, OverlayRenderSystem.Buffer buffer)
+        private void RenderTrainNavigationLanes(Entity entityWithTrainNavigationLanes, GizmoBatcher gizmoBatcher)
         {
             if (EntityManager.TryGetBuffer(entityWithTrainNavigationLanes, true, out DynamicBuffer<TrainNavigationLane> trainNavigationLanes))
             {
                 foreach (var trainNavigationLane in trainNavigationLanes)
                 {
-                    RenderPath(trainNavigationLane.m_Lane, trainNavigationLane.m_CurvePosition, buffer);
+                    RenderPath(trainNavigationLane.m_Lane, trainNavigationLane.m_CurvePosition, gizmoBatcher);
                 }
             }
         }
 
-        private void RenderWatercraftNavigationLanes(Entity entityWithWatercraftNavigationLanes, OverlayRenderSystem.Buffer buffer)
+        private void RenderWatercraftNavigationLanes(Entity entityWithWatercraftNavigationLanes, GizmoBatcher gizmoBatcher)
         {
             if (EntityManager.TryGetBuffer(entityWithWatercraftNavigationLanes, true, out DynamicBuffer<WatercraftNavigationLane> watercraftNavigationLanes))
             {
                 foreach (var watercraftNavigationLane in watercraftNavigationLanes)
                 {
-                    RenderPath(watercraftNavigationLane.m_Lane, watercraftNavigationLane.m_CurvePosition, buffer);
+                    RenderPath(watercraftNavigationLane.m_Lane, watercraftNavigationLane.m_CurvePosition, gizmoBatcher);
                 }
             }
         }
 
-        private void RenderAircraftNavigationLanes(Entity entityWithAircraftNavigationLanes, OverlayRenderSystem.Buffer buffer)
+        private void RenderAircraftNavigationLanes(Entity entityWithAircraftNavigationLanes, GizmoBatcher gizmoBatcher)
         {
             if (EntityManager.TryGetBuffer(entityWithAircraftNavigationLanes, true, out DynamicBuffer<AircraftNavigationLane> aircraftNavigationLanes))
             {
                 foreach (var aircraftNavigationLane in aircraftNavigationLanes)
                 {
-                    RenderPath(aircraftNavigationLane.m_Lane, aircraftNavigationLane.m_CurvePosition, buffer);
+                    RenderPath(aircraftNavigationLane.m_Lane, aircraftNavigationLane.m_CurvePosition, gizmoBatcher);
                 }
             }
         }
 
-        private void RenderPath(Entity pathEntity, float2 usedInterval, OverlayRenderSystem.Buffer buffer)
+        private void RenderPath(Entity pathEntity, float2 usedInterval, GizmoBatcher gizmoBatcher)
         {
             if (EntityManager.HasComponent<Curve>(pathEntity))
             {
                 // Normal lanes components have a curve
                 var curve = EntityManager.GetComponentData<Curve>(pathEntity);
 
-                buffer.DrawCurve(Color.green, MathUtils.Cut(curve.m_Bezier, usedInterval), 0.5f);
+                gizmoBatcher.DrawBezier(MathUtils.Cut(curve.m_Bezier, usedInterval), Color.green);
             }
             // Handle transit line segments
             else if (EntityManager.TryGetComponent<Game.Routes.Waypoint>(pathEntity, out var waypoint) && EntityManager.HasComponent<Owner>(pathEntity))
@@ -695,31 +698,40 @@ namespace SceneExplorer.System
                 else 
                 {
                     startWaypointSet = false;
-                    var startSegmentIndex = startWayPoint.m_Index;
-                    var endSegmentIndex = waypoint.m_Index;
 
                     if (EntityManager.TryGetComponent<Owner>(pathEntity, out var transitLineEntity) 
                         && EntityManager.TryGetBuffer<Game.Routes.RouteSegment>(transitLineEntity.m_Owner, true, out var routeSegments))
                     {
-                        // In transit lines the end Waypoint might be beyond the end of the line.
-                        // E.g. the start Waypoint is 2, the end Waypoint is 1, and the routeSegments.Length is 4 (0,1,2,3),
-                        // therefore we need to iterate it like this: 2,3,0,1
+                        // RouteSegments are between Waypoints, e.g.:
+                        // WayPoints:      0   1   2   3
+                        // RouteSegments:    0   1   2   3
+                        // If the StartWaypoint is 1 and the EndWaypoint is 3, then we need to render segments 1 and 2.
+                        // However, the EndWaypoint might be also beyond the end of the transit line.
+                        // E.g. the StartWaypoint is 2, and the EndWaypoint is 1.
+                        // In this case we need to render segments 2, 3 and 0.
+                        var startSegmentIndex = startWayPoint.m_Index;
+                        var endSegmentIndex = waypoint.m_Index == 0 ? routeSegments.Length - 1 : waypoint.m_Index - 1;
+                        
                         var i = startSegmentIndex;
-                        do
+                        while (true)
                         {
+                            var routeSegment = routeSegments[i];
+                            if (EntityManager.HasComponent<PathElement>(routeSegment.m_Segment))
+                            {
+                                RenderPathElements(routeSegment.m_Segment, gizmoBatcher);
+                            }
+
+                            if (i == endSegmentIndex)
+                            {
+                                break;
+                            }
+
+                            i++;
                             if (i == routeSegments.Length)
                             {
                                 i = 0;
                             }
-
-                            var routeSegment = routeSegments[i];
-                            if (EntityManager.HasComponent<PathElement>(routeSegment.m_Segment))
-                            {
-                                RenderPathElements(routeSegment.m_Segment, buffer);
-                            }
-
-                            i++;
-                        } while (i != endSegmentIndex);
+                        } 
                     }
                 }
             }
@@ -729,23 +741,11 @@ namespace SceneExplorer.System
             {
                 var locationBounds = cullingInfo.m_Bounds;
 
-                var color = Color.green;
-                var width = 0.5f;
-
-                var corner1 = locationBounds.min;
-                var corner2 = new float3(locationBounds.min.x, locationBounds.min.y, locationBounds.max.z);
-                var corner5 = new float3(locationBounds.max.x, locationBounds.min.y, locationBounds.min.z);
-                var corner6 = new float3(locationBounds.max.x, locationBounds.min.y, locationBounds.max.z);
-
-                // Draw only the bottom of the bounding box
-                buffer.DrawLine(color, new Line3.Segment(corner1, corner5), width);
-                buffer.DrawLine(color, new Line3.Segment(corner5, corner6), width);
-                buffer.DrawLine(color, new Line3.Segment(corner6, corner2), width);
-                buffer.DrawLine(color, new Line3.Segment(corner2, corner1), width);
+                gizmoBatcher.DrawWireBounds((Bounds)locationBounds, Color.green);
             }
             else
             {
-                Logging.Warning($"Path segment entity {pathEntity} has no Curve or Waypoint component, thus it cannot be rendered.");
+                // The entity has no renderable component
             }
         }
 
@@ -1078,59 +1078,39 @@ namespace SceneExplorer.System
             buffer.DrawLine( outline, fill, 0f, 0f, line, width, new float2(1f));
         }
 
-        private void RenderCurve(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        private void RenderCurve(ComponentDataRenderer.HoverData hovered, GizmoBatcher gizmoBatcher)
         {
             var bezierCurve = (Bezier4x3)hovered.ComponentItem.GetValueCached();
-            buffer.DrawCurve(Color.red, bezierCurve, 0.5f);
+            gizmoBatcher.DrawBezier(bezierCurve, Color.red);
         }
 
-        private void RenderPoint(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        private void RenderPoint(ComponentDataRenderer.HoverData hovered, GizmoBatcher gizmoBatcher)
         {
             var point = (float3)hovered.ComponentItem.GetValueCached();
-            RenderPoint(point, buffer);
+            RenderPoint(point, gizmoBatcher);
         }
 
-        private void RenderPoint(float3 point, OverlayRenderSystem.Buffer buffer)
+        private void RenderPoint(float3 point, GizmoBatcher gizmoBatcher)
         {
-            var width = 0.2f;
-
-            buffer.DrawLine(Color.red, new Line3.Segment(new float3(point.x - 1, point.y, point.z), new float3(point.x + 1, point.y, point.z)), width);
-            buffer.DrawLine(Color.red, new Line3.Segment(new float3(point.x, point.y, point.z - 1), new float3(point.x, point.y, point.z + 1)), width);
+            var color = Color.red;
+            gizmoBatcher.DrawLine(new float3(point.x - 1, point.y, point.z), new float3(point.x + 1, point.y, point.z), color);
+            gizmoBatcher.DrawLine(new float3(point.x, point.y, point.z - 1), new float3(point.x, point.y, point.z + 1), color);
+            gizmoBatcher.DrawLine(new float3(point.x, point.y - 1, point.z), new float3(point.x, point.y + 1, point.z), color);
         }
 
-        private void RenderBounds(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        private void RenderBounds(ComponentDataRenderer.HoverData hovered, GizmoBatcher gizmoBatcher)
         {
             var bounds = (Bounds3)hovered.ComponentItem.GetValueCached();
-            var color = Color.red;
-            var width = 0.2f;
-
-            var corner1 = bounds.min;
-            var corner2 = new float3(bounds.min.x, bounds.min.y, bounds.max.z);
-            var corner3 = new float3(bounds.min.x, bounds.max.y, bounds.min.z);
-            var corner4 = new float3(bounds.min.x, bounds.max.y, bounds.max.z);
-            var corner5 = new float3(bounds.max.x, bounds.min.y, bounds.min.z);
-            var corner6 = new float3(bounds.max.x, bounds.min.y, bounds.max.z);
-            var corner7 = new float3(bounds.max.x, bounds.max.y, bounds.min.z);
-            var corner8 = bounds.max;
-
-            // Unfortunatelly the OverlayRenderSystem does not support drawing vertical lines, so I only deaw the top and the bottom lines
-            buffer.DrawLine(color, new Line3.Segment(corner1, corner5), width);
-            buffer.DrawLine(color, new Line3.Segment(corner5, corner6), width);
-            buffer.DrawLine(color, new Line3.Segment(corner6, corner2), width);
-            buffer.DrawLine(color, new Line3.Segment(corner2, corner1), width);
-            buffer.DrawLine(color, new Line3.Segment(corner3, corner7), width);
-            buffer.DrawLine(color, new Line3.Segment(corner7, corner8), width);
-            buffer.DrawLine(color, new Line3.Segment(corner8, corner4), width);
-            buffer.DrawLine(color, new Line3.Segment(corner4, corner3), width);
+            gizmoBatcher.DrawWireBounds((Bounds)bounds, Color.red);
         }
 
-        private void RenderSegment(ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
+        private void RenderSegment(ComponentDataRenderer.HoverData hovered, GizmoBatcher gizmoBatcher)
         {
             Segment segment = (Segment)hovered.ComponentItem.GetValueCached();
             var color = new Color(0.9f, 0.1f, 0.1f, 0.8f);
 
-            buffer.DrawCurve(color, segment.m_Left, 0.5f);
-            buffer.DrawCurve(color, segment.m_Right, 0.5f);
+            gizmoBatcher.DrawBezier(segment.m_Left, color);
+            gizmoBatcher.DrawBezier(segment.m_Right, color);
         }
 
         private void RenderAreaNode(Game.Areas.Node node, OverlayRenderSystem.Buffer buffer)
