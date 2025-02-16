@@ -16,6 +16,8 @@ using SceneExplorer.ToBeReplaced;
 using SceneExplorer.ToBeReplaced.Helpers;
 using System;
 using System.Collections.Generic;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -41,6 +43,105 @@ namespace SceneExplorer.System
 
     public partial class InspectObjectToolSystem : ToolBaseSystem
     {
+        [BurstCompile]
+        private struct PathRendererJob : IJob
+        {
+            [ReadOnly] public GizmoBatcher gizmoBatcher;
+            [ReadOnly] public NativeArray<ValueTuple<Entity, float2>> pathEntities;
+            [ReadOnly] public ComponentLookup<Curve> curveCompontentLookup;
+            [ReadOnly] public ComponentLookup<Game.Routes.Waypoint> waypointCompontentLookup;
+            [ReadOnly] public ComponentLookup<Owner> ownerCompontentLookup;
+            [ReadOnly] public BufferLookup<Game.Routes.RouteSegment> routeSegmentBufferLookup;
+            [ReadOnly] public BufferLookup<PathElement> pathElementBufferLookup;
+            [ReadOnly] public ComponentLookup<Game.Routes.TakeoffLocation> takeoffLocationCompontentLookup;
+            [ReadOnly] public ComponentLookup<Game.Objects.SpawnLocation> spawnLocationCompontentLookup;
+            [ReadOnly] public ComponentLookup<CullingInfo> cullingInfoCompontentLookup;
+                
+            private bool startWaypointSet;
+            private Game.Routes.Waypoint startWayPoint;
+
+            public void Execute()
+            {
+                foreach (var pathEntity in pathEntities)
+                {
+                    RenderPath(pathEntity.Item1, pathEntity.Item2, gizmoBatcher);
+                }
+            }
+
+            private void RenderPath(Entity pathEntity, float2 usedInterval, GizmoBatcher gizmoBatcher)
+            {
+                if (curveCompontentLookup.TryGetComponent(pathEntity, out Curve curve))
+                {
+                    // Normal lane components have a curve
+                    gizmoBatcher.DrawBezier(MathUtils.Cut(curve.m_Bezier, usedInterval), Color.green, 6);
+                }
+                // Handle transit line segments
+                else if (waypointCompontentLookup.TryGetComponent(pathEntity, out var waypoint) && ownerCompontentLookup.HasComponent(pathEntity))
+                {
+                    if (!startWaypointSet)
+                    {
+                        startWayPoint = waypoint;
+                        startWaypointSet = true;
+                    }
+                    else
+                    {
+                        startWaypointSet = false;
+
+                        if (ownerCompontentLookup.TryGetComponent(pathEntity, out var transitLineEntity)
+                            && routeSegmentBufferLookup.TryGetBuffer(transitLineEntity.m_Owner, out var routeSegments))
+                        {
+                            // RouteSegments are between Waypoints, e.g.:
+                            // WayPoints:      0   1   2   3
+                            // RouteSegments:    0   1   2   3
+                            // If the StartWaypoint is 1 and the EndWaypoint is 3, then we need to render segments 1 and 2.
+                            // However, the EndWaypoint might be also beyond the end of the transit line.
+                            // E.g. the StartWaypoint is 2, and the EndWaypoint is 1.
+                            // In this case we need to render segments 2, 3 and 0.
+                            var startSegmentIndex = startWayPoint.m_Index;
+                            var endSegmentIndex = waypoint.m_Index == 0 ? routeSegments.Length - 1 : waypoint.m_Index - 1;
+
+                            var i = startSegmentIndex;
+                            while (true)
+                            {
+                                var routeSegment = routeSegments[i];
+                                
+                                if (pathElementBufferLookup.TryGetBuffer(routeSegment.m_Segment, out var pathElements))
+                                {
+                                    foreach (var pathElement in pathElements)
+                                    {
+                                        RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, gizmoBatcher);
+                                    }
+                                }
+
+                                if (i == endSegmentIndex)
+                                {
+                                    break;
+                                }
+
+                                i++;
+                                if (i == routeSegments.Length)
+                                {
+                                    i = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+                // Handle the others (takoff and spawn locations)
+                else if ((takeoffLocationCompontentLookup.HasComponent(pathEntity) || spawnLocationCompontentLookup.HasComponent(pathEntity))
+                    && cullingInfoCompontentLookup.TryGetComponent(pathEntity, out var cullingInfo))
+                {
+                    var locationBounds = cullingInfo.m_Bounds;
+
+                    gizmoBatcher.DrawWireBounds((Bounds)locationBounds, Color.green);
+                }
+                else
+                {
+                    // The entity has no renderable component
+                }
+            }
+        }
+
         public Entity HoveredEntity;
         public float3 LastPos;
         public Entity Selected;
@@ -61,8 +162,6 @@ namespace SceneExplorer.System
         private OverlayRenderSystem _overlayRenderSystem;
         private GizmosSystem _gizmosSystem;
         private bool _eventRegistered;
-        private bool startWaypointSet;
-        private Game.Routes.Waypoint startWayPoint;
         public ComponentDataRenderer.HoverData HoverData;
 
         protected override void OnCreate()
@@ -443,38 +542,50 @@ namespace SceneExplorer.System
             }
             if (managedType == typeof(PathElement))
             {
-                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
-                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderPathElements(hovered.entity, gizmoBatcher);
-                return true;
+                if (EntityManager.TryGetBuffer(hovered.entity, true, out DynamicBuffer<PathElement> pathElements))
+                {
+                    deps = StartPathRenderingJob(inputDeps, pathElements, (pa) => pa.m_Target, (pa) => pa.m_TargetDelta);
+                    return true;
+                }
+                deps = inputDeps;
+                return false;
             }
             if (managedType == typeof(CarNavigationLane))
             {
-                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
-                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderCarNavigationLanes(hovered.entity, gizmoBatcher);
-                return true;
+                if (EntityManager.TryGetBuffer(hovered.entity, true, out DynamicBuffer<CarNavigationLane> carNavigationLanes))
+                {
+                    deps = StartPathRenderingJob(inputDeps, carNavigationLanes, (cnl) => cnl.m_Lane, (cnl) => cnl.m_CurvePosition);
+                    return true;
+                }
+                deps = inputDeps;
+                return false;
             }
             if (managedType == typeof(TrainNavigationLane))
             {
-                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
-                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderTrainNavigationLanes(hovered.entity, gizmoBatcher);
-                return true;
+                if (EntityManager.TryGetBuffer(hovered.entity, true, out DynamicBuffer<TrainNavigationLane> trainNavigationLanes))
+                {
+                    deps = StartPathRenderingJob(inputDeps, trainNavigationLanes, (tnl) => tnl.m_Lane, (tnl) => tnl.m_CurvePosition);
+                }
+                deps = inputDeps;
+                return false;
             }
             if (managedType == typeof(WatercraftNavigationLane))
             {
-                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
-                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderWatercraftNavigationLanes(hovered.entity, gizmoBatcher);
-                return true;
+                if (EntityManager.TryGetBuffer(hovered.entity, true, out DynamicBuffer<WatercraftNavigationLane> watercraftNavigationLanes))
+                {
+                    deps = StartPathRenderingJob(inputDeps, watercraftNavigationLanes, (wnl) => wnl.m_Lane, (wnl) => wnl.m_CurvePosition);
+                }
+                deps = inputDeps;
+                return false;
             }
             if (managedType == typeof(AircraftNavigationLane))
             {
-                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
-                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-                RenderAircraftNavigationLanes(hovered.entity, gizmoBatcher);
-                return true;
+                if (EntityManager.TryGetBuffer(hovered.entity, true, out DynamicBuffer<AircraftNavigationLane> aircraftNavigationLanes))
+                {
+                    deps = StartPathRenderingJob(inputDeps, aircraftNavigationLanes, (anl) => anl.m_Lane, (anl) => anl.m_CurvePosition);
+                }
+                deps = inputDeps;
+                return false;
             }
             if (managedType == typeof(SubLane))
             {
@@ -552,6 +663,39 @@ namespace SceneExplorer.System
             return false;
         }
 
+        private JobHandle StartPathRenderingJob<T>(JobHandle inputDeps, DynamicBuffer<T> pathEntities, Func<T, Entity> getTargetEntity, Func<T, float2> getDelta)
+            where T : unmanaged
+        {
+            JobHandle deps;
+            var pathEntitiesAndDeltas = new NativeArray<ValueTuple<Entity, float2>>(pathEntities.Capacity, Allocator.TempJob);
+
+            for (int i = 0; i < pathEntities.Length; i++)
+            {
+                var targetAndDelta = new ValueTuple<Entity, float2>();
+                targetAndDelta.Item1 = getTargetEntity(pathEntities[i]);
+                targetAndDelta.Item2 = getDelta(pathEntities[i]);
+                pathEntitiesAndDeltas[i] = targetAndDelta;
+            }
+
+            var jobHandle = new PathRendererJob
+            {
+                gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies),
+                pathEntities = pathEntitiesAndDeltas,
+                curveCompontentLookup = GetComponentLookup<Curve>(true),
+                waypointCompontentLookup = GetComponentLookup<Game.Routes.Waypoint>(true),
+                ownerCompontentLookup = GetComponentLookup<Owner>(true),
+                routeSegmentBufferLookup = GetBufferLookup<Game.Routes.RouteSegment>(true),
+                pathElementBufferLookup = GetBufferLookup<PathElement>(true),
+                takeoffLocationCompontentLookup = GetComponentLookup<Game.Routes.TakeoffLocation>(true),
+                spawnLocationCompontentLookup = GetComponentLookup<Game.Objects.SpawnLocation>(true),
+                cullingInfoCompontentLookup = GetComponentLookup<CullingInfo>(true),
+            }.Schedule();
+
+            _gizmosSystem.AddGizmosBatcherWriter(jobHandle);
+            deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+            return deps;
+        }
+
         private void RenderSubNets(Entity entity, bool isBufferType, ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
         {
             DynamicBuffer<SubNet> subNets = EntityManager.GetBuffer<SubNet>(entity);
@@ -617,135 +761,6 @@ namespace SceneExplorer.System
                 {
                     RenderNet(subLane.m_SubLane, hovered, buffer, false, isElevated);
                 }
-            }
-        }
-
-        private void RenderPathElements(Entity entityWithPathElements, GizmoBatcher gizmoBatcher)
-        {
-            if (EntityManager.TryGetBuffer(entityWithPathElements, true, out DynamicBuffer<PathElement> pathElements))
-            {
-                foreach (var pathElement in pathElements)
-                {
-                    RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, gizmoBatcher);
-                }
-            }
-
-            // For the case if there was only one Waypoint. It is very unlikely because they must come in pairs, but better safe than sorry.
-            startWaypointSet = false; 
-        }
-
-        private void RenderCarNavigationLanes(Entity entityWithCarNavigationLanes, GizmoBatcher gizmoBatcher)
-        {
-            if (EntityManager.TryGetBuffer(entityWithCarNavigationLanes, true, out DynamicBuffer<CarNavigationLane> carNavigationLanes))
-            {
-                foreach (var carNavigationLane in carNavigationLanes)
-                {
-                    RenderPath(carNavigationLane.m_Lane, carNavigationLane.m_CurvePosition, gizmoBatcher);
-                }
-            }
-        }
-
-        private void RenderTrainNavigationLanes(Entity entityWithTrainNavigationLanes, GizmoBatcher gizmoBatcher)
-        {
-            if (EntityManager.TryGetBuffer(entityWithTrainNavigationLanes, true, out DynamicBuffer<TrainNavigationLane> trainNavigationLanes))
-            {
-                foreach (var trainNavigationLane in trainNavigationLanes)
-                {
-                    RenderPath(trainNavigationLane.m_Lane, trainNavigationLane.m_CurvePosition, gizmoBatcher);
-                }
-            }
-        }
-
-        private void RenderWatercraftNavigationLanes(Entity entityWithWatercraftNavigationLanes, GizmoBatcher gizmoBatcher)
-        {
-            if (EntityManager.TryGetBuffer(entityWithWatercraftNavigationLanes, true, out DynamicBuffer<WatercraftNavigationLane> watercraftNavigationLanes))
-            {
-                foreach (var watercraftNavigationLane in watercraftNavigationLanes)
-                {
-                    RenderPath(watercraftNavigationLane.m_Lane, watercraftNavigationLane.m_CurvePosition, gizmoBatcher);
-                }
-            }
-        }
-
-        private void RenderAircraftNavigationLanes(Entity entityWithAircraftNavigationLanes, GizmoBatcher gizmoBatcher)
-        {
-            if (EntityManager.TryGetBuffer(entityWithAircraftNavigationLanes, true, out DynamicBuffer<AircraftNavigationLane> aircraftNavigationLanes))
-            {
-                foreach (var aircraftNavigationLane in aircraftNavigationLanes)
-                {
-                    RenderPath(aircraftNavigationLane.m_Lane, aircraftNavigationLane.m_CurvePosition, gizmoBatcher);
-                }
-            }
-        }
-
-        private void RenderPath(Entity pathEntity, float2 usedInterval, GizmoBatcher gizmoBatcher)
-        {
-            if (EntityManager.HasComponent<Curve>(pathEntity))
-            {
-                // Normal lanes components have a curve
-                var curve = EntityManager.GetComponentData<Curve>(pathEntity);
-
-                gizmoBatcher.DrawBezier(MathUtils.Cut(curve.m_Bezier, usedInterval), Color.green);
-            }
-            // Handle transit line segments
-            else if (EntityManager.TryGetComponent<Game.Routes.Waypoint>(pathEntity, out var waypoint) && EntityManager.HasComponent<Owner>(pathEntity))
-            {
-                if (!startWaypointSet)
-                {
-                    startWayPoint = waypoint;
-                    startWaypointSet = true;
-                }
-                else 
-                {
-                    startWaypointSet = false;
-
-                    if (EntityManager.TryGetComponent<Owner>(pathEntity, out var transitLineEntity) 
-                        && EntityManager.TryGetBuffer<Game.Routes.RouteSegment>(transitLineEntity.m_Owner, true, out var routeSegments))
-                    {
-                        // RouteSegments are between Waypoints, e.g.:
-                        // WayPoints:      0   1   2   3
-                        // RouteSegments:    0   1   2   3
-                        // If the StartWaypoint is 1 and the EndWaypoint is 3, then we need to render segments 1 and 2.
-                        // However, the EndWaypoint might be also beyond the end of the transit line.
-                        // E.g. the StartWaypoint is 2, and the EndWaypoint is 1.
-                        // In this case we need to render segments 2, 3 and 0.
-                        var startSegmentIndex = startWayPoint.m_Index;
-                        var endSegmentIndex = waypoint.m_Index == 0 ? routeSegments.Length - 1 : waypoint.m_Index - 1;
-                        
-                        var i = startSegmentIndex;
-                        while (true)
-                        {
-                            var routeSegment = routeSegments[i];
-                            if (EntityManager.HasComponent<PathElement>(routeSegment.m_Segment))
-                            {
-                                RenderPathElements(routeSegment.m_Segment, gizmoBatcher);
-                            }
-
-                            if (i == endSegmentIndex)
-                            {
-                                break;
-                            }
-
-                            i++;
-                            if (i == routeSegments.Length)
-                            {
-                                i = 0;
-                            }
-                        } 
-                    }
-                }
-            }
-            // Handle the others (takoff and spawn locations)
-            else if ((EntityManager.HasComponent<Game.Routes.TakeoffLocation>(pathEntity) || EntityManager.HasComponent<Game.Objects.SpawnLocation>(pathEntity))
-                && EntityManager.TryGetComponent<CullingInfo>(pathEntity, out var cullingInfo))
-            {
-                var locationBounds = cullingInfo.m_Bounds;
-
-                gizmoBatcher.DrawWireBounds((Bounds)locationBounds, Color.green);
-            }
-            else
-            {
-                // The entity has no renderable component
             }
         }
 
