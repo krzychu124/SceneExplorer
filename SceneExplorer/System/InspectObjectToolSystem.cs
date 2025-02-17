@@ -46,7 +46,7 @@ namespace SceneExplorer.System
         [BurstCompile]
         private struct PathRendererJob : IJob
         {
-            [ReadOnly] public GizmoBatcher gizmoBatcher;
+            public GizmoBatcher gizmoBatcher;
             [ReadOnly] public NativeArray<ValueTuple<Entity, float2>> pathEntities;
             [ReadOnly] public ComponentLookup<Curve> curveCompontentLookup;
             [ReadOnly] public ComponentLookup<Game.Routes.Waypoint> waypointCompontentLookup;
@@ -56,19 +56,17 @@ namespace SceneExplorer.System
             [ReadOnly] public ComponentLookup<Game.Routes.TakeoffLocation> takeoffLocationCompontentLookup;
             [ReadOnly] public ComponentLookup<Game.Objects.SpawnLocation> spawnLocationCompontentLookup;
             [ReadOnly] public ComponentLookup<CullingInfo> cullingInfoCompontentLookup;
-                
-            private bool startWaypointSet;
-            private Game.Routes.Waypoint startWayPoint;
 
             public void Execute()
             {
+                Game.Routes.Waypoint? startWayPoint = null;
                 foreach (var pathEntity in pathEntities)
                 {
-                    RenderPath(pathEntity.Item1, pathEntity.Item2, gizmoBatcher);
+                    RenderPath(pathEntity.Item1, pathEntity.Item2, gizmoBatcher, ref startWayPoint);
                 }
             }
 
-            private void RenderPath(Entity pathEntity, float2 usedInterval, GizmoBatcher gizmoBatcher)
+            private void RenderPath(Entity pathEntity, float2 usedInterval, GizmoBatcher gizmoBatcher, ref Game.Routes.Waypoint? startWayPoint)
             {
                 if (curveCompontentLookup.TryGetComponent(pathEntity, out Curve curve))
                 {
@@ -78,15 +76,12 @@ namespace SceneExplorer.System
                 // Handle transit line segments
                 else if (waypointCompontentLookup.TryGetComponent(pathEntity, out var waypoint) && ownerCompontentLookup.HasComponent(pathEntity))
                 {
-                    if (!startWaypointSet)
+                    if (!startWayPoint.HasValue)
                     {
                         startWayPoint = waypoint;
-                        startWaypointSet = true;
                     }
                     else
                     {
-                        startWaypointSet = false;
-
                         if (ownerCompontentLookup.TryGetComponent(pathEntity, out var transitLineEntity)
                             && routeSegmentBufferLookup.TryGetBuffer(transitLineEntity.m_Owner, out var routeSegments))
                         {
@@ -97,7 +92,7 @@ namespace SceneExplorer.System
                             // However, the EndWaypoint might be also beyond the end of the transit line.
                             // E.g. the StartWaypoint is 2, and the EndWaypoint is 1.
                             // In this case we need to render segments 2, 3 and 0.
-                            var startSegmentIndex = startWayPoint.m_Index;
+                            var startSegmentIndex = startWayPoint.Value.m_Index;
                             var endSegmentIndex = waypoint.m_Index == 0 ? routeSegments.Length - 1 : waypoint.m_Index - 1;
 
                             var i = startSegmentIndex;
@@ -107,9 +102,10 @@ namespace SceneExplorer.System
                                 
                                 if (pathElementBufferLookup.TryGetBuffer(routeSegment.m_Segment, out var pathElements))
                                 {
+                                    Game.Routes.Waypoint? innerStartWayPoint = null;
                                     foreach (var pathElement in pathElements)
                                     {
-                                        RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, gizmoBatcher);
+                                        RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, gizmoBatcher, ref innerStartWayPoint);
                                     }
                                 }
 
@@ -125,6 +121,7 @@ namespace SceneExplorer.System
                                 }
                             }
                         }
+                        startWayPoint = null;
                     }
                 }
                 // Handle the others (takoff and spawn locations)
@@ -666,8 +663,8 @@ namespace SceneExplorer.System
         private JobHandle StartPathRenderingJob<T>(JobHandle inputDeps, DynamicBuffer<T> pathEntities, Func<T, Entity> getTargetEntity, Func<T, float2> getDelta)
             where T : unmanaged
         {
-            JobHandle deps;
-            var pathEntitiesAndDeltas = new NativeArray<ValueTuple<Entity, float2>>(pathEntities.Capacity, Allocator.TempJob);
+            var pathEntitiesAndDeltas = 
+                new NativeArray<ValueTuple<Entity, float2>>(pathEntities.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
             for (int i = 0; i < pathEntities.Length; i++)
             {
@@ -681,19 +678,21 @@ namespace SceneExplorer.System
             {
                 gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies),
                 pathEntities = pathEntitiesAndDeltas,
-                curveCompontentLookup = GetComponentLookup<Curve>(true),
-                waypointCompontentLookup = GetComponentLookup<Game.Routes.Waypoint>(true),
-                ownerCompontentLookup = GetComponentLookup<Owner>(true),
-                routeSegmentBufferLookup = GetBufferLookup<Game.Routes.RouteSegment>(true),
-                pathElementBufferLookup = GetBufferLookup<PathElement>(true),
-                takeoffLocationCompontentLookup = GetComponentLookup<Game.Routes.TakeoffLocation>(true),
-                spawnLocationCompontentLookup = GetComponentLookup<Game.Objects.SpawnLocation>(true),
-                cullingInfoCompontentLookup = GetComponentLookup<CullingInfo>(true),
-            }.Schedule();
+                curveCompontentLookup = SystemAPI.GetComponentLookup<Curve>(true),
+                waypointCompontentLookup = SystemAPI.GetComponentLookup<Game.Routes.Waypoint>(true),
+                ownerCompontentLookup = SystemAPI.GetComponentLookup<Owner>(true),
+                routeSegmentBufferLookup = SystemAPI.GetBufferLookup<Game.Routes.RouteSegment>(true),
+                pathElementBufferLookup = SystemAPI.GetBufferLookup<PathElement>(true),
+                takeoffLocationCompontentLookup = SystemAPI.GetComponentLookup<Game.Routes.TakeoffLocation>(true),
+                spawnLocationCompontentLookup = SystemAPI.GetComponentLookup<Game.Objects.SpawnLocation>(true),
+                cullingInfoCompontentLookup = SystemAPI.GetComponentLookup<CullingInfo>(true),
+            }.Schedule(JobHandle.CombineDependencies(Dependency, dependencies));
 
             _gizmosSystem.AddGizmosBatcherWriter(jobHandle);
-            deps = JobHandle.CombineDependencies(inputDeps, dependencies);
-            return deps;
+
+            pathEntitiesAndDeltas.Dispose(jobHandle);
+
+            return jobHandle;
         }
 
         private void RenderSubNets(Entity entity, bool isBufferType, ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
