@@ -686,7 +686,7 @@ namespace SceneExplorer.System
                 takeoffLocationCompontentLookup = SystemAPI.GetComponentLookup<Game.Routes.TakeoffLocation>(true),
                 spawnLocationCompontentLookup = SystemAPI.GetComponentLookup<Game.Objects.SpawnLocation>(true),
                 cullingInfoCompontentLookup = SystemAPI.GetComponentLookup<CullingInfo>(true),
-            }.Schedule(JobHandle.CombineDependencies(Dependency, dependencies));
+            }.Schedule(JobHandle.CombineDependencies(inputDeps, dependencies));
 
             _gizmosSystem.AddGizmosBatcherWriter(jobHandle);
 
