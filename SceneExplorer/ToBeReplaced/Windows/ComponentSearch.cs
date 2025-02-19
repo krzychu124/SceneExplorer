@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Game;
+using Game.Input;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -310,11 +311,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 _sharedEntitiesInspector.Close();
             }
-            GameManager.instance.inputManager.hasInputFieldFocus = false;
+            InputManager.instance.hasInputFieldFocus = false;
         }
 
         private void OnDisable() {
-            GameManager.instance.inputManager.hasInputFieldFocus = false;
+            InputManager.instance.hasInputFieldFocus = false;
         }
     }
 }

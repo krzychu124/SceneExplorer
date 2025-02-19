@@ -76,7 +76,7 @@ namespace SceneExplorer.Services
             public WatchableEntity(Entity e, PrefabSystem prefabSystem) {
                 _entity = e;
                 _prefabSystem = prefabSystem;
-                Assert.IsNotNull(prefabSystem);
+                // Assert.IsNotNull(prefabSystem);
                 Update();
             }
             

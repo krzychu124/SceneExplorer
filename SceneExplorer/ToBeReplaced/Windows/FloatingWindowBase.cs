@@ -64,7 +64,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         protected virtual void Start()
         {
 
-            _inputManager = GameManager.instance.inputManager;
+            _inputManager = InputManager.instance;
             WindowManager.RegisterWindow(this, ParentWindowId);
         }
 

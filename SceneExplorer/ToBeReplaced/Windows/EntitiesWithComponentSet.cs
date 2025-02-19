@@ -400,7 +400,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public override void Close()
         {
             base.Close();
-            GameManager.instance.inputManager.hasInputFieldFocus = false;
+            InputManager.instance.hasInputFieldFocus = false;
 
             Destroy(gameObject);
         }

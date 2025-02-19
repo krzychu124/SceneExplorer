@@ -17,7 +17,7 @@ namespace SceneExplorer.System
         protected override void OnCreate() {
             base.OnCreate();
             _uiManager = GameObject.FindObjectOfType<UIManager>();
-            _inputManager = GameManager.instance.inputManager;
+            _inputManager = InputManager.instance;
             Enabled = false;
         }
 
@@ -35,11 +35,11 @@ namespace SceneExplorer.System
             {
                 if (hasGUIFocus && !_guiWasFocused)
                 {
-                    GameManager.instance.inputManager.hasInputFieldFocus = true;
+                    _inputManager.hasInputFieldFocus = true;
                 }
                 else if (!hasGUIFocus && _guiWasFocused)
                 {
-                    GameManager.instance.inputManager.hasInputFieldFocus = false;
+                    _inputManager.hasInputFieldFocus = false;
                 }
             }
             _guiWasFocused = hasGUIFocus;

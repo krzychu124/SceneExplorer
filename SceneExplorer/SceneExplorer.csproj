@@ -101,4 +101,13 @@
         <None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="System\InspectObjectToolSystem.PathRendererJob.cs">
+        <DependentUpon>InspectObjectToolSystem.cs</DependentUpon>
+      </Compile>
+      <Compile Update="System\InspectObjectToolSystem.RenderObjectOutlinesJob.cs">
+        <DependentUpon>InspectObjectToolSystem.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>
