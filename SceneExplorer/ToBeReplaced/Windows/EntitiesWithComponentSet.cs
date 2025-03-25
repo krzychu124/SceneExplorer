@@ -5,7 +5,6 @@ using Game.SceneFlow;
 using SceneExplorer.Services;
 using SceneExplorer.ToBeReplaced.Helpers;
 using System.Collections.Generic;
-using Game;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -25,6 +24,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private bool _updateIntervalError2;
         private string _updateIntervalStr1 = "60";
         private string _updateIntervalStr2 = "30";
+        private string _pageSizeStr = "20";
         private bool _requireListUpdate;
         private TypeIndex _currentType = TypeIndex.Null;
         private Pagination<Item> _pagination;
@@ -109,11 +109,21 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUI.color = temp;
             }
 
+            GUILayout.BeginHorizontal(options: null);
+            GUILayout.Label("Items per page", options: null);
+            GUILayout.FlexibleSpace();
+            _pageSizeStr = GUILayout.TextField(_pageSizeStr, 4, UIStyle.Instance.textInputLayoutOptions);
+            GUILayout.EndHorizontal();
+
+            if (!PaginationHelpers.ValidatePageSizeString(_pageSizeStr, ref _pagination))
+            {
+                PaginationHelpers.RenderPageRangeError();
+            }
+
             GUILayout.Space(8);
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
 
-            int first = 1 + _pagination.ItemPerPage * (_pagination.CurrentPage - 1);
-            int last = first + (_pagination.ItemPerPage - 1) > _pagination.ItemCount ? _pagination.ItemCount : first + (_pagination.ItemPerPage);
+            (int first, int last) = PaginationHelpers.CalculateFirstLast(ref _pagination);
 
             CommonUI.ListHeader(first, last, ref _pagination);
 
@@ -125,13 +135,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
                 GUILayout.Space(6);
                 int count = _pagination.Data.Count;
-                int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
-                int lastItem = firstItem + _pagination.ItemPerPage;
-                if (firstItem < count)
+                int lastItem = first + _pagination.ItemPerPage;
+                if (first < count)
                 {
                     _scrollPos2 = GUILayout.BeginScrollView(_scrollPos2, options: null);
                     int max = lastItem > count ? count : lastItem;
-                    for (int i = firstItem; i < max; i++)
+                    for (int i = first; i < max; i++)
                     {
                         var data = _pagination.Data[i];
                         GUILayout.BeginHorizontal(options: null);
@@ -336,7 +345,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
         private bool InspectManual(Entity entity)
         {
-            if (_entityManager.Exists(entity))
+            if (entity.ExistsIn(_entityManager))
             {
                 var inspector = new GameObject("Manual Object Inspector").AddComponent<ManualEntityInspector>();
                 inspector.ChainDepth = ChainDepth + 1;
@@ -421,7 +430,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
             public void Validate(EntityManager entityManager, PrefabSystem prefabSystem)
             {
-                IsValid = Entity != Entity.Null && entityManager.Exists(Entity);
+                IsValid = Entity.ExistsIn(entityManager);
                 string prefabName = Entity.TryGetPrefabName(entityManager, prefabSystem, out string prefabType);
                 PrefabName = !string.IsNullOrEmpty(prefabName) ? $"({prefabType} - {prefabName})" : string.Empty;
             }

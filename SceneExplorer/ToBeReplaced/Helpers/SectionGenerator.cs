@@ -69,7 +69,7 @@ using SubObject = Game.Objects.SubObject;
                 if (field.Name.Equals("m_Prefab"))
                 {
                     var pEntity = field.GetValue(componentValue);
-                    if ((Entity)pEntity != Entity.Null)
+                    if (((Entity)pEntity).ExistsIn(entityManager))
                     {
                         PrefabBase prefabData = prefabSystem.GetPrefab<PrefabBase>((Entity)pEntity);
                         sb.AppendLine($"\tPrefab name:{prefabData.name}");
@@ -100,7 +100,7 @@ using SubObject = Game.Objects.SubObject;
                 
                 var val = field.GetValue(componentValue);
                 sb.Append("  ").Append(field.Name).Append(" = ").AppendLine(field.GetValue(componentValue).ToString());
-                if (val is Entity e && e != Entity.Null)
+                if (val is Entity e && e.ExistsIn(entityManager))
                 {
                     NativeArray<ComponentType> types = entityManager.GetComponentTypes(e);
                     if (types.Contains(typeof(PrefabRef)))
@@ -169,7 +169,7 @@ using SubObject = Game.Objects.SubObject;
             }
             var val = field.GetValue(value);
             sb.Append("\t").Append(field.Name).Append(" = ").AppendLine(field.GetValue(value).ToString());
-            if (val is Entity e && e != Entity.Null)
+            if (val is Entity e && e.ExistsIn(entityManager))
             {
                 NativeArray<ComponentType> types = entityManager.GetComponentTypes(e);
                 if (types.Contains(typeof(PrefabRef)))

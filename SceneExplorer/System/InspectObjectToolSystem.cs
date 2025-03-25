@@ -61,7 +61,6 @@ namespace SceneExplorer.System
         private PrefabToolPanelSystem _prefabToolPanelSystem;
         private OverlayRenderSystem _overlayRenderSystem;
         private GizmosSystem _gizmosSystem;
-        private bool _eventRegistered;
         public ComponentDataRenderer.HoverData HoverData;
 
         protected override void OnCreate()
@@ -323,7 +322,7 @@ namespace SceneExplorer.System
 
             JobHandle deps = inputDeps;
             var hovered = HoverData;
-            if (hovered.entity != Entity.Null && hovered.DataType != ComponentDataRenderer.HoverData.HoverType.None)
+            if (hovered.entity.ExistsIn(EntityManager) && hovered.DataType != ComponentDataRenderer.HoverData.HoverType.None)
             {
                 JobHandle resultDeps;
                 Type managedType;
@@ -348,7 +347,7 @@ namespace SceneExplorer.System
             else if (HoveredEntity != Entity.Null || Selected != Entity.Null)
             {
                 JobHandle resultDeps = inputDeps;
-                if (HoveredEntity != Entity.Null && HoveredEntity != Selected && RequireManualHighlight(HoveredEntity, out ComponentType componentType, out bool isBuffer))
+                if (HoveredEntity.ExistsIn(EntityManager) && HoveredEntity != Selected && RequireManualHighlight(HoveredEntity, out ComponentType componentType, out bool isBuffer))
                 {
                     Type managedType = componentType.GetManagedType();
                     hovered = new ComponentDataRenderer.HoverData()
@@ -363,7 +362,7 @@ namespace SceneExplorer.System
                     }
                 }
 
-                if (Selected != Entity.Null && RequireManualHighlight(Selected, out ComponentType componentType2, out bool isBuffer2))
+                if (Selected.ExistsIn(EntityManager) && RequireManualHighlight(Selected, out ComponentType componentType2, out bool isBuffer2))
                 {
                     Type managedType = componentType2.GetManagedType();
                     hovered = new ComponentDataRenderer.HoverData()
@@ -870,7 +869,7 @@ namespace SceneExplorer.System
                     diameter = MathUtils.Size(nodeGeometry.m_Bounds).x + 1f;
                 }
                 else if (EntityManager.TryGetComponent<EditorContainer>(entity, out EditorContainer editorContainer) &&
-                    editorContainer.m_Prefab != Entity.Null &&
+                    editorContainer.m_Prefab.ExistsIn(EntityManager) &&
                     EntityManager.TryGetComponent(editorContainer.m_Prefab, out NetLaneGeometryData laneGeometryData))
                 {
                     diameter = laneGeometryData.m_Size.x * 0.75f;

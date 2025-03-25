@@ -163,7 +163,14 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
             GUILayout.FlexibleSpace();
-            GUILayout.Label($" {first} - {last} of {pagination.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
+            if (pagination.ItemCount == 0)
+            {
+                GUILayout.Label(" No items ", UIStyle.Instance.paginationLabelStyle, options: null);
+            }
+            else
+            {
+                GUILayout.Label($" {first + 1} - {last} of {pagination.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
+            }
             GUI.enabled = pagination.CurrentPage > 1;
             if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
             {

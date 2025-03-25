@@ -45,7 +45,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         {
             if (SelectedEntity != Entity.Null)
             {
-                if (!manager.Exists(SelectedEntity) && !UseSnapshot)
+                if (!SelectedEntity.ExistsIn(manager) && !UseSnapshot)
                 {
                     Valid = false;
                     _selectedEntity = Entity.Null;

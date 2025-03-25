@@ -74,7 +74,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             if (!_disposed)
             {
                 Type managedType = Type.GetManagedType();
-                if (entity != Entity.Null && managedType != null)
+                if (entity.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager) && managedType != null)
                 {
                     try
                     {

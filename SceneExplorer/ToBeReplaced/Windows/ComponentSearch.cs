@@ -4,7 +4,6 @@ using SceneExplorer.ToBeReplaced.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Game;
 using Game.Input;
 using Unity.Collections;
 using Unity.Entities;
@@ -22,8 +21,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private string _searchName = string.Empty;
         private int _updateInterval = 0;
         private string _updateIntervalStr = "0";
+        private string _pageSizeStr = "30";
         private bool _updateResults;
-        private bool _updateEntityCount;
         private bool _fullNameMatch;
         private bool _caseSensitive = true;
         private bool _updateIntervalError = false;
@@ -111,6 +110,18 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 GUILayout.Label("Invalid value. Min. 5 or 0 for no updates", options: null);
                 GUI.color = temp;
             }
+            
+            GUILayout.BeginHorizontal(options: null);
+            GUILayout.Label("Items per page", options: null);
+            GUILayout.FlexibleSpace();
+            _pageSizeStr = GUILayout.TextField(_pageSizeStr, 4, UIStyle.Instance.textInputLayoutOptions);
+            GUILayout.EndHorizontal();
+            
+            if (!PaginationHelpers.ValidatePageSizeString(_pageSizeStr, ref _pagination))
+            {
+                PaginationHelpers.RenderPageRangeError();
+            }
+            
             if (_searchName.Length >= 3 && _updateInterval != 0 && _lastUpdate >= 0)
             {
                 GUILayout.Label($"Next update in {_updateInterval - _lastUpdate} ({_updateInterval})", options: null);
@@ -119,27 +130,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
             _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
 
-            GUILayout.BeginHorizontal(UIStyle.Instance.collapsibleContentStyle, options: null);
-            GUILayout.Space(8);
-
-            GUILayout.Label("Items", UIStyle.Instance.paginationLabelStyle, options: null);
-            GUILayout.FlexibleSpace();
-            int first = 1 + _pagination.ItemPerPage * (_pagination.CurrentPage - 1);
-            int last = first + (_pagination.ItemPerPage - 1) > _pagination.ItemCount ? _pagination.ItemCount : first + (_pagination.ItemPerPage);
-            GUILayout.Label($" {first} - {last} of {_pagination.ItemCount} ", UIStyle.Instance.paginationLabelStyle, options: null);
-            GUI.enabled = _pagination.CurrentPage > 1;
-            if (GUILayout.Button(" ◀ ", UIStyle.Instance.iconButton, _paginationButton))
-            {
-                _pagination.PreviousPage();
-            }
-            GUI.enabled = _pagination.CurrentPage < _pagination.PageCount;
-            if (GUILayout.Button(" ▶ ", UIStyle.Instance.iconButton, _paginationButton))
-            {
-                _pagination.NextPage();
-            }
-            GUI.enabled = true;
-
-            GUILayout.EndHorizontal();
+            (int first, int last) = PaginationHelpers.CalculateFirstLast(ref _pagination);
+            CommonUI.ListHeader(first, last, ref _pagination);
 
             if (_pagination.ItemCount > 0)
             {
@@ -149,13 +141,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
                 GUILayout.Space(6);
                 int count = _pagination.Data.Count;
-                int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
-                int lastItem = firstItem + _pagination.ItemPerPage;
-                if (firstItem < count)
+                int lastItem = first + _pagination.ItemPerPage;
+                if (first < count)
                 {
                     _scrollPos2 = GUILayout.BeginScrollView(_scrollPos2, options: null);
                     int max = lastItem > count ? count : lastItem;
-                    for (int i = firstItem; i < max; i++)
+                    for (int i = first; i < max; i++)
                     {
                         var data = _pagination.Data[i];
                         GUILayout.BeginHorizontal(options: null);

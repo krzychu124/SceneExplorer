@@ -128,7 +128,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private void RefreshData() {
             _items.Clear();
             _results.Clear();
-            int index = 0;
             foreach (WatcherService.IWatchable w in _watcherService.Watchables)
             {
                 if (w.IsValid)

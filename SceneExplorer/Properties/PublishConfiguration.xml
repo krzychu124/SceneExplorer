@@ -30,24 +30,15 @@ Since game entities may be composed of many components, framerate drop is expect
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/scene-explorer.1655915/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.10" />
+	<ModVersion Value="0.2.11" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.2.*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-Data visualizations were added for:
-* SubObject (all and/or hovered items)
-* Bezier4x3
-* Bounds3
-* float3
-* Game.Net.Segment
-* Game.Pathfind.PathElement
-* Game.Vehicles.CarNavigationLane
-* Game.Vehicles.TrainNavigationLane
-* Game.Vehicles.WatercraftNavigationLane
-* Game.Vehicles.AircraftNavigationLane
+- Improved Entity validation checks
+- Item per page can now be changed (5-1000 range)
 	</ChangeLog>
 	<!--ChangeLog>
 	</ChangeLog-->

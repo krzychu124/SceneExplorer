@@ -129,7 +129,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             object prevValue = _value;
             _value = FieldInfo.GetValue(instance);
             _entity = (Entity)_value;
-            if (IsSnapshot && (_entity == Entity.Null || !World.DefaultGameObjectInjectionWorld.EntityManager.Exists(_entity)))
+            if (IsSnapshot && (_entity == Entity.Null || !_entity.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager)))
             {
                 Logging.DebugEvaluation($"value not available: {_entity} | {prevValue} | {_value} | {instance.GetType().Name} | init: {_initialized}");
                 // IsValid = false;

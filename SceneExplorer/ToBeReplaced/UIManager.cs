@@ -1,4 +1,5 @@
 ﻿using Game.Prefabs;
+using SceneExplorer.ToBeReplaced.Helpers;
 using SceneExplorer.ToBeReplaced.Windows;
 using Unity.Entities;
 using UnityEngine;
@@ -31,6 +32,10 @@ namespace SceneExplorer.ToBeReplaced
         }
 
         public void InspectEntity(Entity entity) {
+            if (!entity.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager))
+            {
+                return;
+            }
             var inspector = GetInspectorInstance();
             inspector.SelectedEntity = entity;
             if (entity != Entity.Null)

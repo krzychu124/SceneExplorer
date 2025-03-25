@@ -26,7 +26,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public static bool EvaluateCanJumpTo(EntityManager entityManager, Entity entity)
         {
-            return entity != Entity.Null && (entityManager.HasComponent<Transform>(entity) || entityManager.HasComponent<Node>(entity) || entityManager.HasComponent<Curve>(entity) || entityManager.HasComponent<Geometry>(entity));
+            return entity.ExistsIn(entityManager) && (entityManager.HasComponent<Transform>(entity) || entityManager.HasComponent<Node>(entity) || entityManager.HasComponent<Curve>(entity) || entityManager.HasComponent<Geometry>(entity));
         }
     }
 }

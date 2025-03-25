@@ -108,7 +108,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 case FixedString4096Bytes:
                     return new TextItem(fieldName, $"\"{o.ToString()}\" ({o.GetType().Name})");
                 case GCHandle handle:
-                    return new TextItem(fieldName, $"{(handle.IsAllocated ? handle.Target?.GetType().FullName : "<GC_HANDLE NOT-ALLOCATED>")}");
+                    return new TextItem(fieldName, StringifyGcHandle(handle));
                 case FeaturePrefab featurePrefab:
                     return new TextItem(fieldName, $"\"{featurePrefab.name}\", prefabBase: {featurePrefab.prefab?.name} ({o.GetType().Name})");
                 case Unlockable unlockable:
@@ -318,11 +318,16 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     case FixedString4096Bytes:
                         return $"\"{v.ToString()}\" ({v.GetType().Name})";
                     case GCHandle handle:
-                        return $"{(handle.IsAllocated ? handle.Target?.GetType().FullName : "<GC_HANDLE NOT-ALLOCATED>")}";
+                        return StringifyGcHandle(handle);
                     default:
                         return info.FieldType.FullName;
                 }
             }, isSnapshot);
+        }
+
+        public static string StringifyGcHandle(GCHandle handle)
+        {
+            return !handle.IsAllocated ? "<GC_HANDLE NOT-ALLOCATED>" : $"{(handle.Target != null ? $"\"{handle.Target}\" ({handle.Target.GetType().FullName})" : "")}";
         }
     }
 }

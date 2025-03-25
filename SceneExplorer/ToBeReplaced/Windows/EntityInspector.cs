@@ -125,7 +125,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 return;
             }
             InspectedObject inspectedObject = _entityManager.GetComponentData<InspectedObject>(_inspectObjectToolSystem.SystemHandle);
-            bool isDirty = _selectedEntity != Entity.Null && _entityManager.Exists(_selectedEntity);
+            bool isDirty = _selectedEntity.ExistsIn(_entityManager);
             if (inspectedObject.entityChanged || inspectedObject.isDirty)
             {
                 _entityChanged = true;
@@ -470,7 +470,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
 
         private bool InspectManual(Entity entity) {
-            if (_entityManager.Exists(entity))
+            if (entity.ExistsIn(_entityManager))
             {
                 var inspector = new GameObject("Manual Object Inspector").AddComponent<ManualEntityInspector>();
                 inspector.ChainDepth = ChainDepth + 1;

@@ -36,7 +36,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentItems
         GUILayout.Label(_title, UIStyle.Instance.reducedPaddingLabelStyle, options: null);
         GUILayout.Label(_valueString, UIStyle.Instance.entityValueStyle, options: null);
         GUILayout.FlexibleSpace();
-        GUI.enabled = _value != Entity.Null;
+        GUI.enabled = _value.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager);
         if (GUILayout.Button("Details", UIStyle.Instance.iconButton, options: null))
         {
             ParentInspector?.PreviewEntity(_value, _titleRaw, _componentName, false);

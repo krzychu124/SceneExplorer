@@ -53,8 +53,10 @@ namespace SceneExplorer.Services
             }
         }
 
-        public bool TryGetSnapshot(Entity entity, out EntitySnapshotData data) {
-            return _data.TryGetValue(entity, out data);
+        public bool TryGetSnapshot(Entity entity, out EntitySnapshotData data)
+        {
+            data = null;
+            return entity.IsValid() && _data.TryGetValue(entity, out data);
         }
 
         public bool HasSnapshot(Entity e) {
@@ -67,7 +69,7 @@ namespace SceneExplorer.Services
             {
                 return false;
             }
-            if (!_entityManager.Exists(entity))
+            if (!entity.ExistsIn(_entityManager))
             {
                 Logging.Debug($"[MakeSnapshotInternal] Entity {entity} does not exist");
                 return false;
@@ -148,7 +150,6 @@ namespace SceneExplorer.Services
             internal Dictionary<ComponentType, object> _componentData;
 
             public Entity Entity => _entity;
-            public bool Exist => World.DefaultGameObjectInjectionWorld.EntityManager.Exists(_entity);
             public ComponentType[] ComponentTypes => _componentTypes;
 
             public EntitySnapshotData(Entity entity, ComponentType[] types) {

@@ -10,6 +10,7 @@ using Game.Tools;
 using Game.UI.Editor;
 using Game.UI.Localization;
 using Game.UI.Widgets;
+using SceneExplorer.ToBeReplaced.Helpers;
 using SceneExplorer.ToBeReplaced.Windows;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -311,8 +312,9 @@ namespace SceneExplorer.System
 
         public bool SelectEntity(Entity entity)
         {
-            PrefabData prefabData;
-            if (entity == Entity.Null || !base.EntityManager.TryGetComponent(entity, out prefabData))
+            if (!entity.ExistsIn(EntityManager) || 
+                !EntityManager.TryGetComponent(entity, out PrefabRef prefabRef) || 
+                !EntityManager.TryGetComponent(prefabRef.m_Prefab, out PrefabData prefabData))
             {
                 _selectedEntity = Entity.Null;
                 _prefabChanged = _currentPrefab != null;

@@ -2,6 +2,7 @@
 using Game.Common;
 using Game.Tools;
 using System;
+using SceneExplorer.ToBeReplaced.Helpers;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -12,7 +13,7 @@ namespace SceneExplorer
     {
         internal static void ChangeHighlighting_MainThread(this EntityManager entityManager, Entity entity, ChangeMode mode)
         {
-            if (entity == Entity.Null || !entityManager.Exists(entity))
+            if (!entity.ExistsIn(entityManager))
             {
                 return;
             }

@@ -91,7 +91,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers.ContentSections
             case SubLane:
             case SubNet:
             case SubObject:
-                if (fieldValue is Entity e && e != Entity.Null)
+                if (fieldValue is Entity e && e.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager))
                 {
                     prefabName = GetPrefabNameFromEntity(e);
                 }

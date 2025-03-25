@@ -16,6 +16,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private List<Item> _items;
         private List<Item> _results;
         private string _searchName = string.Empty;
+        private string _pageSizeStr = "20";
         private bool _updateResults;
 
         private PrefabSystem _prefabSystem;
@@ -70,9 +71,19 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 _updateResults = true;
             }
 
-            int first = 1 + _pagination.ItemPerPage * (_pagination.CurrentPage - 1);
-            int last = first + (_pagination.ItemPerPage - 1) > _pagination.ItemCount ? _pagination.ItemCount : first + (_pagination.ItemPerPage);
+            GUILayout.BeginHorizontal(options: null);
+            GUILayout.Label("Items per page", options: null);
+            GUILayout.FlexibleSpace();
+            _pageSizeStr = GUILayout.TextField(_pageSizeStr, 4, UIStyle.Instance.textInputLayoutOptions);
+            GUILayout.EndHorizontal();
 
+            if (!PaginationHelpers.ValidatePageSizeString(_pageSizeStr, ref _pagination))
+            {
+                PaginationHelpers.RenderPageRangeError();
+            }
+            
+            (int first, int last) = PaginationHelpers.CalculateFirstLast(ref _pagination);
+            
             CommonUI.ListHeader(first, last, ref _pagination);
 
             if (_pagination.ItemCount > 0)
@@ -83,13 +94,12 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
                 GUILayout.Space(6);
                 int count = _pagination.Data.Count;
-                int firstItem = (_pagination.CurrentPage - 1) * _pagination.ItemPerPage;
-                int lastItem = firstItem + _pagination.ItemPerPage;
-                if (firstItem < count)
+                int lastItem = first + _pagination.ItemPerPage;
+                if (first < count)
                 {
                     _scrollPos = GUILayout.BeginScrollView(_scrollPos, options: null);
                     int max = lastItem > count ? count : lastItem;
-                    for (int i = firstItem; i < max; i++)
+                    for (int i = first; i < max; i++)
                     {
                         var data = _pagination.Data[i];
                         GUILayout.BeginHorizontal(options: null);
@@ -152,7 +162,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private void RefreshData() {
             _items.ForEach(Item.DisposeItem);
             _items.Clear();
-            int index = 0;
             foreach (Entity entity in _snapshotService.Entities)
             {
                 if (_snapshotService.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data))

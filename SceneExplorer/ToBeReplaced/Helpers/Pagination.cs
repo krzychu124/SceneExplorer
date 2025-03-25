@@ -1,9 +1,7 @@
 using System.Collections.Generic;
-using System.Collections.Generic;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
 {
-
     public struct Pagination<T>
     {
         private int _itemPerPage;

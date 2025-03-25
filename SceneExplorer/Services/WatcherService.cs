@@ -68,7 +68,7 @@ namespace SceneExplorer.Services
         public class WatchableEntity : IWatchable, IDisposable
         {
             private Entity _entity;
-            private bool _isWalid;
+            private bool _isValid;
             private string _name = string.Empty;
             private PrefabSystem _prefabSystem;
             private bool _isSnapshot;
@@ -102,7 +102,7 @@ namespace SceneExplorer.Services
             public void Update() {
                 var entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
                 var snapshot = Snapshot;
-                _isWalid = _entity != Entity.Null && (entityManager.Exists(_entity) || snapshot!= null);
+                _isValid = _entity.IsValid() && _entity != Entity.Null && (entityManager.Exists(_entity) || snapshot!= null);
                 _isSnapshot = snapshot != null;
                 if (IsValid)
                 {
@@ -111,7 +111,7 @@ namespace SceneExplorer.Services
                 }
             }
 
-            public bool IsValid => _isWalid;
+            public bool IsValid => _isValid;
 
             public void Dispose() {
                 _prefabSystem = null;
