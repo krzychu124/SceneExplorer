@@ -23,6 +23,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private PrefabDataInspector _sharedPrefabInspectorPopup;
         private ComplexObject _complexObject;
         private InspectableObjectRenderer _objectRenderer;
+        private HashSet<object> _visited = new HashSet<object>();
 
         public PrefabDataInspector() {
             _minSize = new Vector2(200, 300);
@@ -77,13 +78,15 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 {
                     var temp = _complexObject.IsActive;
                     _complexObject.IsActive = true;
-                    _complexObject.UpdateValue(_selectedPrefab, false);
+                    _visited.Clear();
+                    _complexObject.UpdateValue(_selectedPrefab, false, _visited);
                     _complexObject.IsActive = temp;
                 }
                 return;
             }
 
-            _complexObject?.UpdateValue(_selectedPrefab, false);
+            _visited.Clear();
+            _complexObject?.UpdateValue(_selectedPrefab, false, _visited);
         }
 
         public override void OnDestroy() {

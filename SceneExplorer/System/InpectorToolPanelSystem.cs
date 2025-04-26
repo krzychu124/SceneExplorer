@@ -312,6 +312,11 @@ namespace SceneExplorer.System
 
         public bool SelectEntity(Entity entity)
         {
+            if (!this.Enabled)
+            {
+                return false;
+            }
+            
             if (!entity.ExistsIn(EntityManager) || 
                 !EntityManager.TryGetComponent(entity, out PrefabRef prefabRef) || 
                 !EntityManager.TryGetComponent(prefabRef.m_Prefab, out PrefabData prefabData))

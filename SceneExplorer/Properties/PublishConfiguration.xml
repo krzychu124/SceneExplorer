@@ -30,15 +30,19 @@ Since game entities may be composed of many components, framerate drop is expect
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/scene-explorer.1655915/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.11" />
+	<ModVersion Value="0.2.12" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.2.*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-- Improved Entity validation checks
-- Item per page can now be changed (5-1000 range)
+- Support Enableable components, the component title will include status: [Enabled:true|false]
+- Include more details to PrefabData inspector if data extends type of PrefabBase
+- Replace manual GUI.matrix scaling with ScaleAroundPivot
+- Fix potential infinite loop when inspecting PrefabData that include certain placeholder prefabs
+- Fix component value evaluation when previewing snapshots (data Snapshot feature is available only in the Editor)
+- Fix text wrap at certain UI scaling
 	</ChangeLog>
 	<!--ChangeLog>
 	</ChangeLog-->

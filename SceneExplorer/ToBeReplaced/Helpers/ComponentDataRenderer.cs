@@ -1,6 +1,8 @@
 ﻿using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced.Windows;
 using System;
+using System.Linq;
+using Game.Prefabs;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -33,7 +35,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             GUI.enabled = false;
             GUILayout.Button("•", UIStyle.Instance.iconButton, options: CommonUI.ExpandButtonOptions);
             GUI.enabled = true;
-            GUILayout.Label(GetTypeInfo(component.Type, component.Name, component.IsSnapshot), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
+            GUILayout.Label(GetTypeInfo(component.Type, component.Name, component.IsSnapshot, (component.SpecialType & SpecialComponentType.Enableable) != 0 ? !component.IsDisabled : null), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
             GUILayout.EndHorizontal();
             _lastRendered = false;
         }
@@ -42,7 +44,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         {
             string name = GetComponentName(component);
             if (CommonUI.CollapsibleHeader(name, component.DetailedView, rect, out bool titleHovered, CommonUI.ButtonLocation.Start,
-                textStyle: CommonUI.CalculateTextStyle(component.SpecialType, component.DetailedView)))
+                textStyle: CommonUI.CalculateTextStyle(component.SpecialType, component.DetailedView, component.IsDisabled)))
             {
                 if (component.DetailedView)
                 {
@@ -95,18 +97,19 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private static string GetComponentName(IEntityComponent component)
         {
             if (component == null) return "NULL!";
+            bool? isEnableableAndEnabled = (component.SpecialType & SpecialComponentType.Enableable) != 0 ? !component.IsDisabled : null;
             return component switch
             {
-                PrefabRefComponentInfo r => GetTypeInfo(component.Type, component.Name) + $" - {r.PrefabRefDataName}",
-                PrefabDataComponentInfo d => GetTypeInfo(component.Type, component.Name) + $" - {d.PrefabDataName}",
-                _ => GetTypeInfo(component.Type, component.Name, component.IsSnapshot)
+                PrefabRefComponentInfo r => GetTypeInfo(component.Type, component.Name, false, isEnableableAndEnabled) + $" - {r.PrefabRefDataName}",
+                PrefabDataComponentInfo d => GetTypeInfo(component.Type, component.Name, false, isEnableableAndEnabled) + $" - {d.PrefabDataName}",
+                _ => GetTypeInfo(component.Type, component.Name, component.IsSnapshot, isEnableableAndEnabled)
             };
         }
 
         public void Render(IEntityBufferComponent component, Entity entity, Rect rect)
         {
             GUI.enabled = component.ItemCount > 0;
-            if (CommonUI.CollapsibleHeader(GetTypeInfo(component.Type, $"{component.Name} ({component.ItemCount})", component.IsSnapshot), component.DetailedView, rect, out bool titleHovered, CommonUI.ButtonLocation.Start,
+            if (CommonUI.CollapsibleHeader(GetTypeInfo(component.Type, $"{component.Name} ({component.ItemCount})", component.IsSnapshot, (component.SpecialType & SpecialComponentType.Enableable) != 0 ? !component.IsDisabled : null), component.DetailedView, rect, out bool titleHovered, CommonUI.ButtonLocation.Start,
                 textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, component.DetailedView)))
             {
                 if (component.DetailedView)
@@ -185,7 +188,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             GUI.enabled = false;
             GUILayout.Button("•", UIStyle.Instance.iconButton, options: CommonUI.ExpandButtonOptions);
             GUI.enabled = true;
-            GUILayout.Label(GetTypeInfo(component.Type, component.Name), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
+            GUILayout.Label(GetTypeInfo(component.Type, component.Name, false, (component.SpecialType & SpecialComponentType.Enableable) != 0 ? !component.IsDisabled : null), UIStyle.Instance.reducedPaddingLabelStyle, options: null);
             GUILayout.EndHorizontal();
             _lastRendered = false;
         }
@@ -209,9 +212,9 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        private static string GetTypeInfo(ComponentType type, string name, bool isSnapshot = false)
+        private static string GetTypeInfo(ComponentType type, string name, bool isSnapshot = false, bool? isEnabled = null)
         {
-            return isSnapshot ? $"[S] {name}" : name;
+            return isSnapshot ? $"[S] {name}" : (isEnabled.HasValue ? $"{name} [Enabled:{isEnabled.Value}]" : name);
             // if (type.IsZeroSized)
             // {
             //     return "[T] " + name;
@@ -273,6 +276,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public class InspectableObjectRenderer
     {
         private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60), GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
+        private static GUILayoutOption[] _noExpand = new GUILayoutOption[] { GUILayout.ExpandWidth(false) };
 
         public bool Render(IInspectableObject obj, IValueInspector valueInspector, int index, Rect rect, out IInspectableObject hoveredObject)
         {
@@ -283,9 +287,9 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 Entity value = (Entity)(entity.GetValueCached() ?? default(Entity));
                 GUILayout.Label(entity.FieldInfo.Name + ":", UIStyle.Instance.reducedPaddingLabelStyle, options: null);
                 GUILayout.Space(2);
-                GUILayout.Label($"{value.ToString()} {(!string.IsNullOrEmpty(entity.PrefabName) ? $" - {entity.PrefabName}" : string.Empty)}", UIStyle.Instance.CalculateTextStyle(typeof(Entity)), options: null);
+                GUILayout.Label($"{value.ToString()} {(!string.IsNullOrEmpty(entity.PrefabName) ? $" - {entity.PrefabName} " : string.Empty)}", UIStyle.Instance.CalculateTextStyle(typeof(Entity)), options: null);
                 GUILayout.FlexibleSpace();
-                GUI.enabled = value.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager);
+                GUI.enabled = value.IsValid() && entity.CanInspectValue;
                 if (entity.CanJumpTo && GUILayout.Button("Jump To", UIStyle.Instance.iconButton, options: null))
                 {
                     entity.InspectorPopupRef = valueInspector.Inspect(value, entity, InspectMode.JumpTo);
@@ -313,10 +317,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             else if (obj is CommonInspectableObject common)
             {
                 GUILayout.BeginHorizontal(options: null);
-                GUILayout.Label((common.FieldInfo?.Name ?? common.ValueType.Name) + ":", UIStyle.Instance.CalculateLabelStyle(common.FieldInfo?.IsPublic ?? true), options: null);
+                GUILayout.Label((common.FieldInfo?.Name ?? common.ValueType.Name) + ":", UIStyle.Instance.CalculateLabelStyle(common.FieldInfo?.IsPublic ?? true), options: _noExpand);
                 GUILayout.Space(2);
                 var value = common.GetValueCached();
-                GUILayout.Label(value != null ? value.ToString() : "<NULL>", UIStyle.Instance.CalculateTextStyle(common.FieldInfo?.FieldType ?? common.ValueType), options: null);
+                GUILayout.Label(value != null ? value + " " : "<NULL> ", UIStyle.Instance.CalculateTextStyle(common.FieldInfo?.FieldType ?? common.ValueType), options: _noExpand);
                 GUILayout.FlexibleSpace();
                 if (common.CanInspectValue && GUILayout.Button("Preview", UIStyle.Instance.iconButton, options: null))
                 {
@@ -357,6 +361,42 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     GUILayout.Space(12);
 
                     GUILayout.BeginVertical(options: null);
+                    
+                    if (complex.IsPrefabBase && complex.GetValueCached() is PrefabBase p)
+                    {
+                        GUILayout.BeginHorizontal(options: null);
+                        GUILayout.Label("name:", UIStyle.Instance.CalculateLabelStyle(true), options: null);
+                        GUILayout.Space(2);
+                        GUILayout.Label(!string.IsNullOrEmpty(p.name) ? p.name + " " : "<NULL> ", UIStyle.Instance.CalculateTextStyle(typeof(string)), options: null);
+                        GUILayout.FlexibleSpace();
+                        GUILayout.EndHorizontal();
+                        CommonUI.DrawLine();
+
+                        GUILayout.BeginHorizontal(options: null);
+                        GUILayout.Label("thumbnailUrl:", UIStyle.Instance.CalculateLabelStyle(true), options: null);
+                        GUILayout.Space(2);
+                        GUILayout.Label(!string.IsNullOrEmpty(p.thumbnailUrl) ? p.thumbnailUrl + " " : "<NULL> ", UIStyle.Instance.CalculateTextStyle(typeof(string)), options: null);
+                        GUILayout.FlexibleSpace();
+                        GUILayout.EndHorizontal();
+                        CommonUI.DrawLine();
+
+                        GUILayout.BeginHorizontal(options: null);
+                        GUILayout.Label("uiTag:", UIStyle.Instance.CalculateLabelStyle(true), options: null);
+                        GUILayout.Space(2);
+                        GUILayout.Label(!string.IsNullOrEmpty(p.uiTag) ? p.uiTag + " " : "<NULL> ", UIStyle.Instance.CalculateTextStyle(typeof(string)), options: null);
+                        GUILayout.FlexibleSpace();
+                        GUILayout.EndHorizontal();
+                        CommonUI.DrawLine();
+    
+                        GUILayout.BeginHorizontal(options: null);
+                        GUILayout.Label("modTags:", UIStyle.Instance.CalculateLabelStyle(true), options: null);
+                        GUILayout.Space(2);
+                        GUILayout.Label(string.Join(",", p.modTags) + " ", UIStyle.Instance.CalculateTextStyle(typeof(FakeEnum)), options: null);
+                        GUILayout.FlexibleSpace();
+                        GUILayout.EndHorizontal();
+                        CommonUI.DrawLine();
+                    }
+                    
                     for (var i = 0; i < complex.Children.Length; i++)
                     {
                         Render(complex.Children[i], valueInspector, i, rect, out var hoveredChildObject);
@@ -378,7 +418,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 Logging.DebugEvaluation($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
                 GUI.enabled = iterable.ItemCount > 0;
-                if (CommonUI.CollapsibleHeader($"{iterable.FieldInfo.Name} ({iterable.ItemCount}){(iterable.ItemCount == 0 ? " <EMPTY>" : string.Empty)}", iterable.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
+                if (CommonUI.CollapsibleHeader($"{iterable.FieldInfo.Name} ({iterable.ItemCount}){(iterable.LoopDetected ? "<LOOP_DETECTED>":(iterable.ItemCount == 0 ? " <EMPTY>" : string.Empty))}", iterable.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterable.IsActive)))
                 {
                     iterable.IsActive = !iterable.IsActive;
@@ -496,7 +536,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             else if (obj is GenericListObject iterableList)
             {
                 Logging.DebugEvaluation($"Rendering array: {obj.FieldInfo.FieldType.FullName}");
-                if (CommonUI.CollapsibleHeader($"{iterableList.FieldInfo.Name} ({iterableList.ItemCount})", iterableList.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
+                if (CommonUI.CollapsibleHeader($"{iterableList.FieldInfo.Name} ({iterableList.ItemCount}) {(iterableList.LoopDetected ? "<LOOP_DETECTED>" : string.Empty)}", iterableList.IsActive, rect, out bool _, CommonUI.ButtonLocation.Start,
                     textStyle: CommonUI.CalculateTextStyle(SpecialComponentType.Buffer, iterableList.IsActive)))
                 {
                     iterableList.IsActive = !iterableList.IsActive;
@@ -557,5 +597,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
             return false;
         }
+        
+        private enum FakeEnum {}
     }
 }

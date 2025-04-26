@@ -74,6 +74,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public readonly GUIStyle managedHighlightedLabelStyle;
         public readonly GUIStyle unManagedLabelStyle;
         public readonly GUIStyle unManagedHighlightedLabelStyle;
+        public readonly GUIStyle unManagedDisabledLabelStyle;
+        public readonly GUIStyle unManagedDisabledHighlightedLabelStyle;
         public readonly GUIStyle bufferHighlightedLabelStyle;
         public readonly GUIStyle bufferLabelStyle;
         public readonly GUIStyle sharedLabelStyle;
@@ -223,7 +225,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             reducedPaddingPrivateLabelStyle.wordWrap = false;
             paginationLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { margin = new RectOffset(3, 3, 3, 1), padding = new RectOffset(1, 1, 1, 1), fontSize = 12, fontStyle = FontStyle.Bold };
             reducedPaddingHighlightedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { fontStyle = FontStyle.Bold };
-            enumValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.59f, 0.83f) }, fontStyle = FontStyle.BoldAndItalic, wordWrap = true };
+            enumValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.59f, 0.83f) }, fontStyle = FontStyle.BoldAndItalic, wordWrap = true/*, overflow = new RectOffset(1,1,1,1)*/};
             entityValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.76f, 0.87f) }, fontStyle = FontStyle.Bold, wordWrap = true };
             numericValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.8f, 0.71f) }, fontStyle = FontStyle.Bold, wordWrap = true };
             booleanValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(16, 167, 178, 255) }, fontStyle = FontStyle.Bold, wordWrap = true };
@@ -233,7 +235,9 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             managedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 232, 115, 255) } };
             managedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 232, 115, 255) } };
             unManagedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(255, 245, 191, 255) } };
-            unManagedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 245, 191, 255) } };
+            unManagedHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(255, 236, 178, 255) } };
+            unManagedDisabledLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(192, 182, 129, 255) } };
+            unManagedDisabledHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(195, 190, 136, 255) } };
             bufferLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(242, 203, 0, 255) } };
             bufferHighlightedLabelStyle = new GUIStyle(focusedReducedPaddingHighlightedLabelStyle) { normal = { textColor = new Color32(242, 203, 0, 255) } };
             sharedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color32(120, 252, 255, 255) } };

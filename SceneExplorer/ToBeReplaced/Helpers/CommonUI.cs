@@ -278,13 +278,15 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             return result;
         }
 
-        public static GUIStyle CalculateTextStyle(SpecialComponentType type, bool highlight)
+        public static GUIStyle CalculateTextStyle(SpecialComponentType type, bool highlight, bool disabled = false)
         {
             bool isInvalid = (type & SpecialComponentType.Invalid) != 0;
             switch (type)
             {
                 case SpecialComponentType.PrefabRef:
                 case SpecialComponentType.PrefabData:
+                case SpecialComponentType.PrefabRef | SpecialComponentType.Enableable:
+                case SpecialComponentType.PrefabData | SpecialComponentType.Enableable:
                 case SpecialComponentType.PrefabRef | SpecialComponentType.Invalid:
                 case SpecialComponentType.PrefabData | SpecialComponentType.Invalid:
                     if (isInvalid)
@@ -293,14 +295,24 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     }
                     return !highlight ? UIStyle.Instance.focusedReducedPaddingLabelStyle : UIStyle.Instance.focusedReducedPaddingHighlightedLabelStyle;
                 case SpecialComponentType.Managed:
+                case SpecialComponentType.Managed | SpecialComponentType.Enableable:
                     return !highlight ? UIStyle.Instance.managedLabelStyle : UIStyle.Instance.managedHighlightedLabelStyle;
                 case SpecialComponentType.UnManaged:
                     return !highlight ? UIStyle.Instance.unManagedLabelStyle : UIStyle.Instance.unManagedHighlightedLabelStyle;
+                case SpecialComponentType.UnManaged | SpecialComponentType.Enableable:
+                    if (disabled)
+                    {
+                        return !highlight ? UIStyle.Instance.unManagedDisabledLabelStyle : UIStyle.Instance.unManagedDisabledHighlightedLabelStyle;
+                    }
+                    return !highlight ? UIStyle.Instance.unManagedLabelStyle : UIStyle.Instance.unManagedHighlightedLabelStyle;
                 case SpecialComponentType.Buffer:
+                case SpecialComponentType.Buffer | SpecialComponentType.Enableable:
                     return !highlight ? UIStyle.Instance.bufferLabelStyle : UIStyle.Instance.bufferHighlightedLabelStyle;
                 case SpecialComponentType.Shared:
+                case SpecialComponentType.Shared | SpecialComponentType.Enableable:
                     return !highlight ? UIStyle.Instance.sharedLabelStyle : UIStyle.Instance.sharedHighlightedLabelStyle;
                 case SpecialComponentType.Unknown:
+                case SpecialComponentType.Unknown | SpecialComponentType.Enableable:
                     return !highlight ? UIStyle.Instance.unknownLabelStyle : UIStyle.Instance.unknownHighlightedLabelStyle;
                 default:
                     return !highlight ? UIStyle.Instance.reducedPaddingLabelStyle : UIStyle.Instance.reducedPaddingHighlightedLabelStyle;

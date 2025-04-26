@@ -49,7 +49,8 @@ namespace SceneExplorer
         {
             var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
             Vector3 scaleVector = new Vector3(normalizedScaling, normalizedScaling, 1.0f);
-            return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scaleVector);
+            GUIUtility.ScaleAroundPivot(scaleVector, new Vector2());
+            return GUI.matrix;
         }
 
         internal static Vector2 GetTransformedMousePosition()

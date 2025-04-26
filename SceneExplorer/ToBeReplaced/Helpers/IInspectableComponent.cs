@@ -23,6 +23,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         void HideDetails();
         bool DetailedView { get; }
         bool IsSnapshot { get; }
+        bool IsDisabled { get; }
     }
 
     public interface IEntityComponent : IInspectableComponent
@@ -50,6 +51,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     public abstract class ComponentInfoBase : IInspectableComponent
     {
         private bool _disposed;
+        protected HashSet<object> visitedObjects = new HashSet<object>();
 
         protected ComponentInfoBase(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) {
             Type = type;
@@ -60,7 +62,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         }
 
         public ComponentType Type { get; }
-        public virtual SpecialComponentType SpecialType { get; protected set; }
+        public SpecialComponentType SpecialType { get; protected set; }
 
         public string Name { get; }
         public List<FieldInfo> DataFields { get; private set; }
@@ -68,13 +70,14 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public bool DetailedView { get; private set; }
         public bool IsSnapshot { get; }
+        public bool IsDisabled { get; set; }
         protected object _componentData;
 
         public bool UpdateBindings(Entity entity) {
             if (!_disposed)
             {
                 Type managedType = Type.GetManagedType();
-                if (entity.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager) && managedType != null)
+                if ((entity.IsValid() && (IsSnapshot || entity.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager))) && managedType != null)
                 {
                     try
                     {
@@ -133,6 +136,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public UnmanagedComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
             Logging.DebugEvaluation($"[Component-Unmanaged] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.UnManaged;
+            if (type.IsEnableable)
+            {
+                SpecialType |= SpecialComponentType.Enableable;
+            }
         }
 
         public override object UpdateBindingsInternal(Entity entity) {
@@ -140,13 +147,18 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 return value;
             }
+            if ((SpecialType & SpecialComponentType.Enableable) != 0)
+            {
+                IsDisabled = !World.DefaultGameObjectInjectionWorld.EntityManager.IsComponentEnabled(entity, Type);
+            }
             return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
+            visitedObjects.Clear();
             foreach (IInspectableObject o in Objects)
             {
-                o.UpdateValue(_componentData, false);
+                o.UpdateValue(_componentData, false, visitedObjects);
             }
             return true;
         }
@@ -164,13 +176,18 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 return value;
             }
+            if ((SpecialType & SpecialComponentType.Enableable) != 0)
+            {
+                IsDisabled = !World.DefaultGameObjectInjectionWorld.EntityManager.IsComponentEnabled(entity, Type);
+            }
             return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
+            visitedObjects.Clear();
             foreach (IInspectableObject o in Objects)
             {
-                o.UpdateValue(_componentData, false);
+                o.UpdateValue(_componentData, false, visitedObjects);
             }
             return true;
         }
@@ -188,13 +205,18 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 return value;
             }
+            if ((SpecialType & SpecialComponentType.Enableable) != 0)
+            {
+                IsDisabled = !World.DefaultGameObjectInjectionWorld.EntityManager.IsComponentEnabled(entity, Type);
+            }
             return Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
+            visitedObjects.Clear();
             foreach (IInspectableObject o in Objects)
             {
-                o.UpdateValue(_componentData, false);
+                o.UpdateValue(_componentData, false, visitedObjects);
             }
             return true;
         }
@@ -205,6 +227,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public SharedComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
             Logging.DebugEvaluation($"[Component-Common] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.Shared;
+            if (type.IsEnableable)
+            {
+                SpecialType |= SpecialComponentType.Enableable;
+            }
         }
 
         public override object UpdateBindingsInternal(Entity entity) {
@@ -212,13 +238,18 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 return value;
             }
+            if ((SpecialType & SpecialComponentType.Enableable) != 0)
+            {
+                IsDisabled = !World.DefaultGameObjectInjectionWorld.EntityManager.IsComponentEnabled(entity, Type);
+            }
             return Type.GetManagedType().GetSharedComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
+            visitedObjects.Clear();
             foreach (IInspectableObject o in Objects)
             {
-                o.UpdateValue(_componentData, false);
+                o.UpdateValue(_componentData, false, visitedObjects);
             }
             return true;
         }
@@ -232,6 +263,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public PrefabRefComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
             Logging.DebugEvaluation($"[Component-PrefabRef] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.PrefabRef;
+            if (type.IsEnableable)
+            {
+                SpecialType |= SpecialComponentType.Enableable;
+            }
         }
 
         public override object UpdateBindingsInternal(Entity entity) {
@@ -246,6 +281,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             else
             {
                 EntityManager entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+                if ((SpecialType & SpecialComponentType.Enableable) != 0)
+                {
+                    IsDisabled = !entityManager.IsComponentEnabled(entity, Type);
+                }
                 prefabRef = entityManager.GetComponentData<PrefabRef>(entity);
                 if (entityManager.Exists(prefabRef) && entityManager.TryGetComponent(prefabRef.m_Prefab, out PrefabData prefabData))
                 {
@@ -267,9 +306,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
+            visitedObjects.Clear();
             foreach (IInspectableObject o in Objects)
             {
-                o.UpdateValue(_componentData, false);
+                o.UpdateValue(_componentData, false, visitedObjects);
             }
             return true;
         }
@@ -283,6 +323,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public PrefabDataComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
             Logging.DebugEvaluation($"[Component-PrefabData] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
             SpecialType = SpecialComponentType.PrefabData;
+            if (type.IsEnableable)
+            {
+                SpecialType |= SpecialComponentType.Enableable;
+            }
         }
 
         public override object UpdateBindingsInternal(Entity entity) {
@@ -295,6 +339,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
             else
             {
+                if ((SpecialType & SpecialComponentType.Enableable) != 0)
+                {
+                    IsDisabled = !World.DefaultGameObjectInjectionWorld.EntityManager.IsComponentEnabled(entity, Type);
+                }
                 data = (PrefabData)Type.GetManagedType().GetComponentDataByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
             }
             PrefabSystem prefabSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PrefabSystem>();
@@ -316,9 +364,10 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         }
 
         public override bool RefreshValuesInternal(Entity entity, object previousData) {
+            visitedObjects.Clear();
             foreach (IInspectableObject o in Objects)
             {
-                o.UpdateValue(_componentData, false);
+                o.UpdateValue(_componentData, false, visitedObjects);
             }
             return true;
         }
@@ -326,7 +375,6 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
     public class EntityBufferComponentInfo : ComponentInfoBase, IEntityBufferComponent
     {
-        public override SpecialComponentType SpecialType => SpecialComponentType.Buffer;
         public int CurrentPage { get; private set; } = 1;
         public int PageCount { get; private set; } = 1;
         public int ItemCount => DataArray.Count;
@@ -335,15 +383,25 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private List<object> _allItems = new List<object>();
         private int _previousPage = 1;
         private bool _initialized;
+        private HashSet<object> _visitedEmpty = new HashSet<object>();
 
         public EntityBufferComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
             Logging.DebugEvaluation($"[Buffer] Type: {type.GetManagedType().FullName}, name: {name} | {string.Join(", ", fields.Select(f => $"{f.Name}{(f.IsPrivate ? "[P]" : "")}: {f.FieldType.Name}"))}");
+            SpecialType = SpecialComponentType.Buffer;
+            if (type.IsEnableable)
+            {
+                SpecialType |= SpecialComponentType.Enableable;
+            }
         }
 
         public override object UpdateBindingsInternal(Entity entity) {
             if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
             {
                 return value;
+            }
+            if ((SpecialType & SpecialComponentType.Enableable) != 0)
+            {
+                IsDisabled = !World.DefaultGameObjectInjectionWorld.EntityManager.IsComponentEnabled(entity, Type);
             }
             return Type.GetManagedType().GetComponentBufferArrayByType(World.DefaultGameObjectInjectionWorld.EntityManager, entity);
         }
@@ -406,7 +464,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         IInspectableObject inspectableObject = DataArray[index];
                         bool wasActive = inspectableObject.IsActive;
                         inspectableObject.IsActive = true;
-                        inspectableObject.UpdateValue(_allItems[index], false);
+                        inspectableObject.UpdateValue(_allItems[index], false, _visitedEmpty);
                         inspectableObject.IsActive = wasActive;
                     }
                 }
@@ -466,17 +524,42 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
     public class EntityTagComponentInfo : ComponentInfoBase, IEntityTagComponent
     {
-        public override SpecialComponentType SpecialType => SpecialComponentType.Tag;
+        public EntityTagComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot)
+        {
+            SpecialType = SpecialComponentType.Tag;
+            if (type.IsEnableable)
+            {
+                SpecialType |= SpecialComponentType.Enableable;
+            }
+        }
 
-        public EntityTagComponentInfo(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
+        public override object UpdateBindingsInternal(Entity entity)
+        {
+            if ((SpecialType & SpecialComponentType.Enableable) != 0)
+            {
+                IsDisabled = !World.DefaultGameObjectInjectionWorld.EntityManager.IsComponentEnabled(entity, Type);
+            }
+            return base.UpdateBindingsInternal(entity);
         }
     }
 
     public class EntityNotSupportedComponent : ComponentInfoBase, IEntityNotSupportedComponent
     {
-        public override SpecialComponentType SpecialType { get; protected set; } = SpecialComponentType.Unknown;
-
         public EntityNotSupportedComponent(ComponentType type, string name, List<FieldInfo> fields, bool isSnapshot) : base(type, name, fields, isSnapshot) {
+            SpecialType = SpecialComponentType.Unknown;
+            if (type.IsEnableable)
+            {
+                SpecialType |= SpecialComponentType.Enableable;
+            }
+        }
+
+        public override object UpdateBindingsInternal(Entity entity)
+        {
+            if ((SpecialType & SpecialComponentType.Enableable) != 0)
+            {
+                IsDisabled = !World.DefaultGameObjectInjectionWorld.EntityManager.IsComponentEnabled(entity, Type);
+            }
+            return base.UpdateBindingsInternal(entity);
         }
     }
 
@@ -494,5 +577,6 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         Shared = 1 << 6,
         Unknown = 1 << 7,
         Invalid = 1 << 8,
+        Enableable = 1 << 9,
     }
 }

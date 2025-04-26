@@ -39,10 +39,11 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public FieldInfo FieldInfo { get; }
         public IClosablePopup InspectorPopupRef { get; set; }
         public object GetValueCached();
-        public void UpdateValue(object instance, bool resetState);
+        public void UpdateValue(object instance, bool resetState, HashSet<object> visited);
         public bool IsActive { get; set; }
         public bool IsSnapshot { get; }
         public bool CanInspectValue { get; set; }
+        public bool LoopDetected { get; }
         public void Dispose();
     }
 
@@ -55,6 +56,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         public bool IsSnapshot { get; }
         public bool CanInspectValue { get; set; }
         public bool CanJumpTo { get; set; }
+        public bool LoopDetected { get; protected set; }
         public abstract IInspectableObject Parent { get; protected set; }
 
         protected Inspectable(FieldInfo fieldInfo, bool isSnapshot) {
@@ -70,7 +72,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             return null;
         }
 
-        public virtual void UpdateValue(object instance, bool resetState) {
+        public virtual void UpdateValue(object instance, bool resetState, HashSet<object> visited) {
         }
 
         public abstract void Dispose();
@@ -117,7 +119,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             return _value ?? FieldInfo.GetValue(instance);
         }
 
-        public override void UpdateValue(object instance, bool resetState) {
+        public override void UpdateValue(object instance, bool resetState, HashSet<object> visited) {
             if (instance == null)
             {
                 Logging.DebugEvaluation($"NULL instance! {GetType().Name}");
@@ -129,7 +131,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             object prevValue = _value;
             _value = FieldInfo.GetValue(instance);
             _entity = (Entity)_value;
-            if (IsSnapshot && (_entity == Entity.Null || !_entity.ExistsIn(World.DefaultGameObjectInjectionWorld.EntityManager)))
+            if (IsSnapshot && (_entity == Entity.Null || !SnapshotService.Instance.HasSnapshot(_entity)))
             {
                 Logging.DebugEvaluation($"value not available: {_entity} | {prevValue} | {_value} | {instance.GetType().Name} | init: {_initialized}");
                 // IsValid = false;
@@ -222,7 +224,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        public override void UpdateValue(object instance, bool resetState) {
+        public override void UpdateValue(object instance, bool resetState, HashSet<object> visited) {
             if (instance == null)
             {
                 Logging.DebugEvaluation($"NULL instance! {GetType().Name}");
@@ -244,6 +246,14 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 Logging.DebugEvaluation($"[Iterable] Inactive and initialized. Page: {_previousPage}, now: {CurrentPage} | {FieldInfo.Name}");
                 return;
             }
+
+            if (!visited.Add(_value))
+            {
+                LoopDetected = true;
+                Logging.DebugEvaluation($"[IterableObject] Value already visited! {GetType().Name} {FieldInfo?.Name}");
+                return;
+            }
+            LoopDetected = false;
 
             bool requireUpdate = false;
             if (HasElementCountChanged(out int previousCount, out int newCount))
@@ -290,7 +300,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         IInspectableObject inspectableObject = DataArray[index];
                         bool wasActive = inspectableObject.IsActive;
                         inspectableObject.IsActive = true;
-                        inspectableObject.UpdateValue(_allItems[index], false);
+                        inspectableObject.UpdateValue(_allItems[index], false, visited);
                         inspectableObject.IsActive = wasActive;
                     }
                 }
@@ -357,7 +367,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        public override void UpdateValue(object instance, bool resetState) {
+        public override void UpdateValue(object instance, bool resetState, HashSet<object> visited) {
             if (instance == null)
             {
                 Logging.DebugEvaluation($"NULL instance! {GetType().Name} {FieldInfo?.Name}");
@@ -401,7 +411,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                     IInspectableObject inspectableObject = DataArray[index];
                     bool wasActive = inspectableObject.IsActive;
                     inspectableObject.IsActive = true;
-                    inspectableObject.UpdateValue(_allItems[index], false);
+                    inspectableObject.UpdateValue(_allItems[index], false, visited);
                     inspectableObject.IsActive = wasActive;
                 }
             }
@@ -462,7 +472,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        public override void UpdateValue(object instance, bool resetState) {
+        public override void UpdateValue(object instance, bool resetState, HashSet<object> visited) {
             if (instance == null)
             {
                 Logging.DebugEvaluation($"NULL instance! {GetType().Name} {FieldInfo?.Name}");
@@ -480,6 +490,14 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 Logging.DebugEvaluation($"value not available | {instance.GetType().Name}");
                 return;
             }
+            
+            if (!visited.Add(value))
+            {
+                LoopDetected = true;
+                Logging.DebugEvaluation($"[GenericListObject] Value already visited | {instance.GetType().Name} | {FieldInfo?.Name} | {value}");
+                return;
+            }
+            LoopDetected = false;
 
             bool requireUpdate = false;
 
@@ -509,7 +527,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         IInspectableObject inspectableObject = DataArray[index];
                         bool wasActive = inspectableObject.IsActive;
                         inspectableObject.IsActive = true;
-                        inspectableObject.UpdateValue(_allItems[index], false);
+                        inspectableObject.UpdateValue(_allItems[index], false, visited);
                         inspectableObject.IsActive = wasActive;
                     }
                 }
@@ -566,6 +584,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private object _value;
         public bool IsSnapshot { get; }
         public bool CanInspectValue { get; set; }
+        public bool LoopDetected { get; set; }
         public FieldInfo FieldInfo => _fieldInfo;
         public IClosablePopup InspectorPopupRef { get; set; }
         public IInspectableObject Parent { get; private set; }
@@ -595,7 +614,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             return _value;
         }
 
-        public void UpdateValue(object instance, bool resetState) {
+        public void UpdateValue(object instance, bool resetState, HashSet<object> visited) {
             if (instance == null)
             {
                 Logging.DebugEvaluation($"NULL instance! {GetType().Name} {_fieldInfo?.Name}");
@@ -608,7 +627,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                 {
                     for (var i = 0; i < Children.Length; i++)
                     {
-                        Children[i].UpdateValue(instance, resetState);
+                        Children[i].UpdateValue(instance, resetState, visited);
                     }
                 }
             }
@@ -641,23 +660,25 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
     public class ComplexObject : IInspectableObject
     {
-        private readonly FieldInfo _fieldInfo;
-        private readonly Type _rootType;
-        private object _value;
-        private bool _isActive;
-        private bool _isDirty;
+        protected readonly FieldInfo _fieldInfo;
+        protected readonly Type _rootType;
+        protected object _value;
+        protected bool _isActive;
+        protected bool _isDirty;
         public bool IsSnapshot { get; }
         public bool CanInspectValue { get; set; }
+        public bool LoopDetected { get; set; }
         public FieldInfo FieldInfo => _fieldInfo;
         public Type RootType => _rootType;
         public IInspectableObject Parent { get; private set; }
-        public IInspectableObject[] Children { get; private set; }
+        public IInspectableObject[] Children { get; protected set; }
         public IClosablePopup InspectorPopupRef { get; set; }
 
+        public bool IsPrefabBase { get; private set; }
         public string PrefabName = string.Empty;
 
-        private List<FieldInfo> _childrenFields;
-        private PrefabInfoData _prefabInfoData;
+        protected List<FieldInfo> _childrenFields;
+        protected PrefabInfoData _prefabInfoData;
 
         public ComplexObject([CanBeNull] FieldInfo fieldInfo, List<FieldInfo> childrenFields, bool isSnapshot) {
             _fieldInfo = fieldInfo;
@@ -665,7 +686,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _childrenFields = childrenFields;
             _isDirty = isSnapshot;
             IsSnapshot = isSnapshot;
-            Logging.DebugEvaluation($"New Complex object; {fieldInfo?.Name}({fieldInfo?.FieldType.FullName}) ({_rootType.FullName}) | {string.Join(", ", childrenFields.Select(f => f.Name))}");
+            IsPrefabBase = typeof(PrefabBase).IsAssignableFrom(_rootType);
+            Logging.DebugEvaluation($"New Complex object; {fieldInfo?.Name}({fieldInfo?.FieldType.FullName}) ({_rootType.FullName}) | isPrefabBase: {IsPrefabBase} | {string.Join(", ", childrenFields.Select(f => f.Name))}");
         }
 
         public ComplexObject(Type rootType, List<FieldInfo> childrenFields, bool isSnapshot) {
@@ -674,7 +696,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             _childrenFields = childrenFields;
             _isDirty = isSnapshot;
             IsSnapshot = isSnapshot;
-            Logging.DebugEvaluation($"New Complex object; ({rootType.FullName}) | {string.Join(", ", childrenFields.Select(f => f.Name))}");
+            IsPrefabBase = typeof(PrefabBase).IsAssignableFrom(rootType);
+            Logging.DebugEvaluation($"New Complex object; ({rootType.FullName}) | isPrefabBase: {IsPrefabBase} | {string.Join(", ", childrenFields.Select(f => f.Name))}");
         }
 
         public object GetValueCached() {
@@ -685,7 +708,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             return _value;
         }
 
-        public void UpdateValue(object instance, bool resetState) {
+        public void UpdateValue(object instance, bool resetState, HashSet<object> visited) {
             if (instance == null)
             {
                 Logging.DebugEvaluation($"NULL instance! {GetType().Name} {_fieldInfo?.Name}");
@@ -708,11 +731,12 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             {
                 _value = instance;
             }
+            
             if (Children != null && (IsActive || IsSnapshot))
             {
                 for (int i = 0; i < Children.Length; i++)
                 {
-                    Children[i].UpdateValue(_value, resetState);
+                    Children[i].UpdateValue(_value, resetState, visited);
                 }
                 if (string.IsNullOrEmpty(PrefabName))
                 {
@@ -721,7 +745,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
                         PrefabName = GetPrefabName(Children[_prefabInfoData.fieldIndex].GetValueCached(), _prefabInfoData.fieldName, _prefabInfoData.isPrefabRef, _rootType);
                         Logging.DebugEvaluation($"Calculated prefab name: {PrefabName} | {_prefabInfoData.fieldIndex}, {_prefabInfoData.fieldName}");
                     } 
-                    else if (instance.GetType() == typeof(PrefabBase) && _value is PrefabBase pb)
+                    else if (_value is PrefabBase pb)
                     {
                         PrefabName = pb.name;
                     }
@@ -729,7 +753,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        private static string GetPrefabName(object value, string fieldName, bool isPrefabRef, Type rootType) {
+        protected static string GetPrefabName(object value, string fieldName, bool isPrefabRef, Type rootType) {
             if (value != null)
             {
                 if (value is PrefabBase pb)
@@ -779,7 +803,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        private static PrefabInfoData GetPrefabInfoRef(Type rootType, IInspectableObject[] objects) {
+        protected static PrefabInfoData GetPrefabInfoRef(Type rootType, IInspectableObject[] objects) {
             PrefabInfoData prefabInfoData = default;
             if (rootType == typeof(NetCompositionPiece) || rootType == typeof(NetSectionPiece) || rootType == typeof(NetPieceInfo))
             {

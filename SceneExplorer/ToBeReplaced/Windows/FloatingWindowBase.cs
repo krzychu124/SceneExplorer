@@ -322,6 +322,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
                         if (Mouse.current.leftButton.isPressed)
                         {
+                            var normalizedScaling = ModEntryPoint.Settings.NormalizedScaling;
                             var size = new Vector2(mouse.x, mouse.y) + _resizeDragHandle - new Vector2(_windowRect.x, _windowRect.y);
 
                             if (size.x < _minSize.x)
@@ -336,15 +337,17 @@ namespace SceneExplorer.ToBeReplaced.Windows
 
                             _windowRect.width = size.x;
                             _windowRect.height = size.y;
+                            float normalizedScreenWidth = Screen.width / normalizedScaling;
+                            float normalizedScreenHeight = Screen.height / normalizedScaling;
 
-                            if (_windowRect.x + _windowRect.width >= Screen.width)
+                            if (_windowRect.x + _windowRect.width >= normalizedScreenWidth)
                             {
-                                _windowRect.width = Screen.width - _windowRect.x;
+                                _windowRect.width = normalizedScreenWidth - _windowRect.x;
                             }
 
-                            if (_windowRect.y + _windowRect.height >= Screen.height)
+                            if (_windowRect.y + _windowRect.height >= normalizedScreenHeight)
                             {
-                                _windowRect.height = Screen.height - _windowRect.y;
+                                _windowRect.height = normalizedScreenHeight - _windowRect.y;
                             }
                         }
                         else
@@ -372,7 +375,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         {
             Texture2D texture = IsRoot ? UIStyle.Instance.RootColorTexture :
                 (_resizingWindow == this || _movingWindow == this) ? UIStyle.Instance.InteractionColorTexture : UIStyle.Instance.TitleNormalTexture;
-            float width = IsRoot ? 2f : 1f;
+            float width = 2f;
             GUI.DrawTexture(new Rect(0.0f, 0.0f, width, _windowRect.height), texture);
             GUI.DrawTexture(new Rect(_windowRect.width - width, 0.0f, width, _windowRect.height), texture);
             GUI.DrawTexture(new Rect(0.0f, _windowRect.height - width, _windowRect.width, width), texture);
