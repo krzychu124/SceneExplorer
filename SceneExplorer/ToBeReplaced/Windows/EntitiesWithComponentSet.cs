@@ -237,9 +237,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
             if (typeIndex != TypeIndex.Null)
             {
                 _queryCreator.Add(ComponentType.FromTypeIndex(typeIndex), QueryCreator.MatchingType.WithAll);
-                if (_queryCreator.FillBuilder(_entityManager, out EntityQuery query))
+                if (_queryCreator.FillBuilder(_entityManager, out EntityQuery query, out NativeArray<(ComponentType, int)> minCounts))
                 {
-                    UpdateListByQuery(query);
+                    UpdateListByQuery(query, minCounts);
                 }
             }
         }
@@ -276,8 +276,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 if (_queryCreator.Sync())
                 {
-                    _queryCreator.FillBuilder(_entityManager, out EntityQuery query);
-                    UpdateListByQuery(query, false);
+                    _queryCreator.FillBuilder(_entityManager, out EntityQuery query, out NativeArray<(ComponentType, int)> minCounts);
+                    UpdateListByQuery(query, minCounts, false);
                     updatedByQuery = true;
                 }
                 else
@@ -294,9 +294,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 _requireListUpdate = false;
                 _lastUpdate = 0;
-                if (!updatedByQuery && _queryCreator.FillBuilder(_entityManager, out EntityQuery query))
+                if (!updatedByQuery && _queryCreator.FillBuilder(_entityManager, out EntityQuery query, out NativeArray<(ComponentType, int)> minCounts))
                 {
-                    UpdateListByQuery(query, false);
+                    UpdateListByQuery(query, minCounts, false);
                 }
             }
 
@@ -372,10 +372,10 @@ namespace SceneExplorer.ToBeReplaced.Windows
             }
         }
 
-        private void UpdateListByQuery(EntityQuery query, bool reset = true)
+        private void UpdateListByQuery(EntityQuery query, NativeArray<(ComponentType, int)> minCounts, bool reset = true)
         {
             _items.Clear();
-            UpdateListInternal(query, reset);
+            UpdateListInternal(query, minCounts, reset);
         }
 
         // private void UpdateList(bool reset = true) {
@@ -388,22 +388,50 @@ namespace SceneExplorer.ToBeReplaced.Windows
         //     types.Dispose();
         // }
 
-        private void UpdateListInternal(EntityQuery query, bool reset = true)
+        private void UpdateListInternal(EntityQuery query, NativeArray<(ComponentType, int)> minCounts, bool reset = true)
         {
             NativeArray<Entity> entities = query.ToEntityArray(Allocator.Temp);
             for (var i = 0; i < entities.Length; i++)
             {
                 Item item = new Item(entities[i]);
                 item.Validate(_entityManager, _prefabSystem);
-                _items.Add(item);
+                if (minCounts.IsCreated)
+                {
+                    if (TestItem(item, minCounts))
+                    {
+                        _items.Add(item);
+                    }
+                }
+                else
+                {
+                    _items.Add(item);
+                }
             }
             query.Dispose();
             entities.Dispose();
+            minCounts.Dispose();
             if (_pagination.FixPage(reset))
             {
                 _scrollPos = Vector2.zero;
                 _scrollPos2 = Vector2.zero;
             }
+        }
+
+        private bool TestItem(Item item, NativeArray<(ComponentType, int)> minCounts)
+        {
+            if (!item.IsValid)
+            {
+                return true;
+            }
+            foreach (var valueTuple in minCounts)
+            {
+                int count = valueTuple.Item1.GetManagedType().GetComponentBufferArrayCountByType(_entityManager, item.Entity);
+                if (count < valueTuple.Item2)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public override void Close()

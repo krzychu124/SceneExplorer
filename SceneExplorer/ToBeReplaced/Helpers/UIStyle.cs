@@ -223,7 +223,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             reducedPaddingLabelStyle.wordWrap = false;
             reducedPaddingPrivateLabelStyle = new GUIStyle(GUI.skin.label) { normal = { textColor = reducedPaddingLabelStyle.normal.textColor * new Color(1, 1, 1, 0.6f) }, margin = new RectOffset(0, 0, 1, 1), padding = new RectOffset(1, 1, 1, 1) };
             reducedPaddingPrivateLabelStyle.wordWrap = false;
-            paginationLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { margin = new RectOffset(3, 3, 3, 1), padding = new RectOffset(1, 1, 1, 1), fontSize = 12, fontStyle = FontStyle.Bold };
+            paginationLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { margin = new RectOffset(3, 3, 3, 1), padding = new RectOffset(1, 1, 1, 1), fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft};
             reducedPaddingHighlightedLabelStyle = new GUIStyle(reducedPaddingLabelStyle) { fontStyle = FontStyle.Bold };
             enumValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.59f, 0.83f) }, fontStyle = FontStyle.BoldAndItalic, wordWrap = true/*, overflow = new RectOffset(1,1,1,1)*/};
             entityValueStyle = new GUIStyle(reducedPaddingLabelStyle) { normal = { textColor = new Color(0f, 0.76f, 0.87f) }, fontStyle = FontStyle.Bold, wordWrap = true };

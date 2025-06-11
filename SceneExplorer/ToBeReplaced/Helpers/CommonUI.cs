@@ -11,6 +11,7 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private static GUILayoutOption[] _expandButtonOptions = new GUILayoutOption[] { GUILayout.MaxWidth(21), GUILayout.MaxHeight(22) };
         private static GUILayoutOption[] _lineOptions = new[] { GUILayout.ExpandWidth(true), GUILayout.Height(1f) };
         private static GUILayoutOption[] _paginationButton = new GUILayoutOption[] { GUILayout.MinWidth(60), GUILayout.MaxWidth(60), GUILayout.MaxHeight(22) };
+        private static GUILayoutOption[] _minBufferGroupOption = new GUILayoutOption[] { GUILayout.MinWidth(90), GUILayout.MaxWidth(90), GUILayout.MaxHeight(24) };
 
         public static GUILayoutOption[] ExpandButtonOptions => _expandButtonOptions;
 
@@ -240,18 +241,55 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         private static void RenderQueryItems(QueryCreator creator, HashSet<ComponentType>.Enumerator enumerator, QueryCreator.MatchingType type)
         {
-
-            using (HashSet<ComponentType>.Enumerator creatorWithAll = enumerator)
+            if (type != QueryCreator.MatchingType.WithNone)
             {
-                while (creatorWithAll.MoveNext())
+                using (HashSet<ComponentType>.Enumerator creatorWithAll = enumerator)
                 {
-                    GUILayout.BeginHorizontal(options: null);
-                    if (GUILayout.Button(creatorWithAll.Current.GetManagedType().FullName, UIStyle.Instance.iconButton, options: null))
+                    while (creatorWithAll.MoveNext())
                     {
-                        creator.RemoveDeferred(creatorWithAll.Current, type);
+                        GUILayout.BeginHorizontal(options: null);
+                        if (GUILayout.Button(creatorWithAll.Current.GetManagedType().FullName, UIStyle.Instance.iconButton, options: null))
+                        {
+                            creator.RemoveDeferred(creatorWithAll.Current, type);
+                        }
+                        if (creatorWithAll.Current.IsBuffer)
+                        {
+                            GUILayout.BeginHorizontal(options: _minBufferGroupOption);
+                            if (creator.TryGetMinCount(creatorWithAll.Current, out int min))
+                            {
+                                GUILayout.Label(" Min Count", UIStyle.Instance.paginationLabelStyle);
+                                string temp = min.ToString();
+                                string minS = GUILayout.TextField(temp, 4, UIStyle.Instance.textInputLayoutOptions);
+                                if (minS.Length > 0 && int.TryParse(minS, out int res) && res != min)
+                                {
+
+                                    creator.RequestMinCountUpdate(creatorWithAll.Current, res);
+                                }
+                            }
+                            GUILayout.EndHorizontal();
+                        }
+                        else
+                        {
+                            GUILayout.Space(40);
+                        }
+                        GUILayout.EndHorizontal();
                     }
-                    GUILayout.Space(40);
-                    GUILayout.EndHorizontal();
+                }
+            }
+            else
+            {
+                using (HashSet<ComponentType>.Enumerator creatorWithAll = enumerator)
+                {
+                    while (creatorWithAll.MoveNext())
+                    {
+                        GUILayout.BeginHorizontal(options: null);
+                        if (GUILayout.Button(creatorWithAll.Current.GetManagedType().FullName, UIStyle.Instance.iconButton, options: null))
+                        {
+                            creator.RemoveDeferred(creatorWithAll.Current, type);
+                        }
+                        GUILayout.Space(40);
+                        GUILayout.EndHorizontal();
+                    }
                 }
             }
         }

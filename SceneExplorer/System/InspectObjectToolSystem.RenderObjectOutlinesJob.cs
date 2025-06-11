@@ -30,7 +30,7 @@ namespace SceneExplorer.System
                     return;
                 }
 
-                Color outlineColor = color;;
+                Color outlineColor = color;
                 if (transformData.TryGetComponent(entity, out Game.Objects.Transform transform) &&
                     prefabRefData.TryGetComponent(entity, out PrefabRef prefabRef) &&
                     objectGeometryData.TryGetComponent(prefabRef.m_Prefab, out ObjectGeometryData objectData))

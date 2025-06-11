@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using Game.Prefabs;
 using SceneExplorer.Services;
 using Unity.Entities;
-using UnityEngine;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
 {
@@ -14,14 +13,24 @@ namespace SceneExplorer.ToBeReplaced.Helpers
     {
         private static TypeIndex _prefabRefTypeIndex;
         private static TypeIndex _prefabDataTypeIndex;
+        private static MethodInfo _getComponentData;
+        private static MethodInfo _getSharedComponentData;
+        private static MethodInfo _getBufferData;
+        private static Dictionary<Type, CachedMethodInfo> _genericGetData;
+        private static Dictionary<Type, CachedPropertyInfo> _typedDynamicBufferLength;
 
         static Extensions()
         {
             _prefabRefTypeIndex = TypeManager.GetTypeIndex(typeof(PrefabRef));
             _prefabDataTypeIndex = TypeManager.GetTypeIndex(typeof(PrefabData));
+            _getComponentData = typeof(EntityManager).GetMethod(nameof(EntityManager.GetComponentData), new Type[] { typeof(Entity) });
+            _getSharedComponentData = typeof(EntityManager).GetMethod(nameof(EntityManager.GetSharedComponentManaged), new Type[] { typeof(Entity) });
+            _getBufferData = typeof(EntityManager).GetMethod(nameof(EntityManager.GetBuffer), new Type[] { typeof(Entity), typeof(bool) });
+            _genericGetData = new Dictionary<Type, CachedMethodInfo>();
+            _typedDynamicBufferLength  = new Dictionary<Type, CachedPropertyInfo>();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsValid(this Entity e)
         {
             return e.Index >= 0;
@@ -35,24 +44,55 @@ namespace SceneExplorer.ToBeReplaced.Helpers
 
         public static object GetComponentDataByType(this Type type, EntityManager entityManager, Entity e)
         {
-            MethodInfo getComponentData = typeof(EntityManager).GetMethod(nameof(EntityManager.GetComponentData), new Type[] { typeof(Entity) });
-            MethodInfo genericGetComponentData = getComponentData.MakeGenericMethod(type);
-            return genericGetComponentData.Invoke(entityManager, new object[] { e });
+            if (!_genericGetData.TryGetValue(type, out CachedMethodInfo methodInfo))
+            {
+                methodInfo = new CachedMethodInfo()
+                {
+                    type = type,
+                    method = _getComponentData.MakeGenericMethod(type),
+                };
+                _genericGetData.Add(type, methodInfo);
+            }
+            return methodInfo.method.Invoke(entityManager, new object[] { e });
         }
 
         public static object GetSharedComponentDataByType(this Type type, EntityManager entityManager, Entity e)
         {
-            MethodInfo getComponentData = typeof(EntityManager).GetMethod(nameof(EntityManager.GetSharedComponentManaged), new Type[] { typeof(Entity) });
-            MethodInfo genericGetComponentData = getComponentData.MakeGenericMethod(type);
-            return genericGetComponentData.Invoke(entityManager, new object[] { e });
+            if (!_genericGetData.TryGetValue(type, out CachedMethodInfo methodInfo))
+            {
+                methodInfo = new CachedMethodInfo()
+                {
+                    type = type,
+                    method = _getSharedComponentData.MakeGenericMethod(type),
+                };
+                _genericGetData.Add(type, methodInfo);
+            }
+            return methodInfo.method.Invoke(entityManager, new object[] { e });
         }
 
         public static List<object> GetComponentBufferArrayByType(this Type type, EntityManager entityManager, Entity e)
         {
-            MethodInfo method = typeof(EntityManager).GetMethod(nameof(EntityManager.GetBuffer), new Type[] { typeof(Entity), typeof(bool) });
-            MethodInfo generic = method.MakeGenericMethod(type);
-            object bufferValue = generic.Invoke(entityManager, new object[] { e, true });
-            IEnumerable data = (IEnumerable)bufferValue.GetType().GetMethod("AsNativeArray", BindingFlags.Instance | BindingFlags.Public).Invoke(bufferValue, null);
+            if (!_genericGetData.TryGetValue(type, out CachedMethodInfo getBufferType))
+            {
+                getBufferType = new CachedMethodInfo()
+                {
+                    type = type,
+                    method = _getBufferData.MakeGenericMethod(type),
+                };
+                _genericGetData.Add(type, getBufferType);
+            }
+            object bufferValue = getBufferType.method.Invoke(entityManager, new object[] { e, true });
+            Type bufferType = bufferValue.GetType();
+            if (!_genericGetData.TryGetValue(bufferType, out CachedMethodInfo getArrayType))
+            {
+                getArrayType = new CachedMethodInfo()
+                {
+                    type = bufferType,
+                    method = bufferType.GetMethod("AsNativeArray", BindingFlags.Instance | BindingFlags.Public),
+                };
+                _genericGetData.Add(bufferType, getArrayType);
+            }
+            IEnumerable data = (IEnumerable)getArrayType.method.Invoke(bufferValue, null);
             List<object> objects = new List<object>();
             foreach (object o in data)
             {
@@ -61,6 +101,46 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             IDisposable disposable = data as IDisposable;
             disposable.Dispose();
             return objects;
+        }
+
+        public static int GetComponentBufferArrayCountByType(this Type type, EntityManager entityManager, Entity e)
+        {
+            int count = 0;
+            if (!_genericGetData.TryGetValue(type, out CachedMethodInfo getBufferType))
+            {
+                getBufferType = new CachedMethodInfo()
+                {
+                    type = type,
+                    method = _getBufferData.MakeGenericMethod(type),
+                };
+                _genericGetData.Add(type, getBufferType);
+            }
+            object bufferValue = getBufferType.method.Invoke(entityManager, new object[] { e, true });
+            Type bufferType = bufferValue.GetType();
+            if (!_genericGetData.TryGetValue(bufferType, out CachedMethodInfo getArrayType))
+            {
+                getArrayType = new CachedMethodInfo()
+                {
+                    type = bufferType,
+                    method = bufferType.GetMethod("AsNativeArray", BindingFlags.Instance | BindingFlags.Public),
+                };
+                _genericGetData.Add(bufferType, getArrayType);
+            }
+            IEnumerable data = (IEnumerable)getArrayType.method.Invoke(bufferValue, null);
+            Type dataType = data.GetType();
+            if (!_typedDynamicBufferLength.TryGetValue(dataType, out CachedPropertyInfo lengthProperty))
+            {
+                lengthProperty = new CachedPropertyInfo()
+                {
+                    type = dataType,
+                    property = dataType.GetProperty("Length"),
+                };
+                _typedDynamicBufferLength.Add(dataType, lengthProperty);
+            }
+            count = (int)lengthProperty.property.GetValue(data);
+            IDisposable disposable = data as IDisposable;
+            disposable.Dispose();
+            return count;
         }
 
         public static string TryGetPrefabName(this Entity e, EntityManager manager, PrefabSystem prefabSystem, out string prefabType)
@@ -177,6 +257,18 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         {
             return typeof(IList).IsAssignableFrom(type)
                 || typeof(IList<>).IsAssignableFrom(type);
+        }
+
+        private class CachedMethodInfo
+        {
+            internal Type type;
+            internal MethodInfo method;
+        }
+
+        private class CachedPropertyInfo
+        {
+            internal Type type;
+            internal PropertyInfo property;
         }
     }
 }

@@ -394,7 +394,8 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             }
         }
 
-        public override object UpdateBindingsInternal(Entity entity) {
+        public override object UpdateBindingsInternal(Entity entity)
+        {
             if (IsSnapshot && SnapshotService.Instance.TryGetSnapshot(entity, out SnapshotService.EntitySnapshotData data) && data.TryGetData(Type, out object value))
             {
                 return value;
