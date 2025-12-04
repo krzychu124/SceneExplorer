@@ -7,11 +7,11 @@
         <!--The file where mod information which is required for publishing mod on PDX mods are stored-->
         <PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
         <LangVersion>9</LangVersion>
-        <Version>0.2.13</Version>
+        <Version>0.2.15</Version>
         <Title>Scene Explorer</Title>
         <Authors>krzychu124</Authors>
-        <AssemblyVersion>0.2.14</AssemblyVersion>
-        <FileVersion>0.2.14</FileVersion>
+        <AssemblyVersion>0.2.15</AssemblyVersion>
+        <FileVersion>0.2.15</FileVersion>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -46,6 +46,9 @@
             <Private>false</Private>
         </Reference>
         <Reference Include="Colossal.IO.AssetDatabase">
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Colossal.OdinSerializer">
             <Private>false</Private>
         </Reference>
         <Reference Include="Colossal.Mathematics">
