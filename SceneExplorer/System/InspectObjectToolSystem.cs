@@ -9,6 +9,7 @@ using Game.Net;
 using Game.Notifications;
 using Game.Prefabs;
 using Game.Rendering;
+using Game.Routes;
 using Game.Tools;
 using Game.UI.Editor;
 using Game.Vehicles;
@@ -16,6 +17,7 @@ using SceneExplorer.ToBeReplaced;
 using SceneExplorer.ToBeReplaced.Helpers;
 using System;
 using System.Collections.Generic;
+using Game.Objects;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -24,20 +26,25 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using CarLane = Game.Net.CarLane;
 using CarLaneFlags = Game.Net.CarLaneFlags;
+using Color = UnityEngine.Color;
 using EditorContainer = Game.Tools.EditorContainer;
+using Elevation = Game.Net.Elevation;
 using Node = Game.Net.Node;
 using PathElement = Game.Pathfind.PathElement;
+using Segment = Game.Net.Segment;
+using SpawnLocation = Game.Objects.SpawnLocation;
 using SubArea = Game.Areas.SubArea;
 using SubLane = Game.Net.SubLane;
 using SubNet = Game.Net.SubNet;
+using Transform = Game.Objects.Transform;
 
 namespace SceneExplorer.System
 {
     public struct InspectedObject : IComponentData
     {
         public Entity entity;
-        public bool entityChanged;
-        public bool isDirty;
+
+        public static InspectedObject Default => new InspectedObject() { entity = Entity.Null };
     }
 
     public partial class InspectObjectToolSystem : ToolBaseSystem
@@ -45,34 +52,35 @@ namespace SceneExplorer.System
         public Entity HoveredEntity;
         public float3 LastPos;
         public Entity Selected;
+        //TODO REMOVE
+        public ComponentDataRenderer.HoverData HoverData;
 
         public override string toolID => "Object Inspector Tool";
         public int Mode { get; set; }
         public bool Underground { get; set; }
-
         public override bool allowUnderground => true;
+        public Entity InspectedObjectEntity => _inspectedObjectEntity;
+        public UIManager UIManager => _uiManager;
 
         private InspectorToolPanelSystem _panel;
         private UIManager _uiManager;
 
-        public UIManager UIManager => _uiManager;
         private List<Action> _actions = new List<Action>();
-        private ComponentType[] _selectedEntityComponents = Array.Empty<ComponentType>();
+        private Entity _inspectedObjectEntity;
         private PrefabToolPanelSystem _prefabToolPanelSystem;
         private OverlayRenderSystem _overlayRenderSystem;
         private GizmosSystem _gizmosSystem;
-        public ComponentDataRenderer.HoverData HoverData;
 
         protected override void OnCreate()
         {
             base.OnCreate();
-            EntityManager.AddComponent<InspectedObject>(SystemHandle);
             _panel = World.GetOrCreateSystemManaged<InspectorToolPanelSystem>();
             Enabled = false;
             _prefabToolPanelSystem = World.GetExistingSystemManaged<PrefabToolPanelSystem>();
             _overlayRenderSystem = World.GetOrCreateSystemManaged<OverlayRenderSystem>();
             _gizmosSystem = World.GetOrCreateSystemManaged<GizmosSystem>();
             TryRegisterPrefabSelectedEvent();
+            _inspectedObjectEntity = EntityManager.CreateEntity(ComponentType.ReadWrite<InspectedObject>());
         }
 
         private void TryRegisterPrefabSelectedEvent()
@@ -238,6 +246,19 @@ namespace SceneExplorer.System
             Selected = Entity.Null;
             HoveredEntity = Entity.Null;
             LastPos = float3.zero;
+            InspectEntity(InspectedObject.Default);
+        }
+
+        public void InspectEntity(InspectedObject obj)
+        {
+            Entity prev = EntityManager.GetComponentData<InspectedObject>(_inspectedObjectEntity).entity;
+            EntityManager.SetComponentData<InspectedObject>(_inspectedObjectEntity, obj);
+            if (!prev.Equals(obj.entity) && !EntityManager.HasComponent<Updated>(_inspectedObjectEntity))
+            {
+                EntityManager.AddComponent<Updated>(_inspectedObjectEntity);
+            }
+            EntityManager.ChangeHighlighting_MainThread(Selected, Utils.ChangeMode.RemoveHighlight);
+            Selected = obj.entity;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -246,16 +267,12 @@ namespace SceneExplorer.System
             requireUnderground = Underground;
             if (prevRequireUnderground != Underground)
             {
-                EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
+                InspectEntity(new InspectedObject()
                 {
-                    entity = Entity.Null,
-                    entityChanged = true,
-                    isDirty = false,
+                    entity = Entity.Null
                 });
 
-                EntityManager.ChangeHighlighting_MainThread(Selected, Utils.ChangeMode.RemoveHighlight);
                 EntityManager.ChangeHighlighting_MainThread(HoveredEntity, Utils.ChangeMode.RemoveHighlight);
-                Selected = Entity.Null;
                 HoveredEntity = Entity.Null;
                 LastPos = float3.zero;
                 _panel.SelectEntity(Entity.Null);
@@ -271,16 +288,12 @@ namespace SceneExplorer.System
                 if (Mouse.current.leftButton.wasReleasedThisFrame && e != Selected)
                 {
                     Logging.Debug($"Selected entity: {e}");
-                    EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
+                    InspectEntity(new InspectedObject()
                     {
-                        entity = e,
-                        entityChanged = true,
-                        isDirty = false,
+                        entity = e
                     });
 
-                    EntityManager.ChangeHighlighting_MainThread(Selected, Utils.ChangeMode.RemoveHighlight);
                     EntityManager.ChangeHighlighting_MainThread(e, Utils.ChangeMode.AddHighlight);
-                    Selected = e;
                     _panel.SelectEntity(e);
                 }
                 else if (prev != HoveredEntity)
@@ -294,16 +307,12 @@ namespace SceneExplorer.System
             }
             else if (Mouse.current.rightButton.wasReleasedThisFrame || (Selected != Entity.Null && !EntityManager.Exists(Selected)))
             {
-                EntityManager.SetComponentData<InspectedObject>(SystemHandle, new InspectedObject()
+                InspectEntity(new InspectedObject()
                 {
-                    entity = Entity.Null,
-                    entityChanged = true,
-                    isDirty = false,
+                    entity = Entity.Null
                 });
 
-                EntityManager.ChangeHighlighting_MainThread(Selected, Utils.ChangeMode.RemoveHighlight);
                 EntityManager.ChangeHighlighting_MainThread(HoveredEntity, Utils.ChangeMode.RemoveHighlight);
-                Selected = Entity.Null;
                 HoveredEntity = Entity.Null;
                 LastPos = float3.zero;
                 _panel.SelectEntity(Entity.Null);
@@ -321,7 +330,7 @@ namespace SceneExplorer.System
             //TODO Move to custom overlay render system, handle via singleton component with hovered entity data
 
             JobHandle deps = inputDeps;
-            var hovered = HoverData;
+            /*var hovered = HoverData;
             if (hovered.entity.ExistsIn(EntityManager) && hovered.DataType != ComponentDataRenderer.HoverData.HoverType.None)
             {
                 JobHandle resultDeps;
@@ -344,13 +353,13 @@ namespace SceneExplorer.System
                     return resultDeps;
                 }
             }
-            else if (HoveredEntity != Entity.Null || Selected != Entity.Null)
+            else */if (HoveredEntity != Entity.Null || Selected != Entity.Null)
             {
                 JobHandle resultDeps = inputDeps;
                 if (HoveredEntity.ExistsIn(EntityManager) && HoveredEntity != Selected && RequireManualHighlight(HoveredEntity, out ComponentType componentType, out bool isBuffer))
                 {
                     Type managedType = componentType.GetManagedType();
-                    hovered = new ComponentDataRenderer.HoverData()
+                    ComponentDataRenderer.HoverData hovered = new ComponentDataRenderer.HoverData()
                     {
                         entity = HoveredEntity,
                         DataType = isBuffer ? ComponentDataRenderer.HoverData.HoverType.Buffer : ComponentDataRenderer.HoverData.HoverType.Component,
@@ -365,7 +374,7 @@ namespace SceneExplorer.System
                 if (Selected.ExistsIn(EntityManager) && RequireManualHighlight(Selected, out ComponentType componentType2, out bool isBuffer2))
                 {
                     Type managedType = componentType2.GetManagedType();
-                    hovered = new ComponentDataRenderer.HoverData()
+                    ComponentDataRenderer.HoverData hovered = new ComponentDataRenderer.HoverData()
                     {
                         entity = Selected,
                         DataType = isBuffer2 ? ComponentDataRenderer.HoverData.HoverType.Buffer : ComponentDataRenderer.HoverData.HoverType.Component,
@@ -547,6 +556,13 @@ namespace SceneExplorer.System
                 RenderAreaTriangles(hovered.entity, hovered, buffer, highlight);
                 return true;
             }
+            if (managedType == typeof(Bone))
+            {
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderBone(hovered, gizmoBatcher);
+                return true;
+            }
             if (managedType == typeof(Edge))
             {
                 switch (hovered.DataType)
@@ -571,13 +587,14 @@ namespace SceneExplorer.System
             where T : unmanaged
         {
             var pathEntitiesAndDeltas = 
-                new NativeArray<ValueTuple<Entity, float2>>(pathEntities.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+                new NativeArray<ValueTuple<Entity, float2, bool>>(pathEntities.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
             for (int i = 0; i < pathEntities.Length; i++)
             {
-                var targetAndDelta = new ValueTuple<Entity, float2>();
+                var targetAndDelta = new ValueTuple<Entity, float2, bool>();
                 targetAndDelta.Item1 = getTargetEntity(pathEntities[i]);
                 targetAndDelta.Item2 = getDelta(pathEntities[i]);
+                targetAndDelta.Item3 = false;
                 pathEntitiesAndDeltas[i] = targetAndDelta;
             }
 
@@ -586,12 +603,12 @@ namespace SceneExplorer.System
                 gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies),
                 pathEntities = pathEntitiesAndDeltas,
                 curveComponentLookup = SystemAPI.GetComponentLookup<Curve>(true),
-                waypointComponentLookup = SystemAPI.GetComponentLookup<Game.Routes.Waypoint>(true),
+                waypointComponentLookup = SystemAPI.GetComponentLookup<Waypoint>(true),
                 ownerComponentLookup = SystemAPI.GetComponentLookup<Owner>(true),
-                routeSegmentBufferLookup = SystemAPI.GetBufferLookup<Game.Routes.RouteSegment>(true),
+                routeSegmentBufferLookup = SystemAPI.GetBufferLookup<RouteSegment>(true),
                 pathElementBufferLookup = SystemAPI.GetBufferLookup<PathElement>(true),
                 takeoffLocationComponentLookup = SystemAPI.GetComponentLookup<Game.Routes.TakeoffLocation>(true),
-                spawnLocationComponentLookup = SystemAPI.GetComponentLookup<Game.Objects.SpawnLocation>(true),
+                spawnLocationComponentLookup = SystemAPI.GetComponentLookup<SpawnLocation>(true),
                 cullingInfoComponentLookup = SystemAPI.GetComponentLookup<CullingInfo>(true),
             }.Schedule(JobHandle.CombineDependencies(inputDeps, dependencies));
 
@@ -826,6 +843,78 @@ namespace SceneExplorer.System
             }
         }
 
+        private void RenderBone(ComponentDataRenderer.HoverData hovered, GizmoBatcher gizmoBatcher)
+        {
+            Entity entity = hovered.entity;
+            if (entity == Entity.Null)
+                return;
+
+            Transform transform;
+            if (!EntityManager.TryGetBuffer<Bone>(entity, true, out DynamicBuffer<Bone> bones) || bones.IsEmpty ||
+                !EntityManager.TryGetComponent(entity, out transform))
+            {
+                return;
+            }
+
+            if (EntityManager.TryGetComponent(entity, out InterpolatedTransform interpolatedTransform))
+            {
+                transform = new Transform(interpolatedTransform.m_Position, interpolatedTransform.m_Rotation);
+            }
+
+            DynamicBuffer<ProceduralBone> proceduralBones = default;
+            if (EntityManager.TryGetComponent(entity, out PrefabRef prefabRef) &&
+                EntityManager.TryGetBuffer(prefabRef, true, out DynamicBuffer<SubMesh> subMeshes) &&
+                EntityManager.TryGetBuffer(subMeshes[0].m_SubMesh, true, out DynamicBuffer<ProceduralBone> procBones))
+            {
+                proceduralBones = procBones;
+            }
+
+            if (hovered.DataType == ComponentDataRenderer.HoverData.HoverType.Buffer)
+            {
+                for (int index = 0; index < bones.Length; index++)
+                {
+                    if (!proceduralBones.IsEmpty && index < proceduralBones.Length)
+                    {
+                        Transform t = GetBoneTransform(index, bones, proceduralBones);
+                        Transform worldPos = ObjectUtils.LocalToWorld(transform, t); 
+                        RenderWireBone(ref worldPos, 1.5f, gizmoBatcher);
+                    } else {
+                        Bone bone = bones[index];
+                        RenderWireBone(ref transform, bone, gizmoBatcher);
+                    }
+                }
+            }
+            else if (hovered.Index >= 0 && hovered.Index < bones.Length)
+            {
+                Transform parentTransform = transform;
+                if (!proceduralBones.IsEmpty && hovered.Index < proceduralBones.Length)
+                {
+                    Transform t = GetBoneTransform(hovered.Index, bones, proceduralBones);
+                    Transform worldPos = ObjectUtils.LocalToWorld(parentTransform, t); 
+                    RenderWireBone(ref worldPos, 1.5f, gizmoBatcher);
+                }
+                else
+                {
+                    RenderWireBone(ref parentTransform, bones[hovered.Index], gizmoBatcher);
+                }
+            }
+        }
+
+        private Transform GetBoneTransform(int index, DynamicBuffer<Bone> bones, DynamicBuffer<ProceduralBone> proceduralBones)
+        {
+            int i = index;
+            float4x4 world = float4x4.identity;
+            while (i != -1)
+            {
+                Bone b = bones[i];
+                ProceduralBone pBone = proceduralBones[i];
+                float4x4 local = float4x4.TRS(b.m_Position, b.m_Rotation, new float3(1));
+                world = math.mul(local, world);
+                i = pBone.m_ParentIndex;
+            }
+            return new Transform(world.c3.xyz, new quaternion(world));
+        }
+
         private void RenderConnectedNodes(Entity entity, ComponentDataRenderer.HoverData hovered, OverlayRenderSystem.Buffer buffer)
         {
             if (entity == Entity.Null)
@@ -1034,6 +1123,30 @@ namespace SceneExplorer.System
             gizmoBatcher.DrawBezier(segment.m_Right, color);
         }
 
+        private void RenderWireBone(ref Transform parentTransform, Bone bone, GizmoBatcher gizmoBatcher)
+        {
+            Transform transform = ObjectUtils.LocalToWorld(parentTransform, bone.m_Position, bone.m_Rotation);
+            float3 tip = transform.m_Position + math.mul(transform.m_Rotation, math.forward()) * math.length(bone.m_Position.yz);
+            gizmoBatcher.DrawWireNode(transform.m_Position, 0.1f, Color.green);
+            gizmoBatcher.DrawWireNode(tip, 0.12f, new Color(0f, 0.73f, 0f));
+            gizmoBatcher.DrawWireCone(transform.m_Position, 0.11f, tip, 0.06f, new Color(0.69f, 0.93f, 0f));
+        }
+
+        private void RenderWireBone(ref Transform transform, float length, GizmoBatcher gizmoBatcher)
+        {
+            float3 tip = transform.m_Position + math.mul(transform.m_Rotation, math.forward()) * length;
+            gizmoBatcher.DrawWireNode(transform.m_Position, 0.1f, Color.green);
+            gizmoBatcher.DrawWireNode(tip, 0.12f, new Color(0f, 1f, 1f));
+            gizmoBatcher.DrawWireCone(transform.m_Position, 0.11f, tip, 0.06f, new Color(0.93f, 0.73f, 0f));
+            
+            float3 rhs1 = math.rotate(transform.m_Rotation, math.right());
+            float3 rhs2 = math.rotate(transform.m_Rotation, math.up());
+            float3 rhs3 = math.rotate(transform.m_Rotation, math.forward());
+            gizmoBatcher.DrawArrow(transform.m_Position, transform.m_Position + (rhs1 * 0.5f), Color.red, 0.2f, 20f);
+            gizmoBatcher.DrawArrow(transform.m_Position, transform.m_Position + (rhs2 * 0.5f), Color.green, 0.2f, 20f);
+            gizmoBatcher.DrawArrow(transform.m_Position, transform.m_Position + (rhs3 * 0.5f), Color.blue, 0.2f, 20f);
+        }
+
         private void RenderAreaNode(Game.Areas.Node node, OverlayRenderSystem.Buffer buffer)
         {
                 buffer.DrawCircle(
@@ -1110,9 +1223,11 @@ namespace SceneExplorer.System
             {
                 objects = objects,
                 objectGeometryData = SystemAPI.GetComponentLookup<ObjectGeometryData>(true),
-                transformData = SystemAPI.GetComponentLookup<Game.Objects.Transform>(true),
+                transformData = SystemAPI.GetComponentLookup<Transform>(true),
+                interpolatedTransformData = SystemAPI.GetComponentLookup<InterpolatedTransform>(true),
                 prefabRefData = SystemAPI.GetComponentLookup<PrefabRef>(true),
                 color = highlight ? Color.cyan : Color.white,
+                entityInfo = SystemAPI.GetEntityStorageInfoLookup(),
                 batcher = batcher,
             }.ScheduleParallel(objects.Length, 1, deps);
             objects.Dispose(handle);

@@ -133,7 +133,7 @@ namespace SceneExplorer
             {
                 Logging.Info($"OnGraphicSettingsUpdated: Resolution changed from {_lastScreenResolution} to {gs.resolution}");
                 _lastScreenResolution = gs.resolution;
-                GameManager.instance.RunOnMainThread(() => {
+                Colossal.Core.MainThreadDispatcher.RunOnMainThread(() => {
                     // updating resolution takes time and runs on a separate thread, use new values instead of reading Screen.height directly
                     NormalizedScaling = _lastScreenResolution.height / 1080f * _uiScalingValue;
                 });

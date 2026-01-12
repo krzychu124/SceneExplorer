@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Colossal.Entities;
+using Game.Common;
 using Game.Prefabs;
 using SceneExplorer.Services;
 using SceneExplorer.System;
@@ -7,6 +9,7 @@ using SceneExplorer.ToBeReplaced.Helpers;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
+using Event = UnityEngine.Event;
 
 namespace SceneExplorer.ToBeReplaced.Windows
 {
@@ -22,7 +25,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public string TitleSuffix = string.Empty;
         private Dictionary<IInspectableObject, IClosablePopup> _activeInspectors = new Dictionary<IInspectableObject, IClosablePopup>();
 
-        private List<ISection> _components = new List<ISection>();
         private bool _entityChanged;
         private EntityManager _entityManager;
         private EntityEvaluator _evaluator = new EntityEvaluator();
@@ -45,12 +47,14 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private PrefabSystem _prefabSystem;
         private SceneExplorerUISystem _sceneExplorerUISystem;
         private Rect _titleSectionRect;
+        private Entity _highlightEntity;
 
         public EntityInspector()
         {
             _minSize = new Vector2(250, 250);
             ForceSize(420, 460);
             _prefabSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
+            _highlightEntity = World.DefaultGameObjectInjectionWorld.EntityManager.CreateEntity(World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<ObjectHighlightSystem>().ComponentHighlightArchetype);
         }
 
         protected override string Title { get; } = "Entity Inspector";
@@ -104,7 +108,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
             _prefabSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
             _inspectObjectToolSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<InspectObjectToolSystem>();
             _sceneExplorerUISystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SceneExplorerUISystem>();
-            _renderer = new ComponentDataRenderer(this, _inspectObjectToolSystem);
+            _renderer = new ComponentDataRenderer(this, _inspectObjectToolSystem, OnHighlightData);
 #endif
 #if DEBUG_EXPERIMENTS
         Entity tempEntity = _entityManager.CreateEntity();
@@ -126,17 +130,11 @@ namespace SceneExplorer.ToBeReplaced.Windows
             {
                 return;
             }
-            InspectedObject inspectedObject = _entityManager.GetComponentData<InspectedObject>(_inspectObjectToolSystem.SystemHandle);
+            InspectedObject inspectedObject = _entityManager.GetComponentData<InspectedObject>(_inspectObjectToolSystem.InspectedObjectEntity);
             bool isDirty = _selectedEntity.ExistsIn(_entityManager);
-            if (inspectedObject.entityChanged || inspectedObject.isDirty)
+            if (!inspectedObject.entity.Equals(_selectedEntity) && IsRoot)
             {
                 _entityChanged = true;
-                _entityManager.SetComponentData(_inspectObjectToolSystem.SystemHandle, new InspectedObject()
-                {
-                    entity = inspectedObject.entity,
-                    entityChanged = false,
-                    isDirty = false,
-                });
                 _selectedEntity = inspectedObject.entity;
                 _canJumpTo = InspectObjectUtils.EvaluateCanJumpTo(_entityManager, _selectedEntity);
             }
@@ -148,10 +146,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 Logging.DebugEvaluation("Building UI");
                 if (isOnlyDirty)
                 {
-                    _components.ForEach(c => c.UpdateBindings(refreshOnly: true));
                     _evaluator.SelectedEntity = _selectedEntity;
                     _evaluator.UseSnapshot = false;
-                    _evaluator.Refresh();
+                    _evaluator.Refresh(_entityManager);
                 }
                 else
                 {
@@ -166,8 +163,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
                     {
                         _sharedPrefabInspectorPopup.Close();
                     }
-                    _components.ForEach(c => c.ParentInspector = null);
-                    _components.Clear();
                     if (_selectedEntity != Entity.Null)
                     {
                         // Subtitle = _selectedEntity.ToString();
@@ -188,12 +183,34 @@ namespace SceneExplorer.ToBeReplaced.Windows
 #endif
         }
 
+        private void OnHighlightData(ComponentDataRenderer.HoverData data)
+        {
+            if (_entityManager.TryGetComponent(_highlightEntity, out ObjectHighlightSystem.EntityHighlight oldHighlight))
+            {
+                var highlight = new ObjectHighlightSystem.ComponentHighlight(data.ComponentType, 
+                    data.DataType == ComponentDataRenderer.HoverData.HoverType.ComponentItem || data.DataType == ComponentDataRenderer.HoverData.HoverType.BufferItem
+                        ? data.Index : -1);
+                bool changed = !oldHighlight.entity.Equals(data.entity) || !oldHighlight.highlight.Equals(highlight);
+                if (changed)
+                {
+                    _entityManager.SetComponentData(_highlightEntity, new ObjectHighlightSystem.EntityHighlight()
+                    {
+                        entity = data.entity,
+                        highlight = highlight,
+                    });
+                    _entityManager.AddComponent<Updated>(_highlightEntity);
+                }
+            }
+        }
+
         public override void OnDestroy()
         {
             base.OnDestroy();
-
-            _components.ForEach(c => c.ParentInspector = null);
-            _components.Clear();
+            if (_entityManager.Exists(_highlightEntity))
+            {
+                _entityManager.AddComponent<Deleted>(_highlightEntity);
+                _highlightEntity = Entity.Null;
+            }
         }
 
         public void PreviewEntity(Entity e, string fieldName, string typeName, bool standalone)
@@ -503,8 +520,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
             base.Close();
             _manualEntity = string.Empty;
             _manualEntityVersion = string.Empty;
-            _components.ForEach(c => c.ParentInspector = null);
-            _components.Clear();
             if (_sharedEntityInspectorPopup && _sharedEntityInspectorPopup.IsOpen)
             {
                 _sharedEntityInspectorPopup.Close();

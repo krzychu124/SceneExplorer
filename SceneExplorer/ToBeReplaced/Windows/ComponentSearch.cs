@@ -38,8 +38,6 @@ namespace SceneExplorer.ToBeReplaced.Windows
         private bool _canRemove = false;
         public override bool CanRemove => _canRemove;
 
-        private SimulationSystem _simulationSystem;
-        private TimeSystem _timeSystem;
         private QueryCreator _queryCreator;
         private CommonUI.LocalState _allString = new CommonUI.LocalState();
         private CommonUI.LocalState _anyString = new CommonUI.LocalState();

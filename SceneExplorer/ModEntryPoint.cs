@@ -29,6 +29,7 @@ namespace SceneExplorer
             Settings.ApplyLoadedSettings();
             
             updateSystem.UpdateAt<SceneExplorerUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAfter<ObjectHighlightSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<InspectObjectToolSystem>(SystemUpdatePhase.ToolUpdate);
             updateSystem.UpdateAfter<InspectorTooltipSystem>(SystemUpdatePhase.UITooltip);
             updateSystem.UpdateBefore<InputGuiInteractionSystem, RaycastSystem>(SystemUpdatePhase.MainLoop); // initially disabled

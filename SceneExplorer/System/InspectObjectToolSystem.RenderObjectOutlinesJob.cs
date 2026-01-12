@@ -1,6 +1,7 @@
 ﻿using Colossal;
 using Colossal.Mathematics;
 using Game.Prefabs;
+using Game.Rendering;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -13,19 +14,21 @@ namespace SceneExplorer.System
     public partial class InspectObjectToolSystem
     {
         [BurstCompile]
-        private struct RenderObjectOutlinesJob : IJobFor
+        internal struct RenderObjectOutlinesJob : IJobFor
         {
             [ReadOnly] public ComponentLookup<Game.Objects.Transform> transformData;
+            [ReadOnly] public ComponentLookup<InterpolatedTransform> interpolatedTransformData;
             [ReadOnly] public ComponentLookup<ObjectGeometryData> objectGeometryData;
             [ReadOnly] public ComponentLookup<PrefabRef> prefabRefData;
             [ReadOnly] public NativeArray<Entity> objects;
             [ReadOnly] public Color color;
+            [ReadOnly] public EntityStorageInfoLookup entityInfo;
             public GizmoBatcher batcher;
             
             public void Execute(int index)
             {
                 Entity entity = objects[index];
-                if (entity == Entity.Null)
+                if (entity == Entity.Null || !entityInfo.Exists(entity))
                 {
                     return;
                 }
@@ -60,6 +63,10 @@ namespace SceneExplorer.System
                     else
                     {
                         float4x4 trs2 = new float4x4(transform.m_Rotation, transform.m_Position);
+                        if (interpolatedTransformData.TryGetComponent(entity, out InterpolatedTransform interpolated))
+                        {
+                            trs2 = new float4x4(interpolated.m_Rotation, interpolated.m_Position);
+                        }
                         if ((objectData.m_Flags & Game.Objects.GeometryFlags.Circular) != 0)
                         {
                             batcher.DrawWireCylinder(trs2, new float3(0f, objectData.m_Size.y * 0.5f, 0f), objectData.m_Size.x * 0.5f, objectData.m_Size.y, outlineColor);

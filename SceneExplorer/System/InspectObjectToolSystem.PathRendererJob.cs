@@ -17,9 +17,9 @@ namespace SceneExplorer.System
     public partial class InspectObjectToolSystem
     {
         [BurstCompile]
-        private struct PathRendererJob : IJob
+        internal struct PathRendererJob : IJob
         {
-            [ReadOnly] public NativeArray<ValueTuple<Entity, float2>> pathEntities;
+            [ReadOnly] public NativeArray<ValueTuple<Entity, float2, bool>> pathEntities;
             [ReadOnly] public ComponentLookup<Curve> curveComponentLookup;
             [ReadOnly] public ComponentLookup<Game.Routes.Waypoint> waypointComponentLookup;
             [ReadOnly] public ComponentLookup<Owner> ownerComponentLookup;
@@ -35,16 +35,16 @@ namespace SceneExplorer.System
                 Game.Routes.Waypoint? startWayPoint = null;
                 foreach (var pathEntity in pathEntities)
                 {
-                    RenderPath(pathEntity.Item1, pathEntity.Item2, ref startWayPoint);
+                    RenderPath(pathEntity.Item1, pathEntity.Item2, pathEntity.Item3, ref startWayPoint);
                 }
             }
 
-            private void RenderPath(Entity pathEntity, float2 usedInterval, ref Game.Routes.Waypoint? startWayPoint)
+            private void RenderPath(Entity pathEntity, float2 usedInterval, bool highlight, ref Game.Routes.Waypoint? startWayPoint)
             {
                 if (curveComponentLookup.TryGetComponent(pathEntity, out Curve curve))
                 {
                     // Normal lane components have a curve
-                    gizmoBatcher.DrawBezier(MathUtils.Cut(curve.m_Bezier, usedInterval), Color.green, 6);
+                    gizmoBatcher.DrawBezier(MathUtils.Cut(curve.m_Bezier, usedInterval), highlight ? Color.white : Color.green, 6);
                 }
                 // Handle transit line segments
                 else if (waypointComponentLookup.TryGetComponent(pathEntity, out var waypoint) && ownerComponentLookup.HasComponent(pathEntity))
@@ -78,7 +78,7 @@ namespace SceneExplorer.System
                                     Game.Routes.Waypoint? innerStartWayPoint = null;
                                     foreach (var pathElement in pathElements)
                                     {
-                                        RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, ref innerStartWayPoint);
+                                        RenderPath(pathElement.m_Target, pathElement.m_TargetDelta, false, ref innerStartWayPoint);
                                     }
                                 }
 
@@ -103,7 +103,7 @@ namespace SceneExplorer.System
                 {
                     var locationBounds = cullingInfo.m_Bounds;
 
-                    gizmoBatcher.DrawWireBounds((Bounds)locationBounds, Color.green);
+                    gizmoBatcher.DrawWireBounds((Bounds)locationBounds, highlight ? Color.white : Color.green);
                 }
                 else
                 {

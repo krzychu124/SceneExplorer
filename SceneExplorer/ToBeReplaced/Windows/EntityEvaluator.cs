@@ -16,6 +16,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
         void Render(IEntityNotSupportedComponent component);
         void BeginSection(bool reset);
         void EndSection();
+        void TryHighlight();
     }
 
     public class EntityEvaluator
@@ -23,11 +24,8 @@ namespace SceneExplorer.ToBeReplaced.Windows
         public Entity SelectedEntity
         {
             get => _selectedEntity;
-            set {
-                if (value != _selectedEntity)
-                {
-                    _selectedEntity = value;
-                }
+            set { 
+                _selectedEntity = value;
             }
         }
 
@@ -157,9 +155,9 @@ namespace SceneExplorer.ToBeReplaced.Windows
             }
         }
 
-        public void Refresh()
+        public void Refresh(EntityManager entityManager)
         {
-            Evaluate(World.DefaultGameObjectInjectionWorld.EntityManager, true);
+            Evaluate(entityManager, true);
             if (Valid)
             {
                 _allComponents.ForEach(c => c.RefreshValues(SelectedEntity));
@@ -212,6 +210,7 @@ namespace SceneExplorer.ToBeReplaced.Windows
                 NotSupported.ForEach(renderer.Render);
                 renderer.EndSection();
             }
+            renderer.TryHighlight();
         }
 
         private void AddComponent(IInspectableComponent componentInfo)

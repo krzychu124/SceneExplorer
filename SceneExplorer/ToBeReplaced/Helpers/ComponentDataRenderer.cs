@@ -1,11 +1,9 @@
 ﻿using SceneExplorer.System;
 using SceneExplorer.ToBeReplaced.Windows;
 using System;
-using System.Linq;
 using Game.Prefabs;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace SceneExplorer.ToBeReplaced.Helpers
 {
@@ -19,13 +17,15 @@ namespace SceneExplorer.ToBeReplaced.Helpers
         private InspectObjectToolSystem _toolSystem;
 #endif
         private bool _lastRendered;
+        private Action<HoverData> _highlightAction;
 
 #if DEBUG_PP
-        public ComponentDataRenderer(IValueInspector inspector, InspectObjectToolSystem inspectObjectToolSystem)
+        public ComponentDataRenderer(IValueInspector inspector, InspectObjectToolSystem inspectObjectToolSystem, Action<HoverData> highlightAction)
         {
             _objectRenderer = new InspectableObjectRenderer();
             _inspector = inspector;
             _toolSystem = inspectObjectToolSystem;
+            _highlightAction = highlightAction;
         }
 #endif
 
@@ -207,9 +207,15 @@ namespace SceneExplorer.ToBeReplaced.Helpers
             if (_lastRendered)
             {
 #if DEBUG_PP
+                //TODO REMOVE
                 _toolSystem.HoverData = lastHovered;
 #endif
             }
+        }
+
+        public void TryHighlight()
+        {
+            _highlightAction?.Invoke(lastHovered);
         }
 
         private static string GetTypeInfo(ComponentType type, string name, bool isSnapshot = false, bool? isEnabled = null)
