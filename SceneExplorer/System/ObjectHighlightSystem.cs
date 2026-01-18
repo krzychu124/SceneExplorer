@@ -14,6 +14,7 @@ using Game.Prefabs;
 using Game.Rendering;
 using Game.Routes;
 using Game.Vehicles;
+using Game.Zones;
 using SceneExplorer.ToBeReplaced.Helpers;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -46,7 +47,7 @@ namespace SceneExplorer.System
         private OverlayRenderSystem _overlayRenderSystem;
         private NativeParallelMultiHashMap<Entity, ComponentHighlight> _highlightsMap;
         private EntityQuery _tempHighlightquery;
-
+        private const float CellSize = 8f;
         public int Stats => _highlightsMap.GetKeyArray(Allocator.Temp).Select(k => _highlightsMap.CountValuesForKey(k)).Sum();
         public EntityArchetype ComponentHighlightArchetype;
         
@@ -174,6 +175,8 @@ namespace SceneExplorer.System
             return t == typeof(Node) ||
                 t == typeof(Edge) ||
                 t == typeof(Segment) ||
+                t == typeof(Cell) ||
+                t == typeof(SubBlock) ||
                 t == typeof(SubLane) ||
                 t == typeof(SubNet) ||
                 t == typeof(SubArea) ||
@@ -388,6 +391,18 @@ namespace SceneExplorer.System
                     RenderEdgeNode(entity, componentHighlight.index == 0, componentHighlight, buffer2);
                     return true;
                 }
+            }
+            if (managedType == typeof(SubBlock)) {
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderSubBlock(entity, componentHighlight, gizmoBatcher);
+                return true;
+            }
+            if (managedType == typeof(Cell)) {
+                var gizmoBatcher = _gizmosSystem.GetGizmosBatcher(out JobHandle dependencies);
+                deps = JobHandle.CombineDependencies(inputDeps, dependencies);
+                RenderCellBuffer(entity, componentHighlight, gizmoBatcher);
+                return true;
             }
             deps = inputDeps;
             return false;
@@ -865,6 +880,78 @@ namespace SceneExplorer.System
                     new float2(0,1),
                     node.m_Position,
                     0.4f);
+        }
+
+        private void RenderSubBlock(Entity entity, ComponentHighlight highlight, GizmoBatcher gizmoBatcher) {
+            var subBlocks = EntityManager.GetBuffer<SubBlock>(entity);
+
+            if (highlight.IsMain) {
+                foreach (var subBlock in subBlocks) {
+                    if (subBlock.m_SubBlock != Entity.Null) {
+                        RenderBlock(subBlock.m_SubBlock, gizmoBatcher);
+                    }
+                }
+            } else {
+                var subBlock = subBlocks[highlight.index];
+                if (subBlock.m_SubBlock != Entity.Null) {
+                    RenderBlock(subBlock.m_SubBlock, gizmoBatcher);
+                }
+            }
+        }
+
+        private void RenderCellBuffer(Entity entity, ComponentHighlight highlight, GizmoBatcher gizmoBatcher) {
+            var cells = EntityManager.GetBuffer<Cell>(entity);
+
+            if (highlight.IsMain) {
+                // Highlight block instead of all cells
+                RenderBlock(entity, gizmoBatcher);
+            } else {
+                if (cells.Length < highlight.index) {
+                    return;
+                }
+
+                RenderCell(entity, highlight.index, gizmoBatcher);
+            }
+        }
+
+        private void RenderBlock(Entity entity, GizmoBatcher gizmoBatcher) {
+            var block = EntityManager.GetComponentData<Block>(entity);
+
+            var forward = new float3(block.m_Direction.x, 0f, block.m_Direction.y);
+            var right = new float3(-block.m_Direction.y, 0f, block.m_Direction.x);
+            var rotationMatrix = new float4x4(
+                new float4(right.x, right.y, right.z, 0f),
+                new float4(0f, 1f, 0f, 0f),
+                new float4(forward.x, forward.y, forward.z, 0f),
+                new float4(0f, 0f, 0f, 1f)
+            );
+            
+            var transform = math.mul(float4x4.Translate(block.m_Position), rotationMatrix);
+            var size = new float3(block.m_Size.x * CellSize, CellSize / 2, block.m_Size.y * CellSize);
+            
+            gizmoBatcher.DrawWireCube(transform, new float3(0f, 2f, 0f), size, Color.white);
+        }
+
+        private void RenderCell(Entity entity, int cellIndex, GizmoBatcher gizmoBatcher) {
+            var block = EntityManager.GetComponentData<Block>(entity);
+            
+            var cellX   = cellIndex % block.m_Size.x;
+            var cellY   = cellIndex / block.m_Size.x;
+            var forward = new float3(block.m_Direction.x,  0f, block.m_Direction.y);
+            var right   = new float3(-block.m_Direction.y, 0f, block.m_Direction.x);
+            var rotationMatrix = new float4x4(
+                new float4(right.x, right.y, right.z, 0f),
+                new float4(0f, 1f, 0f, 0f),
+                new float4(forward.x, forward.y, forward.z, 0f),
+                new float4(0f, 0f, 0f, 1f)
+            );
+            var offsetX      = (cellX - block.m_Size.x / 2.0f + 0.5f) * CellSize;
+            var offsetY      = -(cellY - block.m_Size.y / 2.0f + 0.5f) * CellSize;
+            var cellPosition = block.m_Position + right * offsetX + forward * offsetY;
+            var transform    = math.mul(float4x4.Translate(cellPosition), rotationMatrix);
+            var size         = new float3(CellSize, CellSize / 2, CellSize);
+            
+            gizmoBatcher.DrawWireCube(transform, new float3(0f, 2f, 0f), size, Color.white);
         }
 
         private void RenderEdgeNode(Entity entity, bool? start, ComponentHighlight componentHighlight, OverlayRenderSystem.Buffer buffer)
