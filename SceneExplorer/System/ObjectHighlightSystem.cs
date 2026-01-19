@@ -45,6 +45,7 @@ namespace SceneExplorer.System
     {
         private GizmosSystem _gizmosSystem;
         private OverlayRenderSystem _overlayRenderSystem;
+        private ZoneSystem _zoneSystem;
         private NativeParallelMultiHashMap<Entity, ComponentHighlight> _highlightsMap;
         private EntityQuery _tempHighlightquery;
         private const float CellSize = 8f;
@@ -56,6 +57,7 @@ namespace SceneExplorer.System
             base.OnCreate();
             _gizmosSystem = World.GetExistingSystemManaged<GizmosSystem>();
             _overlayRenderSystem = World.GetExistingSystemManaged<OverlayRenderSystem>();
+            _zoneSystem = World.GetExistingSystemManaged<ZoneSystem>();
             _highlightsMap = new NativeParallelMultiHashMap<Entity, ComponentHighlight>(16, Allocator.Persistent);
             
             _tempHighlightquery = SystemAPI.QueryBuilder().WithAll<EntityHighlight>().WithAny<Updated, Deleted>().Build();
@@ -883,75 +885,133 @@ namespace SceneExplorer.System
         }
 
         private void RenderSubBlock(Entity entity, ComponentHighlight highlight, GizmoBatcher gizmoBatcher) {
-            var subBlocks = EntityManager.GetBuffer<SubBlock>(entity);
+            DynamicBuffer<SubBlock> subBlocks = EntityManager.GetBuffer<SubBlock>(entity);
 
             if (highlight.IsMain) {
-                foreach (var subBlock in subBlocks) {
+                foreach (SubBlock subBlock in subBlocks) {
                     if (subBlock.m_SubBlock != Entity.Null) {
-                        RenderBlock(subBlock.m_SubBlock, gizmoBatcher);
+                        Block block = EntityManager.GetComponentData<Block>(subBlock.m_SubBlock);
+                        GetBlockTransform(ref block, out float4x4 rotationMatrix, out _);
+                        RenderBlock(ref block, ref rotationMatrix, gizmoBatcher);
                     }
                 }
             } else {
-                var subBlock = subBlocks[highlight.index];
+                SubBlock subBlock = subBlocks[highlight.index];
                 if (subBlock.m_SubBlock != Entity.Null) {
-                    RenderBlock(subBlock.m_SubBlock, gizmoBatcher);
+                    Block block = EntityManager.GetComponentData<Block>(subBlock.m_SubBlock);
+                    GetBlockTransform(ref block, out float4x4 rotationMatrix, out _);
+                    RenderBlock(ref block, ref rotationMatrix, gizmoBatcher);
                 }
             }
         }
 
         private void RenderCellBuffer(Entity entity, ComponentHighlight highlight, GizmoBatcher gizmoBatcher) {
-            var cells = EntityManager.GetBuffer<Cell>(entity);
-
-            if (highlight.IsMain) {
-                // Highlight block instead of all cells
-                RenderBlock(entity, gizmoBatcher);
+            DynamicBuffer<Cell> cells = EntityManager.GetBuffer<Cell>(entity);
+            ZonePrefabs zonePrefabs = _zoneSystem.GetPrefabs();
+            if (highlight.IsMain)
+            {
+                Block block = EntityManager.GetComponentData<Block>(entity);
+                GetBlockTransform(ref block, out float4x4 rotationMatrix, out float3x2 fwdRight);
+                NativeList<Color> colors = new NativeList<Color>(8, Allocator.Temp);
+                for (int index = 0; index < cells.Length; index++)
+                {
+                    Cell cell = cells[index];
+                    colors.Clear();
+                    GetCellColors(cell.m_State, ref colors);
+                    RenderCell(ref block, index, ref rotationMatrix, ref fwdRight, gizmoBatcher, ref colors);
+                }
+                colors.Dispose();
             } else {
                 if (cells.Length < highlight.index) {
                     return;
                 }
 
-                RenderCell(entity, highlight.index, gizmoBatcher);
+                Block block = EntityManager.GetComponentData<Block>(entity);
+                GetBlockTransform(ref block, out float4x4 rotationMatrix, out float3x2 fwdRight);
+                NativeList<Color> colors = new NativeList<Color>(8, Allocator.Temp);
+                colors.Clear();
+                GetCellColors(cells[highlight.index].m_State, ref colors);
+                RenderCell(ref block, highlight.index, ref rotationMatrix, ref fwdRight, gizmoBatcher, ref colors);
+                colors.Dispose();
             }
         }
 
-        private void RenderBlock(Entity entity, GizmoBatcher gizmoBatcher) {
-            var block = EntityManager.GetComponentData<Block>(entity);
-
-            var forward = new float3(block.m_Direction.x, 0f, block.m_Direction.y);
-            var right = new float3(-block.m_Direction.y, 0f, block.m_Direction.x);
-            var rotationMatrix = new float4x4(
-                new float4(right.x, right.y, right.z, 0f),
-                new float4(0f, 1f, 0f, 0f),
-                new float4(forward.x, forward.y, forward.z, 0f),
-                new float4(0f, 0f, 0f, 1f)
-            );
+        private void RenderBlock(ref Block block, ref float4x4 rotationMatrix, GizmoBatcher gizmoBatcher) {
             
-            var transform = math.mul(float4x4.Translate(block.m_Position), rotationMatrix);
-            var size = new float3(block.m_Size.x * CellSize, CellSize / 2, block.m_Size.y * CellSize);
+            float4x4 transform = math.mul(float4x4.Translate(block.m_Position), rotationMatrix);
+            float3 size = new float3(block.m_Size.x * CellSize, CellSize / 2, block.m_Size.y * CellSize);
             
             gizmoBatcher.DrawWireCube(transform, new float3(0f, 2f, 0f), size, Color.white);
         }
 
-        private void RenderCell(Entity entity, int cellIndex, GizmoBatcher gizmoBatcher) {
-            var block = EntityManager.GetComponentData<Block>(entity);
-            
-            var cellX   = cellIndex % block.m_Size.x;
-            var cellY   = cellIndex / block.m_Size.x;
-            var forward = new float3(block.m_Direction.x,  0f, block.m_Direction.y);
-            var right   = new float3(-block.m_Direction.y, 0f, block.m_Direction.x);
-            var rotationMatrix = new float4x4(
+        private void RenderCell(ref Block block, int cellIndex, ref float4x4 matrix, ref float3x2 fwdRight, GizmoBatcher gizmoBatcher, ref NativeList<Color> colors)
+        {
+            int cellX = cellIndex % block.m_Size.x;
+            int cellY = cellIndex / block.m_Size.x;
+            float offsetX = (cellX - block.m_Size.x / 2.0f + 0.5f) * CellSize;
+            float offsetY = -(cellY - block.m_Size.y / 2.0f + 0.5f) * CellSize;
+            float3 size = new float3(CellSize, 1f, CellSize);
+            float3 cellPosition = block.m_Position + fwdRight.c1 * offsetX + fwdRight.c0 * offsetY;
+            float4x4 transform = math.mul(float4x4.Translate(cellPosition), matrix);
+            gizmoBatcher.DrawWireCube(transform, new float3(0f, 0.5f, 0f), size, Color.white);
+
+            float half = (colors.Length - 1) * 0.5f;
+            for (int index = 0; index < colors.Length; index++)
+            {
+                Color color = colors[index];
+                float3 pos = transform.c3.xyz + (fwdRight.c0 * (index - half) * 1f);
+                gizmoBatcher.DrawWireRect(pos, new float2(0.4f), color);
+            }
+        }
+
+        private void GetBlockTransform(ref Block block, out float4x4 matrix, out float3x2 fwdRight)
+        {
+            float3 forward = new float3(block.m_Direction.x,  0f, block.m_Direction.y);
+            float3 right   = new float3(-block.m_Direction.y, 0f, block.m_Direction.x);
+            matrix = new float4x4(
                 new float4(right.x, right.y, right.z, 0f),
                 new float4(0f, 1f, 0f, 0f),
                 new float4(forward.x, forward.y, forward.z, 0f),
                 new float4(0f, 0f, 0f, 1f)
             );
-            var offsetX      = (cellX - block.m_Size.x / 2.0f + 0.5f) * CellSize;
-            var offsetY      = -(cellY - block.m_Size.y / 2.0f + 0.5f) * CellSize;
-            var cellPosition = block.m_Position + right * offsetX + forward * offsetY;
-            var transform    = math.mul(float4x4.Translate(cellPosition), rotationMatrix);
-            var size         = new float3(CellSize, CellSize / 2, CellSize);
-            
-            gizmoBatcher.DrawWireCube(transform, new float3(0f, 2f, 0f), size, Color.white);
+            fwdRight = new float3x2(forward, right);
+        }
+
+        private void GetCellColors(CellFlags flags, ref NativeList<Color> colors)
+        {
+            colors.Add((flags & CellFlags.Visible) != 0 ? Color.white : new Color(0.27f, 0.27f, 0.27f));
+            if ((flags & CellFlags.Blocked) != 0)
+            {
+                colors.Add(Color.red);
+            }
+            if ((flags & CellFlags.Occupied) != 0)
+            {
+                colors.Add(Color.green);
+            }
+            if ((flags & CellFlags.Shared) != 0)
+            {
+                colors.Add(new Color(0.00f, 0.80f, 1.00f));
+            }
+            if ((flags & CellFlags.Overridden) != 0)
+            {
+                colors.Add(new Color(0.60f, 0.20f, 0.80f));
+            }
+            if ((flags & CellFlags.Roadside) != 0)
+            {
+                colors.Add(new Color(1.00f, 0.75f, 0.00f));
+            }
+            if ((flags & CellFlags.RoadLeft) != 0)
+            {
+                colors.Add(new Color(0.8f, 0.38f, 0f));
+            }
+            if ((flags & CellFlags.RoadRight) != 0)
+            {
+                colors.Add(new Color(0.10f, 0.40f, 0.90f));
+            }
+            if ((flags & CellFlags.RoadBack) != 0)
+            {
+                colors.Add(new Color(1.00f, 0.20f, 0.60f));
+            }
         }
 
         private void RenderEdgeNode(Entity entity, bool? start, ComponentHighlight componentHighlight, OverlayRenderSystem.Buffer buffer)

@@ -30,22 +30,17 @@ Since game entities may be composed of many components, framerate drop is expect
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/scene-explorer.1655915/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.16" />
+	<ModVersion Value="0.2.17" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple-->
 	<Dependency Id="" DisplayName="" Version="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-Improved path NavigationLane and PathElement visualization to render full path by hovering main buffer or starting from the hovered item (hovered item white in this case).	
-More visualizations:
-* Game.Buildings.SpawnLocationElement
-* Game.Buildings.ConnectedBuilding
-* Game.Areas.WoodResource
-* Game.Vehicles.GuestVehicle
-* Game.Vehicles.OwnedVehicle
-* Game.Vehicles.LayoutElement
-* Game.Rendering.Bone (can useful for debugging animations in the editor or in-game)
+More visualizations thanks to Luca's initial commit on GitHub:
+* Game.Zones.SubBlock
+* Game.Zones.Block
+* Game.Zones.Cell
 	</ChangeLog>
 	<!--ChangeLog>
 	</ChangeLog-->
